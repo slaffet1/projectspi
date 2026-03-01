@@ -2,44 +2,48 @@ import { useState } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { businessService } from "../services/businessService";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors]     = useState<{ email?: string; password?: string }>({});
   const [authError, setAuthError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading]   = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
   const submit = async () => {
     setErrors({});
     setAuthError(null);
 
-    // Validation frontend simple
     const newErrors: { email?: string; password?: string } = {};
     if (!email) newErrors.email = "Email requis";
     else if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = "Email invalide";
     if (!password) newErrors.password = "Mot de passe requis";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setLoading(true);
     try {
       const res = await api.post("/users/login", { email, password });
       login(res.data.access_token);
-      navigate("/app");
+
+      // ── Check if the user already has businesses ──────────────────────────
+      const bizRes = await businessService.getMyBusinesses();
+      const businesses = bizRes.data;
+
+      if (businesses.length === 0) {
+        // No business yet → go create one
+        navigate("/app/businesses/new");
+      } else {
+        // Has businesses → go to list so they can pick the active one
+        navigate("/app/businesses");
+      }
     } catch (err: any) {
-      // Backend validation errors
       const backendErrors = err.response?.data?.errors;
       if (backendErrors) {
         setErrors(backendErrors);
       } else if (err.response?.status === 401) {
-        // Auth error
         setAuthError("Email ou mot de passe incorrect");
       } else {
         setAuthError("Erreur inconnue");
@@ -71,7 +75,9 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={`px-4 py-3 border rounded-lg w-full focus:outline-none focus:ring-2 transition ${
-                errors.email ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
+                errors.email
+                  ? "border-red-500 focus:ring-red-400"
+                  : "border-gray-300 focus:ring-blue-400"
               }`}
             />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -85,7 +91,9 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={`px-4 py-3 border rounded-lg w-full focus:outline-none focus:ring-2 transition ${
-                errors.password ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-blue-400"
+                errors.password
+                  ? "border-red-500 focus:ring-red-400"
+                  : "border-gray-300 focus:ring-blue-400"
               }`}
             />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
@@ -106,9 +114,9 @@ export default function Login() {
             Créer un compte
           </a>
           <br />
-  <a href="/" className="text-blue-600 hover:underline mt-2 inline-block">
-    ← Retour à l’accueil
-  </a>
+          <a href="/" className="text-blue-600 hover:underline mt-2 inline-block">
+            ← Retour à l'accueil
+          </a>
         </div>
       </div>
     </div>
