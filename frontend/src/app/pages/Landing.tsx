@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
 import {
@@ -9,17 +9,39 @@ import {
   Clock,
   BarChart3,
   Receipt,
-  Wallet,
   CheckCircle,
   ArrowRight,
   Menu,
   X,
+  User,
+  LogOut,
+  Key,
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/app/context/AuthContext";
+import { ChangePasswordModal } from "./ChangePasswordModal";
 
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -36,25 +58,88 @@ export default function Landing() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">
+              <a
+                href="#features"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 Fonctionnalités
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">
+              <a
+                href="#pricing"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 Tarifs
               </a>
-              <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
+              <a
+                href="#about"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 À propos
               </a>
-              <Link to="/app">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
-                  Se connecter
-                </Button>
-              </Link>
-              <Link to="/app">
-                <Button className="bg-primary hover:bg-accent">
-                  Commencer gratuitement
-                </Button>
-              </Link>
+
+              {/* Auth Section */}
+              {!user ? (
+                <>
+                  <Link to="/login">
+                    <Button
+                      variant="outline"
+                      className="border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      Se connecter
+                    </Button>
+                  </Link>
+                  <Link to="/app">
+                    <Button className="bg-primary hover:bg-accent">
+                      Commencer gratuitement
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <div className="relative" ref={dropdownRef}>
+                  {/* User Icon */}
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-accent transition"
+                  >
+                    <User className="h-5 w-5" />
+                  </button>
+
+                  {/* Dropdown */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-xl border border-border z-50">
+                      <div className="p-4 border-b border-border">
+                        <p className="font-semibold text-foreground">
+                          {user.firstname} {user.lastname}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+
+                      <div className="py-2">
+                       <button
+  onClick={() => setChangePasswordOpen(true)}
+  className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition"
+>
+  <Key className="h-4 w-4 text-primary" />
+  Changer mot de passe
+</button>
+
+                        <button
+                          onClick={() => {
+                            logout();
+                            navigate("/");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Déconnexion
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -95,22 +180,69 @@ export default function Landing() {
               >
                 À propos
               </a>
-              <Link to="/app" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-white">
-                  Se connecter
-                </Button>
-              </Link>
-              <Link to="/app" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full bg-primary hover:bg-accent mt-2">
-                  Commencer gratuitement
-                </Button>
-              </Link>
+
+              {!user ? (
+                <>
+                  <Link
+                    to="/app"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full border-primary text-primary hover:bg-primary hover:text-white"
+                    >
+                      Se connecter
+                    </Button>
+                  </Link>
+                  <Link
+                    to="/app"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Button className="w-full bg-primary hover:bg-accent mt-2">
+                      Commencer gratuitement
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <div className="border-t pt-3">
+                  <div className="px-3 py-2">
+                    <p className="font-semibold">
+                      {user.firstname} {user.lastname}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      navigate("/change-password");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 hover:bg-muted rounded-lg"
+                  >
+                    🔑 Changer mot de passe
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      navigate("/");
+                    }}
+                    className="block w-full text-left px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg"
+                  >
+                    🚪 Déconnexion
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section */}
+    
+
+
+
+  
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -683,6 +815,11 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+   
+    <ChangePasswordModal
+      isOpen={changePasswordOpen}
+      onClose={() => setChangePasswordOpen(false)}
+    />
     </div>
-  );
-}
+                );
+              }

@@ -248,17 +248,18 @@ model roles_permissions {
 }
 
 model users {
-  id             Int              @id @default(autoincrement())
-  email          String           @unique @db.VarChar(255)
-  password       String           @db.VarChar(255)
-  firstname      String           @db.VarChar(100)
-  lastname       String           @db.VarChar(100)
-  phone_number   String?          @db.VarChar(20)
-  status         String?          @default("active") @db.VarChar(20)
-  email_verified Boolean?         @default(false)
-  created_at     DateTime?        @default(now()) @db.Timestamp(6)
-  updated_at     DateTime?        @default(now()) @db.Timestamp(6)
-  business_users business_users[]
+  id                     Int              @id @default(autoincrement())
+  email                  String           @unique @db.VarChar(255)
+  password               String           @db.VarChar(255)
+  firstname              String           @db.VarChar(100)
+  lastname               String           @db.VarChar(100)
+  phone_number           String?          @db.VarChar(20)
+  status                 String?          @default("active") @db.VarChar(20)
+  email_verified         Boolean?         @default(false)
+  email_verification_token String?        @db.VarChar(255)
+  created_at             DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?        @default(now()) @db.Timestamp(6)
+  business_users         business_users[]
 }
 
 model taxes {
