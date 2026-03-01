@@ -7,6 +7,11 @@ import {
   HelpCircle,
   Menu,
   X,
+  UserPlus,
+  ChevronDown,
+  ChevronRight,
+  FileSliders,
+  Percent,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -16,6 +21,10 @@ interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavItemWithChildren extends NavItem {
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
@@ -41,11 +50,28 @@ const navItems: NavItem[] = [
   },
 ];
 
-const bottomNavItems: NavItem[] = [
+const bottomNavItems: NavItemWithChildren[] = [
+  {
+    title: "Membres",
+    href: "/app/members",
+    icon: UserPlus,
+  },
   {
     title: "Paramètres",
     href: "/app/settings",
     icon: Settings,
+    children: [
+      {
+        title: "Facturation",
+        href: "/app/settings/invoices",
+        icon: FileSliders,
+      },
+      {
+        title: "Taxes",
+        href: "/app/settings/taxes",
+        icon: Percent,
+      },
+    ],
   },
   {
     title: "Aide",
@@ -57,6 +83,11 @@ const bottomNavItems: NavItem[] = [
 export function AppSidebar() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Ouvre le sous-menu automatiquement si on est sur une page settings
+  const [settingsOpen, setSettingsOpen] = useState(
+    location.pathname.startsWith("/app/settings")
+  );
 
   return (
     <>
@@ -124,8 +155,64 @@ export function AppSidebar() {
         <div className="border-t border-border p-4 space-y-1">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
 
+            // Item avec sous-menu (Paramètres)
+            if (item.children) {
+              const isParentActive = location.pathname.startsWith("/app/settings");
+
+              return (
+                <div key={item.href}>
+                  {/* Bouton parent */}
+                  <button
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
+                      isParentActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
+                    </div>
+                    {settingsOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+
+                  {/* Sous-menu */}
+                  {settingsOpen && (
+                    <div className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        const isChildActive = location.pathname === child.href;
+
+                        return (
+                          <Link
+                            key={child.href}
+                            to={child.href}
+                            onClick={() => setIsOpen(false)}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                              isChildActive
+                                ? "bg-primary text-white"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            <ChildIcon className="h-4 w-4" />
+                            <span className="font-medium">{child.title}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Item normal (sans sous-menu)
+            const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.href}

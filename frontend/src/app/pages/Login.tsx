@@ -32,7 +32,7 @@ export default function Login() {
     try {
       const res = await api.post("/users/login", { email, password });
       login(res.data.access_token);
-      navigate("/");
+      navigate("/app");
     } catch (err: any) {
       // Backend validation errors
       const backendErrors = err.response?.data?.errors;
