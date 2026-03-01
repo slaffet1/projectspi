@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model banks {
+  id             Int         @id @default(autoincrement())
+  bank_name      String      @db.VarChar(255)
+  account_number String      @db.VarChar(100)
+  iban           String?     @db.VarChar(100)
+  balance        Decimal?    @default(0) @db.Decimal(15, 2)
+  business_id    Int?
+  created_at     DateTime?   @default(now()) @db.Timestamp(6)
+  businesses     businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model business_users {
+  id          Int         @id @default(autoincrement())
+  user_id     Int?
+  business_id Int?
+  role_id     Int?
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles       roles?      @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users?      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, business_id])
+}
+
+model businesses {
+  id                Int              @id @default(autoincrement())
+  name              String           @db.VarChar(255)
+  legal_name        String?          @db.VarChar(255)
+  matricule_fiscale String?          @db.VarChar(100)
+  address           String?          @db.VarChar(255)
+  city              String?          @db.VarChar(100)
+  postal_code       String?          @db.VarChar(20)
+  country           String?          @db.VarChar(100)
+  phone             String?          @db.VarChar(20)
+  email             String?          @db.VarChar(255)
+  logo              String?          @db.VarChar(500)
+  invoice_prefix    String?          @default("INV-") @db.VarChar(20)
+  created_at        DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at        DateTime?        @default(now()) @db.Timestamp(6)
+  banks             banks[]
+  business_users    business_users[]
+  clients           clients[]
+  commandes         commandes[]
+  expenses          expenses[]
+  invitations       invitations[]
+  products          products[]
+  taxes             taxes[]
+}
+
+model clients {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(255)
+  email       String?     @db.VarChar(255)
+  phone       String?     @db.VarChar(20)
+  address     String?     @db.VarChar(255)
+  city        String?     @db.VarChar(100)
+  country     String?     @db.VarChar(100)
+  tax_number  String?     @db.VarChar(100)
+  business_id Int?
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?   @default(now()) @db.Timestamp(6)
+  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quotes      quotes[]
+}
+
+model commande_notes {
+  id             Int      @id @default(autoincrement())
+  command_number String   @unique @db.VarChar(50)
+  command_date   DateTime @db.Date
+  quote_id       Int?
+  quotes         quotes?  @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model commandes {
+  id              Int               @id @default(autoincrement())
+  order_number    String            @unique @db.VarChar(50)
+  order_date      DateTime          @db.Date
+  total_amount    Decimal           @db.Decimal(15, 2)
+  product_id      Int?
+  business_id     Int?
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  businesses      businesses?       @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products        products?         @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  facture_items   facture_items[]
+  reception_notes reception_notes[]
+}
+
+model delivery_notes {
+  id              Int      @id @default(autoincrement())
+  delivery_number String   @unique @db.VarChar(50)
+  delivery_date   DateTime @db.Date
+  quote_id        Int?
+  quotes          quotes?  @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model expenses {
+  id              Int            @id @default(autoincrement())
+  label           String         @db.VarChar(255)
+  amount          Decimal        @db.Decimal(15, 2)
+  expense_date    DateTime       @db.Date
+  payment_method  String?        @db.VarChar(50)
+  business_id     Int?
+  facture_item_id Int?
+  created_at      DateTime?      @default(now()) @db.Timestamp(6)
+  businesses      businesses?    @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  facture_items   facture_items? @relation(fields: [facture_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model facture_items {
+  id          Int        @id @default(autoincrement())
+  description String     @db.VarChar(255)
+  quantity    Int
+  unit_price  Decimal    @db.Decimal(15, 2)
+  total       Decimal    @db.Decimal(15, 2)
+  commande_id Int?
+  expenses    expenses[]
+  commandes   commandes? @relation(fields: [commande_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model fournisseurs {
+  id         Int        @id @default(autoincrement())
+  name       String     @db.VarChar(255)
+  email      String?    @db.VarChar(255)
+  phone      String?    @db.VarChar(20)
+  address    String?    @db.VarChar(255)
+  city       String?    @db.VarChar(100)
+  country    String?    @db.VarChar(100)
+  tax_number String?    @db.VarChar(100)
+  created_at DateTime?  @default(now()) @db.Timestamp(6)
+  products   products[]
+}
+
+model inventaires {
+  id                 Int       @id @default(autoincrement())
+  quantity_available Int
+  minimum_quantity   Int?      @default(0)
+  last_updated       DateTime? @default(now()) @db.Timestamp(6)
+  product_id         Int?
+  products           products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model invoices {
+  id             Int       @id @default(autoincrement())
+  invoice_number String    @unique @db.VarChar(50)
+  issue_date     DateTime  @db.Date
+  due_date       DateTime  @db.Date
+  total_amount   Decimal   @db.Decimal(15, 2)
+  tax_amount     Decimal?  @default(0) @db.Decimal(15, 2)
+  status         String?   @default("draft") @db.VarChar(20)
+  quote_id       Int?
+  created_at     DateTime? @default(now()) @db.Timestamp(6)
+  quotes         quotes?   @relation(fields: [quote_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model mouvements {
+  id             Int            @id @default(autoincrement())
+  mouvement_date DateTime       @db.Date
+  quantity       Int
+  note           String?
+  type           mouvement_type
+  product_id     Int?
+  created_at     DateTime?      @default(now()) @db.Timestamp(6)
+  products       products?      @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model permissions {
+  id                Int                 @id @default(autoincrement())
+  action            String              @unique @db.VarChar(100)
+  roles_permissions roles_permissions[]
+}
+
+model products {
+  id             Int             @id @default(autoincrement())
+  name           String          @db.VarChar(255)
+  description    String?
+  unit_price     Decimal         @db.Decimal(15, 2)
+  tax_rate       Decimal?        @default(0) @db.Decimal(5, 2)
+  business_id    Int?
+  fournisseur_id Int?
+  created_at     DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?       @default(now()) @db.Timestamp(6)
+  commandes      commandes[]
+  inventaires    inventaires[]
+  mouvements     mouvements[]
+  businesses     businesses?     @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fournisseurs   fournisseurs?   @relation(fields: [fournisseur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quote_details  quote_details[]
+}
+
+model quote_details {
+  id         Int       @id @default(autoincrement())
+  quote_id   Int?
+  product_id Int?
+  quantity   Int
+  products   products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quotes     quotes?   @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model quotes {
+  id              Int              @id @default(autoincrement())
+  quote_id        String           @unique @db.VarChar(50)
+  issue_date      DateTime         @db.Date
+  expiration_date DateTime         @db.Date
+  total_amount    Decimal          @db.Decimal(15, 2)
+  status          String?          @default("draft") @db.VarChar(20)
+  client_id       Int?
+  created_at      DateTime?        @default(now()) @db.Timestamp(6)
+  commande_notes  commande_notes[]
+  delivery_notes  delivery_notes[]
+  invoices        invoices[]
+  quote_details   quote_details[]
+  clients         clients?         @relation(fields: [client_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model reception_notes {
+  id               Int        @id @default(autoincrement())
+  reception_number String     @unique @db.VarChar(50)
+  reception_date   DateTime   @db.Date
+  commande_id      Int?
+  commandes        commandes? @relation(fields: [commande_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model roles {
+  id                Int                 @id @default(autoincrement())
+  title             String              @db.VarChar(100)
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  business_users    business_users[]
+  invitations       invitations[]
+  roles_permissions roles_permissions[]
+}
+
+model roles_permissions {
+  role_id       Int
+  permission_id Int
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([role_id, permission_id])
+}
+
+model users {
+  id             Int              @id @default(autoincrement())
+  email          String           @unique @db.VarChar(255)
+  password       String           @db.VarChar(255)
+  firstname      String           @db.VarChar(100)
+  lastname       String           @db.VarChar(100)
+  phone_number   String?          @db.VarChar(20)
+  status         String?          @default("active") @db.VarChar(20)
+  email_verified Boolean?         @default(false)
+  created_at     DateTime?        @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(6)
+  business_users business_users[]
+}
+
+model taxes {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(100)
+  rate        Decimal     @db.Decimal(5, 2)
+  description String?     @db.VarChar(255)
+  is_default  Boolean?    @default(false)
+  business_id Int?
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model invitations {
+  id          Int         @id @default(autoincrement())
+  email       String      @db.VarChar(255)
+  business_id Int?
+  role_id     Int?
+  token       String      @unique @db.VarChar(255)
+  status      String?     @default("pending") @db.VarChar(20)
+  created_at  DateTime?   @default(now()) @db.Timestamp(6)
+  expires_at  DateTime?   @db.Timestamp(6)
+  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles       roles?      @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum mouvement_type {
+  IN
+  OUT
+  UPDATE
+}
