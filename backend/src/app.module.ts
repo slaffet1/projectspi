@@ -7,6 +7,7 @@ import { TaxSettingsModule } from './tax-settings/tax-settings.module';
 import { InviteUsersModule } from './invite-users/invite-users.module';
 import { InvoiceSettingsModule } from './invoice-settings/invoice-settings.module';
 import { UserModule } from './user/user.module';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserModule } from './user/user.module';
     InviteUsersModule,
     InvoiceSettingsModule,
     UserModule,
+    CompanyModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
