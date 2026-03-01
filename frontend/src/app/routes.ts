@@ -14,6 +14,9 @@ import Members from "@/app/pages/Members";
 import Login from "@/app/pages/Login";
 import Register from "@/app/pages/Register";
 import VerifyEmail from "@/app/pages/verifierEmail";
+import BusinessList from "./pages/BusinessList";
+import CreateBusiness from "./pages/CreateBusiness";
+import BusinessProfile from "./pages/BusinessProfile";
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +49,9 @@ export const router = createBrowserRouter([
       { path: "settings/taxes", Component: TaxSettings },
       { path: "settings/invoices", Component: InvoiceSettings },
       { path: "members", Component: Members },
+      { path: "businesses",             Component: BusinessList },
+      { path: "businesses/new",         Component: CreateBusiness },
+      { path: "businesses/:id",         Component: BusinessProfile },
     ],
   },
 ]);

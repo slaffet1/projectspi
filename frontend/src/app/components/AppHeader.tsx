@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
-
+import BusinessSwitcher from './BusinessSwitcher';
 export function AppHeader() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
@@ -38,7 +38,9 @@ export function AppHeader() {
                 <AvatarFallback className="bg-primary text-white">
                   AM
                 </AvatarFallback>
+                <BusinessSwitcher />
               </Avatar>
+              
               <div className="text-left hidden lg:block">
                 <p className="text-sm font-medium">Ahmed Mansour</p>
                 <p className="text-xs text-muted-foreground">admin@business.tn</p>
