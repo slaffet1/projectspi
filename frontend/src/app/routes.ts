@@ -8,12 +8,27 @@ import InvoiceDetail from "@/app/pages/InvoiceDetail";
 import Clients from "@/app/pages/Clients";
 import ClientDetail from "@/app/pages/ClientDetail";
 import Expenses from "@/app/pages/Expenses";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import VerifyEmail from "./pages/verifierEmail";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: Landing,
   },
+   {
+  path: "/login",
+  Component: Login,
+},
+{
+  path: "/register",
+  Component: Register ,
+},
+{
+ path: "/verifEmail",
+  Component: VerifyEmail ,
+},
   {
     path: "/app",
     Component: AppLayout,
@@ -46,6 +61,8 @@ export const router = createBrowserRouter([
         path: "expenses",
         Component: Expenses,
       },
+     
     ],
+    
   },
 ]);
