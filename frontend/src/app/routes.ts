@@ -17,6 +17,7 @@ import VerifyEmail from "@/app/pages/verifierEmail";
 import BusinessList from "./pages/BusinessList";
 import CreateBusiness from "./pages/CreateBusiness";
 import BusinessProfile from "./pages/BusinessProfile";
+import BusinessOnboarding from "./pages/Businessonboarding";
 
 export const router = createBrowserRouter([
   {
@@ -35,11 +36,15 @@ export const router = createBrowserRouter([
     path: "/verifEmail",
     Component: VerifyEmail,
   },
+  { path: "/onboarding",  Component: BusinessOnboarding },
+   { path: "businesses/new",         Component: CreateBusiness },
+
   {
     path: "/app",
     Component: AppLayout,
     children: [
       { index: true, Component: Dashboard },
+      
       { path: "invoices", Component: Invoices },
       { path: "invoices/new", Component: CreateInvoice },
       { path: "invoices/:id", Component: InvoiceDetail },

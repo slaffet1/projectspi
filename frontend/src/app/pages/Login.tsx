@@ -34,7 +34,7 @@ export default function Login() {
 
       if (businesses.length === 0) {
         // No business yet → go create one
-        navigate("/app/businesses/new");
+        navigate("/onboarding");
       } else {
         // Has businesses → go to list so they can pick the active one
         navigate("/app/businesses");
