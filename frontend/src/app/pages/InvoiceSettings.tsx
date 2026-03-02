@@ -4,6 +4,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Save, FileText } from "lucide-react";
+import { useBusiness } from "@/app/context/BusinessContext";
 
 const API_URL = "http://localhost:3000/api";
 
@@ -12,8 +13,9 @@ const InvoiceSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
-  // TODO: Remplacer par l'ID du business connecté
-  const businessId = 1;
+ const { activeBusiness, isAdmin } = useBusiness();
+const businessId = activeBusiness?.id;
+const CURRENT_ROLE: "admin" | "owner" = isAdmin() ? "admin" : "owner";
 
   useEffect(() => {
     fetchSettings();

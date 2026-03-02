@@ -4,17 +4,14 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Pencil, Trash2, Plus, X, Settings } from "lucide-react";
+import { useBusiness } from "@/app/context/BusinessContext";
 
 const API_URL = "http://localhost:3000/api";
 
-
-const CURRENT_ROLE: "admin" | "owner" = "owner";
-
-
-const businessId = 1;
-
-
-const AdminTaxSettings = () => {
+// ─────────────────────────────────────────────
+// VUE ADMIN : CRUD complet des taxes globales
+// ─────────────────────────────────────────────
+const AdminTaxSettings = ({ businessId }: { businessId: number | undefined }) => {
   const [taxes, setTaxes] = useState([]);
   const [name, setName] = useState("");
   const [rate, setRate] = useState("");
@@ -44,12 +41,7 @@ const AdminTaxSettings = () => {
       await fetch(`${API_URL}/taxes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          rate: parseFloat(rate),
-          description,
-          is_default: true,
-        }),
+        body: JSON.stringify({ name, rate: parseFloat(rate), description, is_default: true }),
       });
       setName(""); setRate(""); setDescription("");
       fetchTaxes();
@@ -100,9 +92,7 @@ const AdminTaxSettings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Gestion des Taxes</h1>
-        <p className="text-muted-foreground">
-          Configurez les taux de taxe globaux de la plateforme
-        </p>
+        <p className="text-muted-foreground">Configurez les taux de taxe globaux de la plateforme</p>
       </div>
 
       <Card>
@@ -116,47 +106,25 @@ const AdminTaxSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Nom</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: TVA 19%"
-              />
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: TVA 19%" />
             </div>
             <div>
               <Label>Taux (%)</Label>
-              <Input
-                type="number"
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                placeholder="Ex: 19"
-              />
+              <Input type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="Ex: 19" />
             </div>
             <div>
               <Label>Description</Label>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Taux normal"
-              />
+              <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ex: Taux normal" />
             </div>
           </div>
           <div className="mt-4 flex gap-2">
             {editId ? (
               <>
-                <Button onClick={handleUpdate}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Modifier
-                </Button>
-                <Button variant="outline" onClick={handleCancel}>
-                  <X className="h-4 w-4 mr-2" />
-                  Annuler
-                </Button>
+                <Button onClick={handleUpdate}><Pencil className="h-4 w-4 mr-2" />Modifier</Button>
+                <Button variant="outline" onClick={handleCancel}><X className="h-4 w-4 mr-2" />Annuler</Button>
               </>
             ) : (
-              <Button onClick={handleCreate}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
+              <Button onClick={handleCreate}><Plus className="h-4 w-4 mr-2" />Ajouter</Button>
             )}
           </div>
         </CardContent>
@@ -207,7 +175,7 @@ const AdminTaxSettings = () => {
 // ─────────────────────────────────────────────
 // VUE BUSINESS OWNER : toggles + taxe perso
 // ─────────────────────────────────────────────
-const OwnerTaxSettings = () => {
+const OwnerTaxSettings = ({ businessId }: { businessId: number | undefined }) => {
   const [taxes, setTaxes] = useState([]);
   const [enabledTaxes, setEnabledTaxes] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -227,9 +195,7 @@ const OwnerTaxSettings = () => {
       const data = await response.json();
       setTaxes(data);
       const initial: Record<number, boolean> = {};
-      data.forEach((tax) => {
-        initial[tax.id] = true;
-      });
+      data.forEach((tax) => { initial[tax.id] = true; });
       setEnabledTaxes(initial);
       setLoading(false);
     } catch (error) {
@@ -239,12 +205,7 @@ const OwnerTaxSettings = () => {
   };
 
   const handleToggle = (taxId: number) => {
-    setEnabledTaxes((prev) => ({
-      ...prev,
-      [taxId]: !prev[taxId],
-    }));
-    // TODO: Appeler un endpoint pour persister l'état du toggle par business
-    // ex: PUT /api/businesses/:id/taxes/:taxId/toggle
+    setEnabledTaxes((prev) => ({ ...prev, [taxId]: !prev[taxId] }));
   };
 
   const handleAddCustomTax = async () => {
@@ -281,55 +242,34 @@ const OwnerTaxSettings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Gestion des Taxes</h1>
-        <p className="text-muted-foreground">
-          Activez les taxes applicables à votre entreprise
-        </p>
+        <p className="text-muted-foreground">Activez les taxes applicables à votre entreprise</p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Taxes disponibles</CardTitle>
-            <span className="text-sm text-muted-foreground">
-              {activeCount} taxe(s) active(s)
-            </span>
+            <span className="text-sm text-muted-foreground">{activeCount} taxe(s) active(s)</span>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {defaultTaxes.map((tax) => (
-              <div
-                key={tax.id}
-                className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
-              >
+              <div key={tax.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                 <div className="flex items-center gap-4">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      enabledTaxes[tax.id]
-                        ? "bg-green-50 text-green-700"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${enabledTaxes[tax.id] ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
                     {tax.rate}%
                   </span>
                   <div>
                     <p className="font-medium text-sm">{tax.name}</p>
-                    {tax.description && (
-                      <p className="text-xs text-muted-foreground">{tax.description}</p>
-                    )}
+                    {tax.description && <p className="text-xs text-muted-foreground">{tax.description}</p>}
                   </div>
                 </div>
                 <button
                   onClick={() => handleToggle(tax.id)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    enabledTaxes[tax.id] ? "bg-primary" : "bg-gray-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabledTaxes[tax.id] ? "bg-primary" : "bg-gray-200"}`}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                      enabledTaxes[tax.id] ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${enabledTaxes[tax.id] ? "translate-x-6" : "translate-x-1"}`} />
                 </button>
               </div>
             ))}
@@ -341,16 +281,8 @@ const OwnerTaxSettings = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Taxes personnalisées</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCustomForm(!showCustomForm)}
-            >
-              {showCustomForm ? (
-                <><X className="h-4 w-4 mr-2" />Annuler</>
-              ) : (
-                <><Plus className="h-4 w-4 mr-2" />Ajouter</>
-              )}
+            <Button variant="outline" size="sm" onClick={() => setShowCustomForm(!showCustomForm)}>
+              {showCustomForm ? <><X className="h-4 w-4 mr-2" />Annuler</> : <><Plus className="h-4 w-4 mr-2" />Ajouter</>}
             </Button>
           </div>
         </CardHeader>
@@ -360,81 +292,48 @@ const OwnerTaxSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Nom</Label>
-                  <Input
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="Ex: Taxe spéciale"
-                  />
+                  <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Ex: Taxe spéciale" />
                 </div>
                 <div>
                   <Label>Taux (%)</Label>
-                  <Input
-                    type="number"
-                    value={customRate}
-                    onChange={(e) => setCustomRate(e.target.value)}
-                    placeholder="Ex: 5"
-                  />
+                  <Input type="number" value={customRate} onChange={(e) => setCustomRate(e.target.value)} placeholder="Ex: 5" />
                 </div>
                 <div>
                   <Label>Description</Label>
-                  <Input
-                    value={customDescription}
-                    onChange={(e) => setCustomDescription(e.target.value)}
-                    placeholder="Optionnel"
-                  />
+                  <Input value={customDescription} onChange={(e) => setCustomDescription(e.target.value)} placeholder="Optionnel" />
                 </div>
               </div>
-              <Button onClick={handleAddCustomTax}>
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter
-              </Button>
+              <Button onClick={handleAddCustomTax}><Plus className="h-4 w-4 mr-2" />Ajouter</Button>
             </div>
           )}
 
           {customTaxes.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Aucune taxe personnalisée pour le moment
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-4">Aucune taxe personnalisée pour le moment</p>
           ) : (
             <div className="space-y-3">
               {customTaxes.map((tax) => (
-                <div
-                  key={tax.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50"
-                >
+                <div key={tax.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50">
                   <div className="flex items-center gap-4">
                     <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                       {tax.rate}%
                     </span>
                     <div>
                       <p className="font-medium text-sm">{tax.name}</p>
-                      {tax.description && (
-                        <p className="text-xs text-muted-foreground">{tax.description}</p>
-                      )}
+                      {tax.description && <p className="text-xs text-muted-foreground">{tax.description}</p>}
                     </div>
                   </div>
                   <button
                     onClick={() => handleToggle(tax.id)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      enabledTaxes[tax.id] ? "bg-primary" : "bg-gray-200"
-                    }`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabledTaxes[tax.id] ? "bg-primary" : "bg-gray-200"}`}
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        enabledTaxes[tax.id] ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${enabledTaxes[tax.id] ? "translate-x-6" : "translate-x-1"}`} />
                   </button>
                 </div>
               ))}
             </div>
           )}
 
-          {saved && (
-            <p className="mt-3 text-sm text-green-600 font-medium">
-              ✓ Taxe ajoutée avec succès
-            </p>
-          )}
+          {saved && <p className="mt-3 text-sm text-green-600 font-medium">✓ Taxe ajoutée avec succès</p>}
         </CardContent>
       </Card>
     </div>
@@ -445,7 +344,13 @@ const OwnerTaxSettings = () => {
 // COMPOSANT PRINCIPAL — switch selon le rôle
 // ─────────────────────────────────────────────
 const TaxSettings = () => {
-  return CURRENT_ROLE === "admin" ? <AdminTaxSettings /> : <OwnerTaxSettings />;
+  const { activeBusiness, isAdmin } = useBusiness();
+  const businessId = activeBusiness?.id;
+  const CURRENT_ROLE: "admin" | "owner" = isAdmin() ? "admin" : "owner";
+
+  return CURRENT_ROLE === "admin"
+    ? <AdminTaxSettings businessId={businessId} />
+    : <OwnerTaxSettings businessId={businessId} />;
 };
 
 export default TaxSettings;

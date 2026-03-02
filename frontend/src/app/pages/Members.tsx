@@ -4,24 +4,26 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { UserPlus, Trash2, Users } from "lucide-react";
+import { useBusiness } from "@/app/context/BusinessContext";
 
 const API_URL = "http://localhost:3000/api";
 
 const Members = () => {
+  // ✅ Hook à l'intérieur du composant
+  const { activeBusiness } = useBusiness();
+  const businessId = activeBusiness?.id;
+
   const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
   const [roleId, setRoleId] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  // TODO: Remplacer par l'ID du business connecté
-  const businessId = 1;
-
   useEffect(() => {
     fetchMembers();
   }, []);
 
- const fetchMembers = async () => {
+  const fetchMembers = async () => {
     try {
       const response = await fetch(`${API_URL}/businesses/${businessId}/members`);
       const data = await response.json();
@@ -167,21 +169,11 @@ const Members = () => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Nom
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Email
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Rôle
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Date d'ajout
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                      Actions
-                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Nom</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Email</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Rôle</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date d'ajout</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -199,9 +191,7 @@ const Members = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {member.email}
-                      </td>
+                      <td className="py-3 px-4 text-muted-foreground">{member.email}</td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                           {member.role || "Non défini"}
