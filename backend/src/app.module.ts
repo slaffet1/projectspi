@@ -8,6 +8,7 @@ import { InviteUsersModule } from './invite-users/invite-users.module';
 import { InvoiceSettingsModule } from './invoice-settings/invoice-settings.module';
 import { UserModule } from './user/user.module';
 import { CompanyModule } from './company/company.module';
+import { UserManagementModule } from './user-management/user-management.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { CompanyModule } from './company/company.module';
     InviteUsersModule,
     InvoiceSettingsModule,
     UserModule,
-    CompanyModule
+    CompanyModule,
+    UserManagementModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

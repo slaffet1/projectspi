@@ -17,7 +17,7 @@ import VerifyEmail from "@/app/pages/verifierEmail";
 import BusinessList from "./pages/BusinessList";
 import CreateBusiness from "./pages/CreateBusiness";
 import BusinessProfile from "./pages/BusinessProfile";
-
+import JoinRequests from "./pages/JoinRequestsPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -52,6 +52,7 @@ export const router = createBrowserRouter([
       { path: "businesses",             Component: BusinessList },
       { path: "businesses/new",         Component: CreateBusiness },
       { path: "businesses/:id",         Component: BusinessProfile },
+      { path: "join-requests", Component: JoinRequests },
     ],
   },
 ]);

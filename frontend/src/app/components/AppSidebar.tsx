@@ -48,6 +48,11 @@ const navItems: NavItem[] = [
     href: "/app/expenses",
     icon: Receipt,
   },
+  {
+  title: "Demandes",
+  href: "/app/join-requests",
+  icon: UserPlus,
+},
 ];
 
 const bottomNavItems: NavItemWithChildren[] = [

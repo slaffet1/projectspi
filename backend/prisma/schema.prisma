@@ -54,6 +54,7 @@ model businesses {
   invitations       invitations[]
   products          products[]
   taxes             taxes[]
+  join_requests     join_requests[]  @relation("BusinessJoinRequests")
 }
 
 model clients {
@@ -248,18 +249,20 @@ model roles_permissions {
 }
 
 model users {
-  id                     Int              @id @default(autoincrement())
-  email                  String           @unique @db.VarChar(255)
-  password               String           @db.VarChar(255)
-  firstname              String           @db.VarChar(100)
-  lastname               String           @db.VarChar(100)
-  phone_number           String?          @db.VarChar(20)
-  status                 String?          @default("active") @db.VarChar(20)
-  email_verified         Boolean?         @default(false)
-  email_verification_token String?        @db.VarChar(255)
-  created_at             DateTime?        @default(now()) @db.Timestamp(6)
-  updated_at             DateTime?        @default(now()) @db.Timestamp(6)
-  business_users         business_users[]
+  id                       Int       @id @default(autoincrement())
+  email                    String    @unique @db.VarChar(255)
+  password                 String    @db.VarChar(255)
+  firstname                String    @db.VarChar(100)
+  lastname                 String    @db.VarChar(100)
+  phone_number             String?   @db.VarChar(20)
+  status                   String?   @default("active") @db.VarChar(20)
+  email_verified           Boolean?  @default(false)
+  email_verification_token String?   @db.VarChar(255)
+  created_at               DateTime? @default(now()) @db.Timestamp(6)
+  updated_at               DateTime? @default(now()) @db.Timestamp(6)
+
+  business_users business_users[]
+  join_requests  join_requests[]  @relation("UserJoinRequests")
 }
 
 model taxes {
@@ -290,4 +293,17 @@ enum mouvement_type {
   IN
   OUT
   UPDATE
+}
+
+model join_requests {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  business_id Int
+  status      String   @default("pending")
+  created_at  DateTime @default(now())
+
+  user     users      @relation("UserJoinRequests", fields: [user_id], references: [id], onDelete: Cascade)
+  business businesses @relation("BusinessJoinRequests", fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, business_id])
 }
