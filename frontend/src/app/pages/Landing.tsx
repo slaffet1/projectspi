@@ -21,7 +21,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/app/context/AuthContext";
 import { ChangePasswordModal } from "./ChangePasswordModal";
-
+import { JoinCompanyModal } from "./JoinCompanyModal";
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -29,6 +29,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
 const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+const [joinOpen, setJoinOpen] = useState(false);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -267,6 +268,16 @@ const [changePasswordOpen, setChangePasswordOpen] = useState(false);
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
+                {user && (
+  <Button
+    size="lg"
+    variant="outline"
+    className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white"
+    onClick={() => setJoinOpen(true)}
+  >
+    Join Company
+  </Button>
+)}
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white">
                   Voir une démo
                 </Button>
@@ -815,11 +826,18 @@ const [changePasswordOpen, setChangePasswordOpen] = useState(false);
           </div>
         </div>
       </footer>
-   
+   {joinOpen && (
+  <JoinCompanyModal
+    onClose={() => setJoinOpen(false)}
+  />
+)}
     <ChangePasswordModal
       isOpen={changePasswordOpen}
       onClose={() => setChangePasswordOpen(false)}
     />
     </div>
+    
                 );
               }
+
+              

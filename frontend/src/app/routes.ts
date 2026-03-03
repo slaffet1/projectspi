@@ -18,20 +18,22 @@ import BusinessList from "./pages/BusinessList";
 import CreateBusiness from "./pages/CreateBusiness";
 import BusinessProfile from "./pages/BusinessProfile";
 import BusinessOnboarding from "./pages/Businessonboarding";
+import JoinRequests from "./pages/JoinRequestsPage";
 
 export const router = createBrowserRouter([
-  
+  // ─── Pages publiques ───────────────────────────────────────────
   { path: "/",           Component: Landing },
   { path: "/login",      Component: Login },
   { path: "/register",   Component: Register },
   { path: "/verifEmail", Component: VerifyEmail },
 
+  // ─── Zone entreprise SANS sidebar ──────────────────────────────
   { path: "/onboarding",       Component: BusinessOnboarding },
   { path: "/businesses",       Component: BusinessList },
   { path: "/businesses/new",   Component: CreateBusiness },
   { path: "/businesses/:id",   Component: BusinessProfile },
 
-
+  // ─── Zone travail AVEC sidebar ─────────────────────────────────
   {
     path: "/app",
     Component: AppLayout,
@@ -46,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "settings/taxes",         Component: TaxSettings },
       { path: "settings/invoices",      Component: InvoiceSettings },
       { path: "members",                Component: Members },
+      { path: "join-requests",          Component: JoinRequests },
     ],
   },
 ]);
