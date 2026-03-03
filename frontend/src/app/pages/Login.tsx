@@ -2,7 +2,6 @@ import { useState } from "react";
 import { api } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { businessService } from "../services/businessService";
 
 export default function Login() {
   const [email, setEmail]       = useState("");
@@ -29,16 +28,7 @@ export default function Login() {
       login(res.data.access_token);
 
       // ── Check if the user already has businesses ──────────────────────────
-      const bizRes = await businessService.getMyBusinesses();
-      const businesses = bizRes.data;
-
-      if (businesses.length === 0) {
-        // No business yet → go create one
-        navigate("/onboarding");
-      } else {
-        // Has businesses → go to list so they can pick the active one
-        navigate("/app/businesses");
-      }
+     navigate("/onboarding");
     } catch (err: any) {
       const backendErrors = err.response?.data?.errors;
       if (backendErrors) {

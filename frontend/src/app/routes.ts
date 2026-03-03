@@ -20,43 +20,32 @@ import BusinessProfile from "./pages/BusinessProfile";
 import BusinessOnboarding from "./pages/Businessonboarding";
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    Component: Landing,
-  },
-  {
-    path: "/login",
-    Component: Login,
-  },
-  {
-    path: "/register",
-    Component: Register,
-  },
-  {
-    path: "/verifEmail",
-    Component: VerifyEmail,
-  },
-  { path: "/onboarding",  Component: BusinessOnboarding },
-   { path: "businesses/new",         Component: CreateBusiness },
+  
+  { path: "/",           Component: Landing },
+  { path: "/login",      Component: Login },
+  { path: "/register",   Component: Register },
+  { path: "/verifEmail", Component: VerifyEmail },
+
+  { path: "/onboarding",       Component: BusinessOnboarding },
+  { path: "/businesses",       Component: BusinessList },
+  { path: "/businesses/new",   Component: CreateBusiness },
+  { path: "/businesses/:id",   Component: BusinessProfile },
+
 
   {
     path: "/app",
     Component: AppLayout,
     children: [
-      { index: true, Component: Dashboard },
-      
-      { path: "invoices", Component: Invoices },
-      { path: "invoices/new", Component: CreateInvoice },
-      { path: "invoices/:id", Component: InvoiceDetail },
-      { path: "clients", Component: Clients },
-      { path: "clients/:id", Component: ClientDetail },
-      { path: "expenses", Component: Expenses },
-      { path: "settings/taxes", Component: TaxSettings },
-      { path: "settings/invoices", Component: InvoiceSettings },
-      { path: "members", Component: Members },
-      { path: "businesses",             Component: BusinessList },
-      { path: "businesses/new",         Component: CreateBusiness },
-      { path: "businesses/:id",         Component: BusinessProfile },
+      { index: true,                    Component: Dashboard },
+      { path: "invoices",               Component: Invoices },
+      { path: "invoices/new",           Component: CreateInvoice },
+      { path: "invoices/:id",           Component: InvoiceDetail },
+      { path: "clients",                Component: Clients },
+      { path: "clients/:id",            Component: ClientDetail },
+      { path: "expenses",               Component: Expenses },
+      { path: "settings/taxes",         Component: TaxSettings },
+      { path: "settings/invoices",      Component: InvoiceSettings },
+      { path: "members",                Component: Members },
     ],
   },
 ]);

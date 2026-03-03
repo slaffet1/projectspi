@@ -1,8 +1,65 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Users, ArrowRight, LogOut, BarChart3, CheckCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useBusiness } from "../context/BusinessContext";
 
+// ─── Liste des entreprises existantes ────────────────────────────────────────
+function BusinessesSection() {
+  const { businesses, refreshBusinesses, switchBusiness } = useBusiness();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    refreshBusinesses();
+  }, []);
+
+  if (businesses.length === 0) return null;
+
+  return (
+    <div className="mt-12 w-full max-w-2xl">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex-1 h-px bg-border" />
+        <p className="text-sm font-semibold text-muted-foreground px-2">
+          Vos entreprises existantes
+        </p>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      <div className="space-y-3">
+        {businesses.map((b) => (
+          <div
+            key={b.id}
+            className="flex items-center justify-between bg-white border border-border rounded-xl px-4 py-3 hover:shadow-md hover:border-blue-200 transition-all duration-200"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-lg">
+                  {b.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <p className="font-semibold text-sm text-foreground">{b.name}</p>
+                <p className="text-xs text-muted-foreground">{b.your_role ?? "Membre"}</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                await switchBusiness(b.id);
+                navigate("/app");
+              }}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"
+            >
+              Entrer
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
 export default function BusinessOnboarding() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -56,7 +113,6 @@ export default function BusinessOnboarding() {
             <CheckCircle className="h-4 w-4" />
             Connexion réussie
           </div>
-        
           <p className="text-lg text-muted-foreground">
             Pour commencer, rejoignez une entreprise existante ou créez la vôtre.
           </p>
@@ -76,7 +132,6 @@ export default function BusinessOnboarding() {
                 : "border-border shadow-sm hover:shadow-md"
             }`}
           >
-            {/* Icon */}
             <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-200 ${
               hovered === "create" ? "bg-blue-600" : "bg-blue-50"
             }`}>
@@ -84,16 +139,11 @@ export default function BusinessOnboarding() {
                 hovered === "create" ? "text-white" : "text-blue-600"
               }`} />
             </div>
-
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Créer une entreprise
-            </h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Créer une entreprise</h2>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Lancez votre espace de travail. Vous serez automatiquement
               propriétaire et pourrez inviter votre équipe.
             </p>
-
-            {/* Feature list */}
             <ul className="text-left w-full space-y-2 mb-6">
               {[
                 "Accès complet à toutes les fonctionnalités",
@@ -106,7 +156,6 @@ export default function BusinessOnboarding() {
                 </li>
               ))}
             </ul>
-
             <div className={`flex items-center gap-2 font-semibold text-sm transition-colors duration-200 ${
               hovered === "create" ? "text-blue-600" : "text-muted-foreground"
             }`}>
@@ -115,8 +164,6 @@ export default function BusinessOnboarding() {
                 hovered === "create" ? "translate-x-1" : ""
               }`} />
             </div>
-
-            {/* Popular badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
                 Recommandé
@@ -135,7 +182,6 @@ export default function BusinessOnboarding() {
                 : "border-border shadow-sm hover:shadow-md"
             }`}
           >
-            {/* Icon */}
             <div className={`h-16 w-16 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-200 ${
               hovered === "join" ? "bg-indigo-600" : "bg-indigo-50"
             }`}>
@@ -143,16 +189,11 @@ export default function BusinessOnboarding() {
                 hovered === "join" ? "text-white" : "text-indigo-600"
               }`} />
             </div>
-
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Rejoindre une entreprise
-            </h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Rejoindre une entreprise</h2>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Vous avez reçu une invitation ? Entrez votre code ou acceptez
               l'invitation envoyée par email.
             </p>
-
-            {/* Feature list */}
             <ul className="text-left w-full space-y-2 mb-6">
               {[
                 "Acceptez une invitation par email",
@@ -165,7 +206,6 @@ export default function BusinessOnboarding() {
                 </li>
               ))}
             </ul>
-
             <div className={`flex items-center gap-2 font-semibold text-sm transition-colors duration-200 ${
               hovered === "join" ? "text-indigo-600" : "text-muted-foreground"
             }`}>
@@ -177,16 +217,9 @@ export default function BusinessOnboarding() {
           </button>
         </div>
 
-        {/* Already have businesses link */}
-        <p className="mt-8 text-sm text-muted-foreground">
-          Vous avez déjà des entreprises ?{" "}
-          <button
-            onClick={() => navigate("/app/businesses")}
-            className="text-blue-600 hover:underline font-medium"
-          >
-            Voir mes entreprises →
-          </button>
-        </p>
+        
+        <BusinessesSection />
+
       </div>
     </div>
   );
