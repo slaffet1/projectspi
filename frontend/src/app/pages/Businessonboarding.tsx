@@ -69,15 +69,21 @@ export default function BusinessOnboarding() {
         </div>
         <div className="flex items-center gap-4">
           {user && (
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-foreground">{user.firstname} {user.lastname}</p>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
+            <button
+              onClick={() => navigate("/profile/edit")}
+              className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-blue-50 transition-colors duration-150 group"
+              title="Modifier mon profil"
+            >
+              <div className="flex items-center gap-3">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-medium text-foreground">{user.firstname} {user.lastname}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">{user.firstname?.[0]}{user.lastname?.[0]}</span>
+                </div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">{user.firstname?.[0]}{user.lastname?.[0]}</span>
-              </div>
-            </div>
+            </button>
           )}
           <button onClick={handleLogout} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition px-3 py-1.5 rounded-lg hover:bg-red-50">
             <LogOut className="h-4 w-4" />

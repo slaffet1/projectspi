@@ -19,36 +19,39 @@ import CreateBusiness from "./pages/CreateBusiness";
 import BusinessProfile from "./pages/BusinessProfile";
 import BusinessOnboarding from "./pages/Businessonboarding";
 import JoinRequests from "./pages/JoinRequestsPage";
+import EditProfile from "./pages/modifierProfil";
+
 
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
-  { path: "/",           Component: Landing },
-  { path: "/login",      Component: Login },
-  { path: "/register",   Component: Register },
+  { path: "/", Component: Landing },
+  { path: "/login", Component: Login },
+  { path: "/register", Component: Register },
   { path: "/verifEmail", Component: VerifyEmail },
 
   // ─── Zone entreprise SANS sidebar ──────────────────────────────
-  { path: "/onboarding",       Component: BusinessOnboarding },
-  { path: "/businesses",       Component: BusinessList },
-  { path: "/businesses/new",   Component: CreateBusiness },
-  { path: "/businesses/:id",   Component: BusinessProfile },
+  { path: "/onboarding", Component: BusinessOnboarding },
+  { path: "/businesses", Component: BusinessList },
+  { path: "/businesses/new", Component: CreateBusiness },
+  { path: "/businesses/:id", Component: BusinessProfile },
+  { path: "/profile/edit", Component: EditProfile },
 
   // ─── Zone travail AVEC sidebar ─────────────────────────────────
   {
     path: "/app",
     Component: AppLayout,
     children: [
-      { index: true,                    Component: Dashboard },
-      { path: "invoices",               Component: Invoices },
-      { path: "invoices/new",           Component: CreateInvoice },
-      { path: "invoices/:id",           Component: InvoiceDetail },
-      { path: "clients",                Component: Clients },
-      { path: "clients/:id",            Component: ClientDetail },
-      { path: "expenses",               Component: Expenses },
-      { path: "settings/taxes",         Component: TaxSettings },
-      { path: "settings/invoices",      Component: InvoiceSettings },
-      { path: "members",                Component: Members },
-      { path: "join-requests",          Component: JoinRequests },
+      { index: true, Component: Dashboard },
+      { path: "invoices", Component: Invoices },
+      { path: "invoices/new", Component: CreateInvoice },
+      { path: "invoices/:id", Component: InvoiceDetail },
+      { path: "clients", Component: Clients },
+      { path: "clients/:id", Component: ClientDetail },
+      { path: "expenses", Component: Expenses },
+      { path: "settings/taxes", Component: TaxSettings },
+      { path: "settings/invoices", Component: InvoiceSettings },
+      { path: "members", Component: Members },
+      { path: "join-requests", Component: JoinRequests },
     ],
   },
 ]);

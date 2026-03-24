@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { EmailService } from 'src/email/email.service';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -12,7 +13,7 @@ export class UserService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async createUser(dto: CreateUserDto) {
     const existing = await this.prisma.users.findUnique({
@@ -110,6 +111,20 @@ export class UserService {
       data: {
         email_verified: true,
         email_verification_token: null,
+      },
+    });
+  }
+  async updateUser(userId: number, dto: UpdateUserDto) {
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    return this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        firstname: dto.firstname ?? user.firstname,
+        lastname: dto.lastname ?? user.lastname,
+        phone_number: dto.phoneNumber ?? user.phone_number,
+        email: dto.email ?? user.email,
       },
     });
   }
