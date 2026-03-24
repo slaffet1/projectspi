@@ -183,8 +183,14 @@ model products {
   id             Int             @id @default(autoincrement())
   name           String          @db.VarChar(255)
   description    String?
+  reference      String?         @db.VarChar(100)
+  barcode        String?         @db.VarChar(100)
   unit_price     Decimal         @db.Decimal(15, 2)
+  cost_price     Decimal?        @db.Decimal(15, 2)
   tax_rate       Decimal?        @default(0) @db.Decimal(5, 2)
+  category       String?         @db.VarChar(100)
+  unit           String?         @default("pièce") @db.VarChar(50)
+  is_active      Boolean         @default(true)
   business_id    Int?
   fournisseur_id Int?
   created_at     DateTime?       @default(now()) @db.Timestamp(6)

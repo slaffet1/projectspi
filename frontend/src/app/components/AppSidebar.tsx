@@ -12,6 +12,7 @@ import {
   ChevronRight,
   FileSliders,
   Percent,
+  Package
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -48,6 +49,11 @@ const navItems: NavItem[] = [
     href: "/app/expenses",
     icon: Receipt,
   },
+  {
+  title: "Produits",
+  href: "/app/products",
+  icon: Package,
+},
   {
   title: "Demandes",
   href: "/app/join-requests",

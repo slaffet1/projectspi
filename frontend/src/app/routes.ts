@@ -20,6 +20,7 @@ import BusinessProfile from "./pages/BusinessProfile";
 import BusinessOnboarding from "./pages/Businessonboarding";
 import JoinRequests from "./pages/JoinRequestsPage";
 import EditProfile from "./pages/modifierProfil";
+import Products from "@/app/pages/Products";
 
 
 export const router = createBrowserRouter([
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: "settings/invoices", Component: InvoiceSettings },
       { path: "members", Component: Members },
       { path: "join-requests", Component: JoinRequests },
+      { path: "products", Component: Products },
     ],
   },
 ]);

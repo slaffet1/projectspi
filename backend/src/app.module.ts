@@ -9,6 +9,7 @@ import { InvoiceSettingsModule } from './invoice-settings/invoice-settings.modul
 import { UserModule } from './user/user.module';
 import { CompanyModule } from './company/company.module';
 import { UserManagementModule } from './user-management/user-management.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserManagementModule } from './user-management/user-management.module';
     UserModule,
     CompanyModule,
     UserManagementModule,
+    ProductsModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
