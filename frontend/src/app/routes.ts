@@ -21,6 +21,7 @@ import BusinessOnboarding from "./pages/Businessonboarding";
 import JoinRequests from "./pages/JoinRequestsPage";
 import EditProfile from "./pages/modifierProfil";
 import Products from "@/app/pages/Products";
+import Banks from "@/app/pages/Banks";
 
 
 export const router = createBrowserRouter([
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
       { path: "members", Component: Members },
       { path: "join-requests", Component: JoinRequests },
       { path: "products", Component: Products },
+      { path: "banks", Component: Banks },
     ],
   },
 ]);
