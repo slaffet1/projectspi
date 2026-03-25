@@ -22,13 +22,19 @@ export type Business = {
   joined_at?: string;
 };
 
+type SwitchBusinessResponse = {
+  business: Business;
+  role: string;
+  permissions: string[];
+};
+
 type BusinessContextType = {
   businesses: Business[];
   activeBusiness: Business | null;
   activeRole: string | null;
   permissions: string[];
   loading: boolean;
-  switchBusiness: (businessId: number) => Promise<void>;
+  switchBusiness: (businessId: number) => Promise<SwitchBusinessResponse>; // ← changer void en vrai type
   refreshBusinesses: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   isOwner: () => boolean;
@@ -77,26 +83,29 @@ export const BusinessProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const switchBusiness = async (businessId: number) => {
-    setLoading(true);
-    try {
-      const res = await api.post(`/businesses/${businessId}/switch`);
-      const { business, role, permissions: perms } = res.data;
+  setLoading(true);
+  try {
+    const res = await api.post(`/businesses/${businessId}/switch`);
+    const { business, role, permissions: perms } = res.data;
 
-      setActiveBusiness(business);
-      setActiveRole(role);
-      setPermissions(perms);
+    setActiveBusiness(business);
+    setActiveRole(role);
+    setPermissions(perms);
 
-      localStorage.setItem('activeBusiness', JSON.stringify(business));
-      localStorage.setItem('activeRole', role);
-      localStorage.setItem('permissions', JSON.stringify(perms));
+    localStorage.setItem('activeBusiness', JSON.stringify(business));
+    localStorage.setItem('activeRole', role);
+    localStorage.setItem('permissions', JSON.stringify(perms));
 
-      api.defaults.headers.common['X-Business-Id'] = businessId;
-    } catch (err) {
-      console.error('Failed to switch business', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    api.defaults.headers.common['X-Business-Id'] = businessId;
+
+    return res.data; // ✅ Ajouter ce return !
+  } catch (err) {
+    console.error('Failed to switch business', err);
+    throw err; // optionnel : rejeter l'erreur pour le handleSwitch
+  } finally {
+    setLoading(false);
+  }
+};
 
   const hasPermission = (permission: string) => permissions.includes(permission);
   const isOwner = () => activeRole === 'OWNER';
