@@ -1,4 +1,4 @@
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import { SearchInput } from "@/app/components/SearchInput";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -20,7 +20,7 @@ export function AppHeader() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/login"); 
   };
 
   const initials = user
@@ -49,31 +49,34 @@ export function AppHeader() {
 
         {/* Profil utilisateur */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-white">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left hidden lg:block">
-                <p className="text-sm font-medium">
-                  {user ? `${user.firstname} ${user.lastname}` : "..."}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {user?.email ?? ""}
-                </p>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
+         <DropdownMenuTrigger asChild>
+  <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors">
+    <Avatar className="h-8 w-8">
+      <AvatarFallback className="bg-primary text-white">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+    <div className="text-left hidden lg:block">
+      <p className="text-sm font-medium">
+        {user ? `${user.firstname} ${user.lastname}` : "..."}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {user?.email ?? ""}
+      </p>
+    </div>
+  </button>
+</DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>Paramètres</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/profile/edit")}>
+  <User className="mr-2 h-4 w-4" />
+  <span>Mon profil</span>
+</DropdownMenuItem>
+<DropdownMenuItem onClick={() => navigate("/app/settings/invoices")}>
+  <Settings className="mr-2 h-4 w-4" />
+  <span>Paramètres</span>
+</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

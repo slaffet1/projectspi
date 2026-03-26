@@ -7,6 +7,7 @@ import { Label } from "@/app/components/ui/label";
 import { SearchInput } from "@/app/components/SearchInput";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { api } from "@/app/services/api";
+import { productService } from "@/app/services/productService";
 
 // ─── Types ────────────────────────────────────────────────────
 interface Product {
@@ -21,8 +22,13 @@ interface Product {
   category?: string;
   unit?: string;
   is_active: boolean;
-  fournisseur_id?: number;
   created_at: string;
+}
+
+interface Tax {
+  id: number;
+  name: string;
+  rate: number;
 }
 
 interface ProductForm {
@@ -64,8 +70,15 @@ function ProductModal({
       unit: product.unit ?? "pièce",
     } : emptyForm
   );
+  const [taxes, setTaxes] = useState<Tax[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api.get(`/api/businesses/${businessId}/taxes`)
+      .then(res => setTaxes(res.data))
+      .catch(err => console.error(err));
+  }, [businessId]);
 
   const set = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -76,7 +89,7 @@ function ProductModal({
     const e: Record<string, string> = {};
     if (!form.name.trim()) e.name = "Le nom est requis";
     if (!form.unit_price) e.unit_price = "Le prix est requis";
-    if (isNaN(Number(form.unit_price))) e.unit_price = "Prix invalide";
+    if (isNaN(Number(form.unit_price)) || Number(form.unit_price) < 0) e.unit_price = "Prix invalide";
     return e;
   };
 
@@ -97,9 +110,9 @@ function ProductModal({
         unit: form.unit || "pièce",
       };
       if (product) {
-        await api.put(`/api/businesses/${businessId}/products/${product.id}`, payload);
+        await productService.updateProduct(businessId, product.id, payload);
       } else {
-        await api.post(`/api/businesses/${businessId}/products`, payload);
+        await productService.createProduct(businessId, payload);
       }
       onSave();
       onClose();
@@ -113,99 +126,204 @@ function ProductModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+
+        {/* Header modal */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold">
-            {product ? "Modifier le produit" : "Nouveau produit"}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">
+                {product ? "Modifier le produit" : "Nouveau produit"}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {product ? "Modifiez les informations du produit" : "Remplissez les informations du produit"}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Nom */}
-            <div className="md:col-span-2">
-              <Label>Nom du produit *</Label>
-              <Input value={form.name} onChange={e => set("name", e.target.value)}
-                placeholder="Ex: Laptop Dell XPS" className={errors.name ? "border-red-500" : ""} />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-            </div>
+        <div className="p-6 space-y-6">
 
-            {/* Description */}
-            <div className="md:col-span-2">
-              <Label>Description</Label>
-              <Input value={form.description} onChange={e => set("description", e.target.value)}
-                placeholder="Description du produit" />
-            </div>
+          {/* Section 1 — Informations de base */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">1</span>
+              Informations de base
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <Label>Nom du produit <span className="text-red-500">*</span></Label>
+                <Input
+                  value={form.name}
+                  onChange={e => set("name", e.target.value)}
+                  placeholder="Ex: Laptop Dell XPS 15"
+                  className={errors.name ? "border-red-500" : ""}
+                />
+                {errors.name && <p className="text-red-500 text-xs mt-1">⚠ {errors.name}</p>}
+              </div>
 
-            {/* Référence */}
-            <div>
-              <Label>Référence</Label>
-              <Input value={form.reference} onChange={e => set("reference", e.target.value)}
-                placeholder="Ex: PROD-001" />
-            </div>
+              <div className="md:col-span-2">
+                <Label>Description <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <Input
+                  value={form.description}
+                  onChange={e => set("description", e.target.value)}
+                  placeholder="Ex: Processeur i7, 16GB RAM, 512GB SSD"
+                />
+              </div>
 
-            {/* Code barre */}
-            <div>
-              <Label>Code barre</Label>
-              <Input value={form.barcode} onChange={e => set("barcode", e.target.value)}
-                placeholder="Ex: 123456789" />
-            </div>
+              <div>
+                <Label>Référence <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <Input
+                  value={form.reference}
+                  onChange={e => set("reference", e.target.value)}
+                  placeholder="Ex: PROD-001"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Code interne pour identifier le produit</p>
+              </div>
 
-            {/* Prix de vente */}
-            <div>
-              <Label>Prix de vente HT (DT) *</Label>
-              <Input type="number" value={form.unit_price} onChange={e => set("unit_price", e.target.value)}
-                placeholder="0.00" className={errors.unit_price ? "border-red-500" : ""} />
-              {errors.unit_price && <p className="text-red-500 text-xs mt-1">{errors.unit_price}</p>}
+              <div>
+                <Label>Code barre <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <Input
+                  value={form.barcode}
+                  onChange={e => set("barcode", e.target.value)}
+                  placeholder="Ex: 6191234567890"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Code barre EAN ou QR</p>
+              </div>
             </div>
+          </div>
 
-            {/* Prix d'achat */}
-            <div>
-              <Label>Prix d'achat (DT)</Label>
-              <Input type="number" value={form.cost_price} onChange={e => set("cost_price", e.target.value)}
-                placeholder="0.00" />
+          <div className="h-px bg-border" />
+
+          {/* Section 2 — Prix */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">2</span>
+              Prix & Fiscalité
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Prix de vente HT (DT) <span className="text-red-500">*</span></Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    value={form.unit_price}
+                    onChange={e => set("unit_price", e.target.value)}
+                    placeholder="0.000"
+                    className={`pr-10 ${errors.unit_price ? "border-red-500" : ""}`}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">DT</span>
+                </div>
+                {errors.unit_price && <p className="text-red-500 text-xs mt-1">⚠ {errors.unit_price}</p>}
+                <p className="text-xs text-muted-foreground mt-1">Prix hors taxe</p>
+              </div>
+
+              <div>
+                <Label>Prix d'achat (DT) <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    value={form.cost_price}
+                    onChange={e => set("cost_price", e.target.value)}
+                    placeholder="0.000"
+                    className="pr-10"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">DT</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Utilisé pour calculer la marge</p>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label>Taxe applicable <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <select
+                  value={form.tax_rate}
+                  onChange={e => set("tax_rate", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                >
+                  <option value="">Aucune taxe</option>
+                  {taxes.map(tax => (
+                    <option key={tax.id} value={String(tax.rate)}>
+                      {tax.name} — {tax.rate}%
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Taxes configurées dans les paramètres de votre entreprise
+                </p>
+              </div>
             </div>
+          </div>
 
-            {/* TVA */}
-            <div>
-              <Label>Taux TVA (%)</Label>
-              <Input type="number" value={form.tax_rate} onChange={e => set("tax_rate", e.target.value)}
-                placeholder="Ex: 19" />
-            </div>
+          <div className="h-px bg-border" />
 
-            {/* Unité */}
-            <div>
-              <Label>Unité</Label>
-              <select value={form.unit} onChange={e => set("unit", e.target.value)}
-                className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                <option value="pièce">Pièce</option>
-                <option value="kg">Kg</option>
-                <option value="litre">Litre</option>
-                <option value="mètre">Mètre</option>
-                <option value="boîte">Boîte</option>
-                <option value="heure">Heure</option>
-              </select>
-            </div>
+          {/* Section 3 — Classification */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">3</span>
+              Classification
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Unité de mesure</Label>
+                <select
+                  value={form.unit}
+                  onChange={e => set("unit", e.target.value)}
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                >
+                  <option value="pièce">Pièce</option>
+                  <option value="kg">Kilogramme (kg)</option>
+                  <option value="litre">Litre</option>
+                  <option value="mètre">Mètre</option>
+                  <option value="boîte">Boîte</option>
+                  <option value="heure">Heure (service)</option>
+                  <option value="forfait">Forfait (service)</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Unité utilisée sur les factures</p>
+              </div>
 
-            {/* Catégorie */}
-            <div className="md:col-span-2">
-              <Label>Catégorie</Label>
-              <Input value={form.category} onChange={e => set("category", e.target.value)}
-                placeholder="Ex: Informatique, Électronique..." />
+              <div>
+                <Label>Catégorie <span className="text-muted-foreground text-xs">(optionnel)</span></Label>
+                <Input
+                  value={form.category}
+                  onChange={e => set("category", e.target.value)}
+                  placeholder="Ex: Informatique"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Pour organiser et filtrer vos produits</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 p-6 border-t">
-          <button onClick={onClose}
-            className="px-4 py-2 border rounded-xl text-sm font-medium hover:bg-gray-50 transition">
+        {/* Footer modal */}
+        <div className="flex justify-end gap-3 p-6 border-t bg-muted/30 rounded-b-2xl">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 border rounded-xl text-sm font-medium hover:bg-gray-50 transition"
+          >
             Annuler
           </button>
-          <button onClick={handleSubmit} disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60">
-            {loading ? "Enregistrement..." : product ? "Modifier" : "Créer"}
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              <>{product ? "Modifier le produit" : "Créer le produit"}</>
+            )}
           </button>
         </div>
       </div>
@@ -231,7 +349,7 @@ export default function Products() {
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get(`/api/businesses/${businessId}/products`);
+      const res = await productService.getProducts(businessId!);
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -243,7 +361,7 @@ export default function Products() {
   const handleDelete = async (id: number) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return;
     try {
-      await api.delete(`/api/businesses/${businessId}/products/${id}`);
+      await productService.deleteProduct(businessId!, id);
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
@@ -252,7 +370,7 @@ export default function Products() {
 
   const handleToggle = async (id: number) => {
     try {
-      const res = await api.patch(`/api/businesses/${businessId}/products/${id}/toggle`);
+      const res = await productService.toggleProduct(businessId!, id);
       setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: res.data.is_active } : p));
     } catch (err) {
       console.error(err);
@@ -285,7 +403,8 @@ export default function Products() {
           <h1 className="text-3xl font-semibold text-foreground">Produits</h1>
           <p className="text-muted-foreground mt-1">Gérez votre catalogue de produits</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90" onClick={() => { setEditProduct(undefined); setShowModal(true); }}>
+        <Button className="bg-primary hover:bg-primary/90"
+          onClick={() => { setEditProduct(undefined); setShowModal(true); }}>
           <Plus className="h-4 w-4 mr-2" />
           Nouveau produit
         </Button>
@@ -349,7 +468,8 @@ export default function Products() {
             {filtered.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-muted-foreground">Aucun produit trouvé</p>
+                <p className="text-muted-foreground font-medium">Aucun produit trouvé</p>
+                <p className="text-sm text-muted-foreground mt-1">Créez votre premier produit en cliquant sur "Nouveau produit"</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -390,11 +510,11 @@ export default function Products() {
                           <button onClick={() => handleToggle(p.id)}>
                             {p.is_active ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                                Actif
+                                ● Actif
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-                                Inactif
+                                ○ Inactif
                               </span>
                             )}
                           </button>
@@ -425,7 +545,8 @@ export default function Products() {
           {filtered.length === 0 ? (
             <div className="col-span-3 text-center py-12">
               <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucun produit trouvé</p>
+              <p className="text-muted-foreground font-medium">Aucun produit trouvé</p>
+              <p className="text-sm text-muted-foreground mt-1">Créez votre premier produit</p>
             </div>
           ) : (
             filtered.map(p => (
@@ -459,7 +580,15 @@ export default function Products() {
                   {p.tax_rate && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">TVA</span>
-                      <span>{p.tax_rate}%</span>
+                      <span className="text-blue-600 font-medium">{p.tax_rate}%</span>
+                    </div>
+                  )}
+                  {p.unit_price && p.tax_rate && (
+                    <div className="flex justify-between text-sm bg-muted/50 rounded-lg px-3 py-2">
+                      <span className="text-muted-foreground">Prix TTC</span>
+                      <span className="font-semibold text-primary">
+                        {(Number(p.unit_price) * (1 + Number(p.tax_rate) / 100)).toFixed(3)} DT
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between pt-2 border-t">
