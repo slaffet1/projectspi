@@ -20,12 +20,17 @@ export default function BusinessList() {
     refreshBusinesses();
   }, []);
 
-  const handleSwitch = async (b: Business) => {
-    setSwitching(b.id);
-    await switchBusiness(b.id);
-    setSwitching(null);
-    navigate('/app');
-  };
+ const handleSwitch = async (b: Business) => {
+  setSwitching(b.id);
+
+  const res = await switchBusiness(b.id);
+
+  // Conversion en string pour localStorage
+  localStorage.setItem('businessId', res.business.id.toString());
+
+  setSwitching(null);
+  navigate('/app');
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">

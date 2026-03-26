@@ -21,8 +21,10 @@ import BusinessOnboarding from "./pages/Businessonboarding";
 import JoinRequests from "./pages/JoinRequestsPage";
 import EditProfile from "./pages/modifierProfil";
 import Products from "@/app/pages/Products";
-
-
+import Quotes from "./pages/Quotes";
+import CreateQuote from './pages/CreateQuote';
+import Banks from "@/app/pages/Banks";
+import QuoteDetail from "@/app/pages/QuoteDetail";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -54,6 +56,11 @@ export const router = createBrowserRouter([
       { path: "members", Component: Members },
       { path: "join-requests", Component: JoinRequests },
       { path: "products", Component: Products },
+      { path: "quotes", Component: Quotes },
+      { path: "quotes/new", Component: CreateQuote },
+      { path: "banks", Component: Banks },
+      { path: "/app/quotes/:id", Component: QuoteDetail },
+      
     ],
   },
 ]);
