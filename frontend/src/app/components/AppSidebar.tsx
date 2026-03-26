@@ -57,6 +57,7 @@ const navGroups: NavGroup[] = [
     label: "Achats",
     items: [
       { title: "Produits",   href: "/app/products",  icon: Package },
+      { title: "Fournisseur",   href: "/app/suppliers",  icon: Package },
       { title: "Dépenses",   href: "/app/expenses",  icon: Receipt },
     ],
   },
