@@ -12,102 +12,94 @@ import {
   ChevronRight,
   FileSliders,
   Percent,
-  Package
+  Package,
+  FileSignature,
+  Building2,
+  UsersRound,
+  ClipboardList,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-}
-
-interface NavItemWithChildren extends NavItem {
   children?: NavItem[];
 }
 
-const navItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: "/app",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Factures",
-    href: "/app/invoices",
-    icon: FileText,
-  },
-  {
-    title: "Clients",
-    href: "/app/clients",
-    icon: Users,
-  },
-  {
-    title: "Dépenses",
-    href: "/app/expenses",
-    icon: Receipt,
-  },
-  {
-  title: "Produits",
-  href: "/app/products",
-  icon: Package,
-},
-  {
-  title: "Demandes",
-  href: "/app/join-requests",
-  icon: UserPlus,
-},
-{
-  title: "Banques",
-  href: "/app/banks",
-  icon: Package, 
-},
-];
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
 
-const bottomNavItems: NavItemWithChildren[] = [
+// ─── Navigation structure ─────────────────────────────────────────────────────
+
+const navGroups: NavGroup[] = [
   {
-    title: "Membres",
-    href: "/app/members",
-    icon: UserPlus,
-  },
-  {
-    title: "Paramètres",
-    href: "/app/settings",
-    icon: Settings,
-    children: [
-      {
-        title: "Facturation",
-        href: "/app/settings/invoices",
-        icon: FileSliders,
-      },
-      {
-        title: "Taxes",
-        href: "/app/settings/taxes",
-        icon: Percent,
-      },
+    label: "Général",
+    items: [
+      { title: "Dashboard",  href: "/app",           icon: LayoutDashboard },
     ],
   },
   {
-    title: "Aide",
-    href: "/app/help",
-    icon: HelpCircle,
+    label: "Ventes",
+    items: [
+      { title: "Devis",      href: "/app/quotes",    icon: FileSignature },
+      { title: "Factures",   href: "/app/invoices",  icon: FileText },
+      { title: "Clients",    href: "/app/clients",   icon: Users },
+    ],
+  },
+  {
+    label: "Achats",
+    items: [
+      { title: "Produits",   href: "/app/products",  icon: Package },
+      { title: "Dépenses",   href: "/app/expenses",  icon: Receipt },
+    ],
+  },
+  {
+    label: "Équipe",
+    items: [
+      { title: "Entreprises",  href: "/app/businesses",    icon: Building2 },
+      { title: "Membres",      href: "/app/members",       icon: UsersRound },
+      { title: "Demandes",     href: "/app/join-requests", icon: ClipboardList },
+    ],
   },
 ];
 
+const bottomItems: NavItem[] = [
+  {
+    title: "Paramètres",
+    href:  "/app/settings",
+    icon:  Settings,
+    children: [
+      { title: "Facturation", href: "/app/settings/invoices", icon: FileSliders },
+      { title: "Taxes",       href: "/app/settings/taxes",    icon: Percent },
+    ],
+  },
+  { title: "Aide", href: "/app/help", icon: HelpCircle },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function AppSidebar() {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Ouvre le sous-menu automatiquement si on est sur une page settings
+  const [isOpen,       setIsOpen]       = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith("/app/settings")
   );
 
+  const isActive = (href: string) =>
+    href === "/app"
+      ? location.pathname === "/app"
+      : location.pathname.startsWith(href);
+
   return (
     <>
-      {/* Mobile menu button */}
+      {/* Mobile toggle */}
       <Button
         variant="ghost"
         size="icon"
@@ -117,7 +109,7 @@ export function AppSidebar() {
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Overlay pour mobile */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-30"
@@ -132,7 +124,7 @@ export function AppSidebar() {
         }`}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center border-b border-border px-6">
+        <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <span className="text-lg font-bold text-white">B</span>
@@ -143,67 +135,76 @@ export function AppSidebar() {
           </div>
         </div>
 
-        {/* Navigation principale */}
-        <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => {
+        {/* Scrollable nav area */}
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              {/* Group label */}
+              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                {group.label}
+              </p>
+
+              {/* Group items */}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon   = item.icon;
+                  const active = isActive(item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                        active
+                          ? "bg-primary text-white"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="text-sm font-medium">{item.title}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom nav */}
+        <div className="border-t border-border px-3 py-4 space-y-0.5 shrink-0">
+          {bottomItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
 
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                  isActive
-                    ? "bg-primary text-white"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="font-medium">{item.title}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Navigation du bas */}
-        <div className="border-t border-border p-4 space-y-1">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-
-            // Item avec sous-menu (Paramètres)
+            // Settings with children
             if (item.children) {
-              const isParentActive = location.pathname.startsWith("/app/settings");
+              const parentActive = location.pathname.startsWith("/app/settings");
 
               return (
                 <div key={item.href}>
-                  {/* Bouton parent */}
                   <button
                     onClick={() => setSettingsOpen(!settingsOpen)}
                     className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
-                      isParentActive
+                      parentActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="h-5 w-5" />
-                      <span className="font-medium">{item.title}</span>
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="text-sm font-medium">{item.title}</span>
                     </div>
-                    {settingsOpen ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
+                    {settingsOpen
+                      ? <ChevronDown className="h-3.5 w-3.5" />
+                      : <ChevronRight className="h-3.5 w-3.5" />
+                    }
                   </button>
 
-                  {/* Sous-menu */}
                   {settingsOpen && (
-                    <div className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
+                    <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
                       {item.children.map((child) => {
-                        const ChildIcon = child.icon;
-                        const isChildActive = location.pathname === child.href;
+                        const ChildIcon    = child.icon;
+                        const childActive  = location.pathname === child.href;
 
                         return (
                           <Link
@@ -211,12 +212,12 @@ export function AppSidebar() {
                             to={child.href}
                             onClick={() => setIsOpen(false)}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                              isChildActive
+                              childActive
                                 ? "bg-primary text-white"
                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                             }`}
                           >
-                            <ChildIcon className="h-4 w-4" />
+                            <ChildIcon className="h-4 w-4 shrink-0" />
                             <span className="font-medium">{child.title}</span>
                           </Link>
                         );
@@ -227,21 +228,21 @@ export function AppSidebar() {
               );
             }
 
-            // Item normal (sans sous-menu)
-            const isActive = location.pathname === item.href;
+            // Normal item
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 to={item.href}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                  isActive
+                  active
                     ? "bg-primary text-white"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span className="font-medium">{item.title}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-medium">{item.title}</span>
               </Link>
             );
           })}
