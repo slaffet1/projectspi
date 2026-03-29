@@ -148,11 +148,7 @@ export default function Invoices() {
           </p>
         </div>
 
-        <Link to="/app/invoices/new">
-          <Button className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm">
-            <Plus className="h-4 w-4" /> Nouvelle facture
-          </Button>
-        </Link>
+    
       </div>
 
    
