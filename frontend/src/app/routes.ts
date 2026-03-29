@@ -60,6 +60,7 @@ export const router = createBrowserRouter([
       { path: "quotes/new", Component: CreateQuote },
       { path: "banks", Component: Banks },
       { path: "/app/quotes/:id", Component: QuoteDetail },
+
       
     ],
   },

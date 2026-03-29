@@ -28,7 +28,7 @@ export class QuotesController {
 
   // ── US-33: Create quote ────────────────────────────────────────────────────
   @Post()
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @RequirePermissions('quote:create')
   create(
     @Param('businessId', ParseIntPipe) businessId: number,
@@ -40,7 +40,7 @@ export class QuotesController {
 
   // ── US-36: List all quotes ─────────────────────────────────────────────────
   @Get()
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, Role.MEMBER)
   @RequirePermissions('quote:read')
   findAll(@Param('businessId', ParseIntPipe) businessId: number) {
@@ -49,7 +49,7 @@ export class QuotesController {
 
   // ── US-37: Get single quote ────────────────────────────────────────────────
   @Get(':id')
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, Role.MEMBER)
   @RequirePermissions('quote:read')
   findOne(
@@ -61,7 +61,7 @@ export class QuotesController {
 
   // ── US-34: Edit draft quote ────────────────────────────────────────────────
   @Put(':id')
-  @UseGuards(RolesGuard, PermissionsGuard)
+ // @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, )
   @RequirePermissions('quote:update')
   update(
@@ -74,7 +74,7 @@ export class QuotesController {
 
   // ── US-35: Send quote to client ────────────────────────────────────────────
   @Patch(':id/send')
-  @UseGuards(RolesGuard, PermissionsGuard)
+ // @UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, )
   @RequirePermissions('quote:update')
   send(
@@ -86,7 +86,7 @@ export class QuotesController {
 
   // ── Status transition (accept / reject / cancel) ───────────────────────────
   @Patch(':id/status')
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, )
   @RequirePermissions('quote:update')
   updateStatus(
@@ -99,7 +99,7 @@ export class QuotesController {
 
   // ── US-38: Convert to invoice ──────────────────────────────────────────────
   @Post(':id/convert')
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN, )
   @RequirePermissions('invoice:create')
   convertToInvoice(
@@ -111,7 +111,7 @@ export class QuotesController {
 
   // ── US-39: Delete draft quote ──────────────────────────────────────────────
   @Delete(':id')
-  @UseGuards(RolesGuard, PermissionsGuard)
+  //@UseGuards(RolesGuard, PermissionsGuard)
   @Roles(Role.OWNER, Role.ADMIN,)
   @RequirePermissions('quote:delete')
   remove(

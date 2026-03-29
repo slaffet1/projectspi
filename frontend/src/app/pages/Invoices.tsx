@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { Plus, Filter, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Filter, Check, TrendingUp, Clock, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
-import { StatusBadge, InvoiceStatus } from "@/app/components/StatusBadge";
 import { SearchInput } from "@/app/components/SearchInput";
-import { mockInvoices } from "@/app/data/mockData";
 import { Link } from "react-router";
 import {
   Select,
@@ -13,185 +11,368 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
+import { invoiceService } from "@/app/services/invoiceService";
+import { useBusiness } from "@/app/context/BusinessContext";
+import { toast } from "sonner";
+
+const PAGE_SIZE = 3;
 
 export default function Invoices() {
-  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { activeBusiness } = useBusiness();
+  const businessId = activeBusiness?.id;
 
-  const filteredInvoices = mockInvoices.filter((invoice) => {
-    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loadingIds, setLoadingIds] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    if (businessId) fetchInvoices();
+  }, [businessId]);
+
+  const fetchInvoices = async () => {
+    try {
+      const res = await invoiceService.getAll(businessId!);
+      const data = res.data || [];
+
+      
+      data.sort(
+        (a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
+      );
+
+      setInvoices(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur chargement factures");
+    }
+  };
+
+  const markAsPaid = async (id: number) => {
+    try {
+      setLoadingIds((prev) => [...prev, id]);
+      await invoiceService.markAsPaid(id);
+      setInvoices((prev) =>
+        prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv))
+      );
+      toast.success("Facture marquée comme payée !");
+    } catch (err) {
+      toast.error("Erreur lors du paiement");
+    } finally {
+      setLoadingIds((prev) => prev.filter((i) => i !== id));
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    const styles: Record<string, string> = {
+      paid: "bg-emerald-50 text-emerald-700 border border-emerald-200 ring-1 ring-emerald-100",
+      draft: "bg-slate-50 text-slate-600 border border-slate-200 ring-1 ring-slate-100",
+      sent: "bg-sky-50 text-sky-700 border border-sky-200 ring-1 ring-sky-100",
+      unpaid: "bg-rose-50 text-rose-700 border border-rose-200 ring-1 ring-rose-100",
+    };
+
+    const labels: Record<string, string> = {
+      paid: "✓ Payée",
+      draft: "Brouillon",
+      sent: "Envoyée",
+      unpaid: "Non payée",
+    };
+
+    const dots: Record<string, string> = {
+      paid: "bg-emerald-500",
+      draft: "bg-slate-400",
+      sent: "bg-sky-500",
+      unpaid: "bg-rose-500",
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+          styles[status ?? ""] || "bg-slate-50 text-slate-600 border border-slate-200"
+        }`}
+      >
+        <span className={`w-1.5 h-1.5 rounded-full ${dots[status ?? ""] || "bg-slate-400"}`} />
+        {labels[status ?? ""] || "Inconnu"}
+      </span>
+    );
+  };
+
+ 
+  const filteredInvoices = invoices.filter((inv) => {
+    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
     const matchesSearch =
-      invoice.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchQuery.toLowerCase());
+      inv.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      inv.quotes?.clients?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
+
+  const totalPages = Math.ceil(filteredInvoices.length / PAGE_SIZE);
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
+
+
+  const totalInvoicesCount = filteredInvoices.length;
+  const totalPaidAmount = filteredInvoices
+    .filter((i) => i.status === "paid")
+    .reduce((sum, i) => sum + Number(i.total_amount || 0), 0);
+  const pendingAmount = filteredInvoices
+    .filter((i) => i.status !== "paid")
+    .reduce((sum, i) => sum + Number(i.total_amount || 0), 0);
+
+  const now = new Date();
+  const paidThisMonth = invoices.filter((i) => {
+    const d = new Date(i.issue_date);
+    return (
+      i.status === "paid" &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }).length;
+  const overdueInvoices = invoices.filter((i) => {
+    const due = i.due_date ? new Date(i.due_date) < new Date() : false;
+    return due && i.status === "unpaid";
+  }).length;
+
   return (
     <div className="space-y-8">
-      {/* En-tête */}
+
+
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">Factures</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-semibold tracking-tight">Factures</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Gérez toutes vos factures clients
           </p>
         </div>
+
         <Link to="/app/invoices/new">
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle facture
+          <Button className="flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm">
+            <Plus className="h-4 w-4" /> Nouvelle facture
           </Button>
         </Link>
       </div>
 
-      {/* Filtres */}
-      <Card className="border-border shadow-sm">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <SearchInput
-                placeholder="Rechercher par numéro ou client..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
+   
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total factures</p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalInvoicesCount}</h2>
+                <p className="text-xs text-slate-400 mt-2">Toutes périodes</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-sm">
+                <FileText className="h-5 w-5 text-slate-200" />
+              </div>
             </div>
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as InvoiceStatus | "all")}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="paid">Payée</SelectItem>
-                <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="overdue">En retard</SelectItem>
-                <SelectItem value="draft">Brouillon</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/5" />
+          </CardContent>
+        </Card>
+
+    
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white overflow-hidden relative">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">Chiffre d'affaires</p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalPaidAmount.toFixed(0)}<span className="text-lg font-normal ml-1">DT</span></h2>
+                <p className="text-xs text-emerald-200 mt-2">Factures encaissées</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
+          </CardContent>
+        </Card>
+
+        {/* Factures payées ce mois */}
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-violet-500 to-purple-700 text-white overflow-hidden relative">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-violet-200 uppercase tracking-widest">Payées ce mois</p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">{paidThisMonth}</h2>
+                <p className="text-xs text-violet-200 mt-2">Factures encaissées ce mois</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                <Check className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
+          </CardContent>
+        </Card>
+
+        {/* Factures en retard */}
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-rose-700 text-white overflow-hidden relative">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">En retard</p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">{overdueInvoices}</h2>
+                <p className="text-xs text-rose-200 mt-2">Échéance dépassée</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
+          </CardContent>
+        </Card>
+
+      </div>
+
+      {/* FILTER */}
+      <Card className="rounded-2xl shadow-sm border border-border/60">
+        <CardContent className="pt-5 pb-5 flex gap-4">
+          <SearchInput
+            placeholder="Rechercher une facture ou client..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-52 flex items-center gap-2 rounded-xl">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Filtrer par statut" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="unpaid">Non payée</SelectItem>
+              <SelectItem value="paid">Payée</SelectItem>
+              <SelectItem value="draft">Brouillon</SelectItem>
+              <SelectItem value="sent">Envoyée</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Liste des factures */}
-      <Card className="border-border shadow-sm">
+      {/* TABLE */}
+      <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Numéro
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Client
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Date
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Échéance
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Montant TTC
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Statut
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInvoices.map((invoice) => (
-                  <tr
-                    key={invoice.id}
-                    className="border-b border-border hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="py-4 px-6">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b bg-muted/40">
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Numéro</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Échéance</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Montant</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statut</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {paginatedInvoices.map((inv, index) => {
+                const isLoading = loadingIds.includes(inv.id);
+
+                return (
+                  <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="p-4 text-sm text-muted-foreground font-mono">
+                      {(currentPage - 1) * PAGE_SIZE + index + 1}
+                    </td>
+                    <td className="p-4">
                       <Link
-                        to={`/app/invoices/${invoice.id}`}
-                        className="text-sm font-medium text-primary hover:underline"
+                        to={`/app/invoices/${inv.id}`}
+                        className="text-primary font-medium text-sm hover:underline underline-offset-4"
                       >
-                        {invoice.number}
+                        {inv.invoice_number}
                       </Link>
                     </td>
-                    <td className="py-4 px-6 text-sm">{invoice.clientName}</td>
-                    <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {new Date(invoice.date).toLocaleDateString("fr-FR")}
+                    <td className="p-4 text-sm font-medium">{inv.quotes?.clients?.name}</td>
+                    <td className="p-4 text-sm text-muted-foreground">
+                      {new Date(inv.issue_date).toLocaleDateString("fr-FR")}
                     </td>
-                    <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {new Date(invoice.dueDate).toLocaleDateString("fr-FR")}
+                    <td className="p-4 text-sm text-muted-foreground">
+                      {new Date(inv.due_date).toLocaleDateString("fr-FR")}
                     </td>
-                    <td className="py-4 px-6 text-sm font-medium">
-                      {invoice.amount.toLocaleString("fr-TN")} DT
+                    <td className="p-4">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {Number(inv.total_amount).toLocaleString("fr-TN")} DT
+                      </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <StatusBadge status={invoice.status} />
-                    </td>
-                    <td className="py-4 px-6">
+                    <td className="p-4">{getStatusBadge(inv.status)}</td>
+                    <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        <Link to={`/app/invoices/${invoice.id}`}>
-                          <Button variant="ghost" size="sm">
+                        <Link to={`/app/invoices/${inv.id}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted"
+                          >
                             Détails
                           </Button>
                         </Link>
+
+                        {(inv.status === "draft" || inv.status === "sent") && (
+                          <Button
+                            size="sm"
+                            disabled={isLoading}
+                            onClick={() => markAsPaid(inv.id)}
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold
+                              rounded-lg px-3 h-8 transition-all duration-200
+                              ${isLoading
+                                ? "bg-emerald-300 text-white cursor-wait"
+                                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200 hover:shadow-emerald-300"
+                              }`}
+                          >
+                            {isLoading ? (
+                              <>
+                                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                                En cours...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-3.5 h-3.5" />
+                                Marquer payé
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
 
-          {filteredInvoices.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground">
-                Aucune facture ne correspond à vos critères de recherche
-              </p>
+              {paginatedInvoices.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-12 text-center text-muted-foreground text-sm">
+                    Aucune facture trouvée.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+         
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-1.5 py-4 border-t border-border/50">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <Button
+                  key={p}
+                  size="sm"
+                  variant={p === currentPage ? "default" : "ghost"}
+                  onClick={() => setCurrentPage(p)}
+                  className={`w-8 h-8 p-0 rounded-lg text-xs ${p === currentPage ? "shadow-sm" : "text-muted-foreground"}`}
+                >
+                  {p}
+                </Button>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-border shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Total facturé</p>
-            <p className="text-2xl font-semibold mt-1">
-              {mockInvoices.reduce((sum, inv) => sum + inv.amount, 0).toLocaleString("fr-TN")} DT
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Payées</p>
-            <p className="text-2xl font-semibold mt-1 text-success">
-              {mockInvoices.filter((inv) => inv.status === "paid").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">En attente</p>
-            <p className="text-2xl font-semibold mt-1 text-secondary">
-              {mockInvoices.filter((inv) => inv.status === "pending").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-border shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">En retard</p>
-            <p className="text-2xl font-semibold mt-1 text-destructive">
-              {mockInvoices.filter((inv) => inv.status === "overdue").length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

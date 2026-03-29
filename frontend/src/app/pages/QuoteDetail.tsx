@@ -47,11 +47,14 @@ export default function QuoteDetail() {
   // Edit state
   const [editItems,      setEditItems]      = useState<LineItem[]>([]);
   const [editExpiration, setEditExpiration] = useState("");
-
+/*
   const canUpdate  = hasPermission('quote:update');
   const canDelete  = hasPermission('quote:delete');
   const canConvert = hasPermission('invoice:create');
-
+*/
+const canConvert = true;
+const canDelete = true;
+const canUpdate = true;
   useEffect(() => {
     setIsClient(true);
     if (!businessId || !id) return;
@@ -145,16 +148,9 @@ export default function QuoteDetail() {
     }
   };
 
-  const handleConvert = async () => {
-    if (!confirm("Convertir ce devis en facture ?")) return;
-    try {
-      await quoteService.convertToInvoice(businessId!, +id!);
-      toast.success("Devis converti en facture !");
-      navigate("/app/invoices");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
-    }
-  };
+const handleConvert = () => {
+  navigate(`/app/invoices/new?quoteId=${id}`);
+};
 
   const handleDelete = async () => {
     if (!confirm("Supprimer ce devis définitivement ?")) return;

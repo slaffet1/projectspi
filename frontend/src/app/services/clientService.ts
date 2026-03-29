@@ -11,4 +11,5 @@ export const clientService = {
   updateClient: (id: number, data: any) => api.patch(`/clients/${id}`, data),
 
   deleteClient: (id: number) => api.delete(`/clients/${id}`),
+  
 };

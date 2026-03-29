@@ -3,6 +3,9 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
+    sendInvoice(arg0: number) {
+        throw new Error('Method not implemented.');
+    }
   private transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
