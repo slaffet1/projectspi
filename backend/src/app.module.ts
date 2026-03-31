@@ -14,11 +14,14 @@ import { QuotesModule } from './quotes/quotes.module';
 import { ClientsModule } from './clients/clients.module';
 import { InvoiceSalesModule } from './invoice-sales/invoice-sales.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DeliveryNotesModule } from './delivery-notes/delivery-notes.module';
+import { DeliveryNotesService } from './delivery-notes/delivery-notes.service';
+
 
 
 @Module({
   imports: [
-     ScheduleModule.forRoot(),
+    ScheduleModule.forRoot(),
     PrismaModule,
     TaxSettingsModule,
     InviteUsersModule,
@@ -30,8 +33,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     QuotesModule,
     ClientsModule,
     InvoiceSalesModule,
+    DeliveryNotesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [AppService, PrismaService, DeliveryNotesService],
 })
-export class AppModule {}
+export class AppModule { }

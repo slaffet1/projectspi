@@ -42,30 +42,31 @@ const navGroups: NavGroup[] = [
   {
     label: "Général",
     items: [
-      { title: "Dashboard",  href: "/app",           icon: LayoutDashboard },
+      { title: "Dashboard", href: "/app", icon: LayoutDashboard },
     ],
   },
   {
     label: "Ventes",
     items: [
-      { title: "Devis",      href: "/app/quotes",    icon: FileSignature },
-      { title: "Factures",   href: "/app/invoices",  icon: FileText },
-      { title: "Clients",    href: "/app/clients",   icon: Users },
+      { title: "Devis", href: "/app/quotes", icon: FileSignature },
+      { title: "Factures", href: "/app/invoices", icon: FileText },
+      { title: "Delivery Notes", href: "/app/deliveryNotes", icon: FileText },
+      { title: "Clients", href: "/app/clients", icon: Users },
     ],
   },
   {
     label: "Achats",
     items: [
-      { title: "Produits",   href: "/app/products",  icon: Package },
-      { title: "Dépenses",   href: "/app/expenses",  icon: Receipt },
+      { title: "Produits", href: "/app/products", icon: Package },
+      { title: "Dépenses", href: "/app/expenses", icon: Receipt },
     ],
   },
   {
     label: "Équipe",
     items: [
-      { title: "Entreprises",  href: "/app/businesses",    icon: Building2 },
-      { title: "Membres",      href: "/app/members",       icon: UsersRound },
-      { title: "Demandes",     href: "/app/join-requests", icon: ClipboardList },
+      { title: "Entreprises", href: "/app/businesses", icon: Building2 },
+      { title: "Membres", href: "/app/members", icon: UsersRound },
+      { title: "Demandes", href: "/app/join-requests", icon: ClipboardList },
     ],
   },
 ];
@@ -73,11 +74,11 @@ const navGroups: NavGroup[] = [
 const bottomItems: NavItem[] = [
   {
     title: "Paramètres",
-    href:  "/app/settings",
-    icon:  Settings,
+    href: "/app/settings",
+    icon: Settings,
     children: [
       { title: "Facturation", href: "/app/settings/invoices", icon: FileSliders },
-      { title: "Taxes",       href: "/app/settings/taxes",    icon: Percent },
+      { title: "Taxes", href: "/app/settings/taxes", icon: Percent },
     ],
   },
   { title: "Aide", href: "/app/help", icon: HelpCircle },
@@ -87,7 +88,7 @@ const bottomItems: NavItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const [isOpen,       setIsOpen]       = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith("/app/settings")
   );
@@ -119,9 +120,8 @@ export function AppSidebar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-white transition-transform duration-200 ${
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }`}
+        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-white transition-transform duration-200 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
@@ -147,7 +147,7 @@ export function AppSidebar() {
               {/* Group items */}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
-                  const Icon   = item.icon;
+                  const Icon = item.icon;
                   const active = isActive(item.href);
 
                   return (
@@ -155,11 +155,10 @@ export function AppSidebar() {
                       key={item.href}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                        active
-                          ? "bg-primary text-white"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
+                        ? "bg-primary text-white"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="text-sm font-medium">{item.title}</span>
@@ -184,11 +183,10 @@ export function AppSidebar() {
                 <div key={item.href}>
                   <button
                     onClick={() => setSettingsOpen(!settingsOpen)}
-                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
-                      parentActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
+                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${parentActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4 shrink-0" />
@@ -203,19 +201,18 @@ export function AppSidebar() {
                   {settingsOpen && (
                     <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
                       {item.children.map((child) => {
-                        const ChildIcon    = child.icon;
-                        const childActive  = location.pathname === child.href;
+                        const ChildIcon = child.icon;
+                        const childActive = location.pathname === child.href;
 
                         return (
                           <Link
                             key={child.href}
                             to={child.href}
                             onClick={() => setIsOpen(false)}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                              childActive
-                                ? "bg-primary text-white"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            }`}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${childActive
+                              ? "bg-primary text-white"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                              }`}
                           >
                             <ChildIcon className="h-4 w-4 shrink-0" />
                             <span className="font-medium">{child.title}</span>
@@ -235,11 +232,10 @@ export function AppSidebar() {
                 key={item.href}
                 to={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                  active
-                    ? "bg-primary text-white"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span className="text-sm font-medium">{item.title}</span>

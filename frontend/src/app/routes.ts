@@ -25,6 +25,7 @@ import Quotes from "./pages/Quotes";
 import CreateQuote from './pages/CreateQuote';
 import Banks from "@/app/pages/Banks";
 import QuoteDetail from "@/app/pages/QuoteDetail";
+import DeliveryNote from "./pages/DeliveryNote";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
       { path: "quotes/new", Component: CreateQuote },
       { path: "banks", Component: Banks },
       { path: "/app/quotes/:id", Component: QuoteDetail },
+      {path:"deliveryNotes",Component:DeliveryNote}
 
       
     ],
