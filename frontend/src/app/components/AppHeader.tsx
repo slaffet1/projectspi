@@ -1,4 +1,4 @@
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import { SearchInput } from "@/app/components/SearchInput";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -29,15 +29,15 @@ export function AppHeader() {
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
-      {/* Barre de recherche */}
+      {/* Search bar */}
       <div className="flex-1 max-w-md hidden md:block">
-        <SearchInput placeholder="Rechercher une facture, un client..." />
+        <SearchInput placeholder="Search invoice, client..." />
       </div>
 
-      {/* Spacer pour mobile */}
+      {/* Spacer mobile */}
       <div className="md:hidden w-12"></div>
 
-      {/* Actions utilisateur */}
+      {/* User actions */}
       <div className="flex items-center gap-2 md:gap-4">
         <BusinessSwitcher />
 
@@ -47,10 +47,10 @@ export function AppHeader() {
           <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive"></span>
         </Button>
 
-        {/* Profil utilisateur */}
+        {/* User profile */}
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
+          <DropdownMenuTrigger>
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted cursor-pointer">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-white">
                   {initials}
@@ -64,20 +64,28 @@ export function AppHeader() {
                   {user?.email ?? ""}
                 </p>
               </div>
-            </Button>
+            </div>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate("/profile/edit")}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
+              <span>Edit Profile</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>Paramètres</DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate("/app/settings/invoices")}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
+              <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

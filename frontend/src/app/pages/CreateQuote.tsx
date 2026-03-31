@@ -17,14 +17,12 @@ import {
 import { api } from "@/app/services/api";
 import { quoteService } from "@/app/services/quoteService";
 import { clientService } from "@/app/services/clientService";
-// Note: Adjust these imports based on your actual service files
-// import { clientService } from "@/app/services/clientService";
-// import { productService } from "@/app/services/productService";
 import { useBusiness } from "@/app/context/BusinessContext";
+
 interface QuoteItem {
     product_id: string;
     quantity: number;
-    unit_price: number; // Used for frontend calculation
+    unit_price: number;
     tax_rate: number;
 }
 
@@ -38,7 +36,7 @@ export default function CreateQuote() {
     const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
     const [expirationDate, setExpirationDate] = useState(() => {
         const date = new Date();
-        date.setDate(date.getDate() + 30); // Default to 30 days validity
+        date.setDate(date.getDate() + 30);
         return date.toISOString().split('T')[0];
     });
     const [items, setItems] = useState<QuoteItem[]>([
@@ -58,24 +56,20 @@ export default function CreateQuote() {
     const fetchDropdownData = async () => {
         setLoading(true);
 
-        // 1. Fetch Products Safely
         try {
             const productsRes = await api.get(`/api/businesses/${businessId}/products`);
             setProducts(productsRes.data);
         } catch (error) {
-            console.error("Erreur lors du chargement des produits:", error);
-            toast.error("Impossible de charger les produits");
+            console.error("Error loading products:", error);
+            toast.error("Failed to load products");
         }
 
-        // 2. Fetch Clients Safely
         try {
             const clientsRes = await clientService.getClients();
             setClients(clientsRes.data);
         } catch (error) {
-            console.error("Erreur lors du chargement des clients:", error);
-            // If the backend route doesn't exist yet, it will fail here, 
-            // but your products are already safely loaded above!
-            toast.error("Impossible de charger les clients");
+            console.error("Error loading clients:", error);
+            toast.error("Failed to load clients");
         } finally {
             setLoading(false);
         }
@@ -88,6 +82,7 @@ export default function CreateQuote() {
         const lineTax = lineHT * (item.tax_rate / 100);
         return sum + lineHT + lineTax;
     }, 0);
+
     // Handlers
     const handleAddItem = () => {
         setItems([...items, { product_id: "", quantity: 1, unit_price: 0, tax_rate: 0 }]);
@@ -112,9 +107,9 @@ export default function CreateQuote() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!clientId) return toast.warning("Veuillez sélectionner un client");
+        if (!clientId) return toast.warning("Please select a client");
         if (items.some(i => !i.product_id || i.quantity <= 0)) {
-            return toast.warning("Veuillez remplir correctement tous les articles");
+            return toast.warning("Please fill in all line items correctly");
         }
 
         setLoading(true);
@@ -128,17 +123,16 @@ export default function CreateQuote() {
                 details: items.map(item => ({
                     product_id: Number(item.product_id),
                     quantity: Number(item.quantity),
-                    unit_price: Number(item.unit_price), // Satisfies the unit_price requirement
-                    tax_rate: Number(item.tax_rate)      // Satisfies the tax_rate requirement (defaulting to 0)
+                    unit_price: Number(item.unit_price),
+                    tax_rate: Number(item.tax_rate)
                 }))
             };
 
-            // Assuming your quoteService has a create method like this:
             await quoteService.create(businessId!, payload);
-            toast.success("Devis créé avec succès !");
+            toast.success("Quote created successfully!");
             navigate("/app/quotes");
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Erreur lors de la création du devis");
+            toast.error(err.response?.data?.message || "Error while creating the quote");
         } finally {
             setLoading(false);
         }
@@ -154,8 +148,8 @@ export default function CreateQuote() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-semibold text-foreground">Nouveau Devis</h1>
-                    <p className="text-muted-foreground mt-1">Créer un devis en brouillon</p>
+                    <h1 className="text-3xl font-semibold text-foreground">New Quote</h1>
+                    <p className="text-muted-foreground mt-1">Create a draft quote</p>
                 </div>
             </div>
 
@@ -163,14 +157,14 @@ export default function CreateQuote() {
                 {/* General Info Card */}
                 <Card className="border-border shadow-sm">
                     <CardHeader>
-                        <CardTitle className="text-lg">Informations générales</CardTitle>
+                        <CardTitle className="text-lg">General Information</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <Label>Client *</Label>
                             <Select value={clientId} onValueChange={setClientId} required>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un client" />
+                                    <SelectValue placeholder="Select a client" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {clients.map(c => (
@@ -181,7 +175,7 @@ export default function CreateQuote() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Date d'émission *</Label>
+                            <Label>Issue Date *</Label>
                             <Input
                                 type="date"
                                 value={issueDate}
@@ -191,7 +185,7 @@ export default function CreateQuote() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Date d'expiration *</Label>
+                            <Label>Expiration Date *</Label>
                             <Input
                                 type="date"
                                 value={expirationDate}
@@ -205,19 +199,19 @@ export default function CreateQuote() {
                 {/* Products Card */}
                 <Card className="border-border shadow-sm">
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-lg">Articles du devis</CardTitle>
+                        <CardTitle className="text-lg">Quote Line Items</CardTitle>
                         <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Ajouter une ligne
+                            Add Line
                         </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                             {/* Header Row */}
                             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground pb-2 border-b">
-                                <div className="col-span-6">Produit</div>
-                                <div className="col-span-2 text-center">Quantité</div>
-                                <div className="col-span-2 text-right">Prix Unitaire</div>
+                                <div className="col-span-6">Product</div>
+                                <div className="col-span-2 text-center">Quantity</div>
+                                <div className="col-span-2 text-right">Unit Price</div>
                                 <div className="col-span-1 text-right">Total</div>
                                 <div className="col-span-1 text-center">Action</div>
                             </div>
@@ -231,7 +225,7 @@ export default function CreateQuote() {
                                             onValueChange={(val) => handleItemChange(index, "product_id", val)}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Choisir un produit" />
+                                                <SelectValue placeholder="Select a product" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {products.map(p => (
@@ -250,10 +244,10 @@ export default function CreateQuote() {
                                         />
                                     </div>
                                     <div className="col-span-2 text-right text-sm">
-                                        {item.unit_price.toLocaleString("fr-TN")} DT
+                                        {item.unit_price.toLocaleString("en-US")} TND
                                     </div>
                                     <div className="col-span-1 text-right text-sm font-medium">
-                                        {(item.quantity * item.unit_price).toLocaleString("fr-TN")} DT
+                                        {(item.quantity * item.unit_price).toLocaleString("en-US")} TND
                                     </div>
                                     <div className="col-span-1 text-center">
                                         <Button
@@ -274,16 +268,16 @@ export default function CreateQuote() {
                         <div className="mt-8 flex justify-end">
                             <div className="w-72 bg-muted/50 p-4 rounded-lg space-y-2">
                                 <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                    <span>Total HT :</span>
-                                    <span>{totalHT.toLocaleString("fr-TN", { minimumFractionDigits: 3 })} DT</span>
+                                    <span>Subtotal excl. Tax:</span>
+                                    <span>{totalHT.toLocaleString("en-US", { minimumFractionDigits: 3 })} TND</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm text-muted-foreground border-b pb-2">
-                                    <span>TVA :</span>
-                                    <span>{(totalAmount - totalHT).toLocaleString("fr-TN", { minimumFractionDigits: 3 })} DT</span>
+                                    <span>VAT:</span>
+                                    <span>{(totalAmount - totalHT).toLocaleString("en-US", { minimumFractionDigits: 3 })} TND</span>
                                 </div>
                                 <div className="flex justify-between items-center text-lg font-bold pt-1">
-                                    <span>Total TTC :</span>
-                                    <span className="text-primary">{totalAmount.toLocaleString("fr-TN", { minimumFractionDigits: 3 })} DT</span>
+                                    <span>Total incl. Tax:</span>
+                                    <span className="text-primary">{totalAmount.toLocaleString("en-US", { minimumFractionDigits: 3 })} TND</span>
                                 </div>
                             </div>
                         </div>
@@ -293,11 +287,11 @@ export default function CreateQuote() {
                 {/* Footer Actions */}
                 <div className="flex justify-end gap-4">
                     <Link to="/app/quotes">
-                        <Button type="button" variant="outline">Annuler</Button>
+                        <Button type="button" variant="outline">Cancel</Button>
                     </Link>
                     <Button type="submit" disabled={loading}>
                         <Save className="h-4 w-4 mr-2" />
-                        {loading ? "Création..." : "Enregistrer le devis"}
+                        {loading ? "Creating..." : "Save Quote"}
                     </Button>
                 </div>
             </form>

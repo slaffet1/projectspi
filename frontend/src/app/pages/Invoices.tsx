@@ -20,7 +20,6 @@ const PAGE_SIZE = 3;
 export default function Invoices() {
   const { activeBusiness } = useBusiness();
   const businessId = activeBusiness?.id;
-
   const [invoices, setInvoices] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,16 +34,13 @@ export default function Invoices() {
     try {
       const res = await invoiceService.getAll(businessId!);
       const data = res.data || [];
-
-      
       data.sort(
         (a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
       );
-
       setInvoices(data);
     } catch (err) {
       console.error(err);
-      toast.error("Erreur chargement factures");
+      toast.error("Failed to load invoices");
     }
   };
 
@@ -55,9 +51,9 @@ export default function Invoices() {
       setInvoices((prev) =>
         prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv))
       );
-      toast.success("Facture marquée comme payée !");
+      toast.success("Invoice marked as paid!");
     } catch (err) {
-      toast.error("Erreur lors du paiement");
+      toast.error("Failed to mark as paid");
     } finally {
       setLoadingIds((prev) => prev.filter((i) => i !== id));
     }
@@ -70,21 +66,18 @@ export default function Invoices() {
       sent: "bg-sky-50 text-sky-700 border border-sky-200 ring-1 ring-sky-100",
       unpaid: "bg-rose-50 text-rose-700 border border-rose-200 ring-1 ring-rose-100",
     };
-
     const labels: Record<string, string> = {
-      paid: "✓ Payée",
-      draft: "Brouillon",
-      sent: "Envoyée",
-      unpaid: "Non payée",
+      paid: "✓ Paid",
+      draft: "Draft",
+      sent: "Sent",
+      unpaid: "Unpaid",
     };
-
     const dots: Record<string, string> = {
       paid: "bg-emerald-500",
       draft: "bg-slate-400",
       sent: "bg-sky-500",
       unpaid: "bg-rose-500",
     };
-
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -92,12 +85,11 @@ export default function Invoices() {
         }`}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${dots[status ?? ""] || "bg-slate-400"}`} />
-        {labels[status ?? ""] || "Inconnu"}
+        {labels[status ?? ""] || "Unknown"}
       </span>
     );
   };
 
- 
   const filteredInvoices = invoices.filter((inv) => {
     const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
     const matchesSearch =
@@ -106,13 +98,11 @@ export default function Invoices() {
     return matchesStatus && matchesSearch;
   });
 
-
   const totalPages = Math.ceil(filteredInvoices.length / PAGE_SIZE);
   const paginatedInvoices = filteredInvoices.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
-
 
   const totalInvoicesCount = filteredInvoices.length;
   const totalPaidAmount = filteredInvoices
@@ -131,6 +121,7 @@ export default function Invoices() {
       d.getFullYear() === now.getFullYear()
     );
   }).length;
+
   const overdueInvoices = invoices.filter((i) => {
     const due = i.due_date ? new Date(i.due_date) < new Date() : false;
     return due && i.status === "unpaid";
@@ -138,30 +129,24 @@ export default function Invoices() {
 
   return (
     <div className="space-y-8">
-
-
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Factures</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Invoices</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Gérez toutes vos factures clients
+            Manage all your client invoices
           </p>
         </div>
-
-    
       </div>
 
-   
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total factures</p>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Invoices</p>
                 <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalInvoicesCount}</h2>
-                <p className="text-xs text-slate-400 mt-2">Toutes périodes</p>
+                <p className="text-xs text-slate-400 mt-2">All periods</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-sm">
                 <FileText className="h-5 w-5 text-slate-200" />
@@ -171,14 +156,13 @@ export default function Invoices() {
           </CardContent>
         </Card>
 
-    
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">Chiffre d'affaires</p>
+                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">Revenue</p>
                 <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalPaidAmount.toFixed(0)}<span className="text-lg font-normal ml-1">DT</span></h2>
-                <p className="text-xs text-emerald-200 mt-2">Factures encaissées</p>
+                <p className="text-xs text-emerald-200 mt-2">Collected invoices</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
                 <TrendingUp className="h-5 w-5 text-white" />
@@ -188,14 +172,13 @@ export default function Invoices() {
           </CardContent>
         </Card>
 
-        {/* Factures payées ce mois */}
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-violet-500 to-purple-700 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-violet-200 uppercase tracking-widest">Payées ce mois</p>
+                <p className="text-xs font-medium text-violet-200 uppercase tracking-widest">Paid This Month</p>
                 <h2 className="text-4xl font-bold mt-2 tabular-nums">{paidThisMonth}</h2>
-                <p className="text-xs text-violet-200 mt-2">Factures encaissées ce mois</p>
+                <p className="text-xs text-violet-200 mt-2">Invoices collected this month</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
                 <Check className="h-5 w-5 text-white" />
@@ -205,14 +188,13 @@ export default function Invoices() {
           </CardContent>
         </Card>
 
-        {/* Factures en retard */}
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-rose-700 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">En retard</p>
+                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">Overdue</p>
                 <h2 className="text-4xl font-bold mt-2 tabular-nums">{overdueInvoices}</h2>
-                <p className="text-xs text-rose-200 mt-2">Échéance dépassée</p>
+                <p className="text-xs text-rose-200 mt-2">Past due date</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
                 <AlertTriangle className="h-5 w-5 text-white" />
@@ -221,29 +203,27 @@ export default function Invoices() {
             <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
           </CardContent>
         </Card>
-
       </div>
 
       {/* FILTER */}
       <Card className="rounded-2xl shadow-sm border border-border/60">
         <CardContent className="pt-5 pb-5 flex gap-4">
           <SearchInput
-            placeholder="Rechercher une facture ou client..."
+            placeholder="Search invoice or client..."
             value={searchQuery}
             onChange={setSearchQuery}
           />
-
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-52 flex items-center gap-2 rounded-xl">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Filtrer par statut" />
+              <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="unpaid">Non payée</SelectItem>
-              <SelectItem value="paid">Payée</SelectItem>
-              <SelectItem value="draft">Brouillon</SelectItem>
-              <SelectItem value="sent">Envoyée</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
@@ -256,19 +236,18 @@ export default function Invoices() {
             <thead>
               <tr className="border-b bg-muted/40">
                 <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Numéro</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Number</th>
                 <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
                 <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Échéance</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Montant</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statut</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Due Date</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
                 <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {paginatedInvoices.map((inv, index) => {
                 const isLoading = loadingIds.includes(inv.id);
-
                 return (
                   <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-4 text-sm text-muted-foreground font-mono">
@@ -284,10 +263,10 @@ export default function Invoices() {
                     </td>
                     <td className="p-4 text-sm font-medium">{inv.quotes?.clients?.name}</td>
                     <td className="p-4 text-sm text-muted-foreground">
-                      {new Date(inv.issue_date).toLocaleDateString("fr-FR")}
+                      {new Date(inv.issue_date).toLocaleDateString("en-GB")}
                     </td>
                     <td className="p-4 text-sm text-muted-foreground">
-                      {new Date(inv.due_date).toLocaleDateString("fr-FR")}
+                      {new Date(inv.due_date).toLocaleDateString("en-GB")}
                     </td>
                     <td className="p-4">
                       <span className="text-sm font-semibold tabular-nums">
@@ -303,10 +282,9 @@ export default function Invoices() {
                             variant="outline"
                             className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted"
                           >
-                            Détails
+                            Details
                           </Button>
                         </Link>
-
                         {(inv.status === "draft" || inv.status === "sent") && (
                           <Button
                             size="sm"
@@ -325,12 +303,12 @@ export default function Invoices() {
                                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                                 </svg>
-                                En cours...
+                                Processing...
                               </>
                             ) : (
                               <>
                                 <Check className="w-3.5 h-3.5" />
-                                Marquer payé
+                                Mark Paid
                               </>
                             )}
                           </Button>
@@ -340,18 +318,16 @@ export default function Invoices() {
                   </tr>
                 );
               })}
-
               {paginatedInvoices.length === 0 && (
                 <tr>
                   <td colSpan={8} className="p-12 text-center text-muted-foreground text-sm">
-                    Aucune facture trouvée.
+                    No invoices found.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
 
-         
           {totalPages > 1 && (
             <div className="flex justify-center gap-1.5 py-4 border-t border-border/50">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (

@@ -17,6 +17,7 @@ import {
   Building2,
   UsersRound,
   ClipboardList,
+  Landmark,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -40,48 +41,54 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: "Général",
+    label: "General",
     items: [
       { title: "Dashboard", href: "/app", icon: LayoutDashboard },
     ],
   },
   {
-    label: "Ventes",
+    label: "Sales",
     items: [
-      { title: "Devis", href: "/app/quotes", icon: FileSignature },
-      { title: "Factures", href: "/app/invoices", icon: FileText },
+      { title: "Quotes", href: "/app/quotes", icon: FileSignature },
+      { title: "Invoices", href: "/app/invoices", icon: FileText },
       { title: "Delivery Notes", href: "/app/deliveryNotes", icon: FileText },
       { title: "Clients", href: "/app/clients", icon: Users },
     ],
   },
   {
-    label: "Achats",
+    label: "Purchases",
     items: [
-      { title: "Produits", href: "/app/products", icon: Package },
-      { title: "Dépenses", href: "/app/expenses", icon: Receipt },
+      { title: "Products", href: "/app/products", icon: Package },
+      { title: "Expenses", href: "/app/expenses", icon: Receipt },
     ],
   },
   {
-    label: "Équipe",
+    label: "Banking",
     items: [
-      { title: "Entreprises", href: "/app/businesses", icon: Building2 },
-      { title: "Membres", href: "/app/members", icon: UsersRound },
-      { title: "Demandes", href: "/app/join-requests", icon: ClipboardList },
+      { title: "Bank Accounts", href: "/app/banks", icon: Landmark },
+    ],
+  },
+  {
+    label: "Team",
+    items: [
+      { title: "Companies", href: "/app/businesses", icon: Building2 },
+      { title: "Members", href: "/app/members", icon: UsersRound },
+      { title: "Requests", href: "/app/join-requests", icon: ClipboardList },
     ],
   },
 ];
 
 const bottomItems: NavItem[] = [
   {
-    title: "Paramètres",
+    title: "Settings",
     href: "/app/settings",
     icon: Settings,
     children: [
-      { title: "Facturation", href: "/app/settings/invoices", icon: FileSliders },
+      { title: "Invoicing", href: "/app/settings/invoices", icon: FileSliders },
       { title: "Taxes", href: "/app/settings/taxes", icon: Percent },
     ],
   },
-  { title: "Aide", href: "/app/help", icon: HelpCircle },
+  { title: "Help", href: "/app/help", icon: HelpCircle },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────

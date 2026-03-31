@@ -39,10 +39,10 @@ interface ProductForm {
 
 const emptyForm: ProductForm = {
   name: "", description: "", reference: "", barcode: "",
-  unit_price: "", cost_price: "", tax_rate: "", category: "", unit: "pièce",
+  unit_price: "", cost_price: "", tax_rate: "", category: "", unit: "piece",
 };
 
-// ─── Formulaire modal ─────────────────────────────────────────
+// ─── Modal Form ───────────────────────────────────────────────
 function ProductModal({
   product, onClose, onSave, businessId,
 }: {
@@ -61,7 +61,7 @@ function ProductModal({
       cost_price: String(product.cost_price ?? ""),
       tax_rate: String(product.tax_rate ?? ""),
       category: product.category ?? "",
-      unit: product.unit ?? "pièce",
+      unit: product.unit ?? "piece",
     } : emptyForm
   );
   const [loading, setLoading] = useState(false);
@@ -74,9 +74,9 @@ function ProductModal({
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = "Le nom est requis";
-    if (!form.unit_price) e.unit_price = "Le prix est requis";
-    if (isNaN(Number(form.unit_price))) e.unit_price = "Prix invalide";
+    if (!form.name.trim()) e.name = "Name is required";
+    if (!form.unit_price) e.unit_price = "Price is required";
+    if (isNaN(Number(form.unit_price))) e.unit_price = "Invalid price";
     return e;
   };
 
@@ -94,7 +94,7 @@ function ProductModal({
         cost_price: form.cost_price ? Number(form.cost_price) : undefined,
         tax_rate: form.tax_rate ? Number(form.tax_rate) : undefined,
         category: form.category || undefined,
-        unit: form.unit || "pièce",
+        unit: form.unit || "piece",
       };
       if (product) {
         await api.put(`/api/businesses/${businessId}/products/${product.id}`, payload);
@@ -115,7 +115,7 @@ function ProductModal({
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-lg font-semibold">
-            {product ? "Modifier le produit" : "Nouveau produit"}
+            {product ? "Edit Product" : "New Product"}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X className="h-5 w-5" />
@@ -124,11 +124,11 @@ function ProductModal({
 
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Nom */}
+            {/* Name */}
             <div className="md:col-span-2">
-              <Label>Nom du produit *</Label>
+              <Label>Product Name *</Label>
               <Input value={form.name} onChange={e => set("name", e.target.value)}
-                placeholder="Ex: Laptop Dell XPS" className={errors.name ? "border-red-500" : ""} />
+                placeholder="e.g. Dell XPS Laptop" className={errors.name ? "border-red-500" : ""} />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
@@ -136,64 +136,64 @@ function ProductModal({
             <div className="md:col-span-2">
               <Label>Description</Label>
               <Input value={form.description} onChange={e => set("description", e.target.value)}
-                placeholder="Description du produit" />
+                placeholder="Product description" />
             </div>
 
-            {/* Référence */}
+            {/* Reference */}
             <div>
-              <Label>Référence</Label>
+              <Label>Reference</Label>
               <Input value={form.reference} onChange={e => set("reference", e.target.value)}
-                placeholder="Ex: PROD-001" />
+                placeholder="e.g. PROD-001" />
             </div>
 
-            {/* Code barre */}
+            {/* Barcode */}
             <div>
-              <Label>Code barre</Label>
+              <Label>Barcode</Label>
               <Input value={form.barcode} onChange={e => set("barcode", e.target.value)}
-                placeholder="Ex: 123456789" />
+                placeholder="e.g. 123456789" />
             </div>
 
-            {/* Prix de vente */}
+            {/* Selling Price */}
             <div>
-              <Label>Prix de vente HT (DT) *</Label>
+              <Label>Selling Price excl. Tax (TND) *</Label>
               <Input type="number" value={form.unit_price} onChange={e => set("unit_price", e.target.value)}
                 placeholder="0.00" className={errors.unit_price ? "border-red-500" : ""} />
               {errors.unit_price && <p className="text-red-500 text-xs mt-1">{errors.unit_price}</p>}
             </div>
 
-            {/* Prix d'achat */}
+            {/* Cost Price */}
             <div>
-              <Label>Prix d'achat (DT)</Label>
+              <Label>Cost Price (TND)</Label>
               <Input type="number" value={form.cost_price} onChange={e => set("cost_price", e.target.value)}
                 placeholder="0.00" />
             </div>
 
-            {/* TVA */}
+            {/* VAT */}
             <div>
-              <Label>Taux TVA (%)</Label>
+              <Label>VAT Rate (%)</Label>
               <Input type="number" value={form.tax_rate} onChange={e => set("tax_rate", e.target.value)}
-                placeholder="Ex: 19" />
+                placeholder="e.g. 19" />
             </div>
 
-            {/* Unité */}
+            {/* Unit */}
             <div>
-              <Label>Unité</Label>
+              <Label>Unit</Label>
               <select value={form.unit} onChange={e => set("unit", e.target.value)}
                 className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                <option value="pièce">Pièce</option>
+                <option value="piece">Piece</option>
                 <option value="kg">Kg</option>
-                <option value="litre">Litre</option>
-                <option value="mètre">Mètre</option>
-                <option value="boîte">Boîte</option>
-                <option value="heure">Heure</option>
+                <option value="liter">Liter</option>
+                <option value="meter">Meter</option>
+                <option value="box">Box</option>
+                <option value="hour">Hour</option>
               </select>
             </div>
 
-            {/* Catégorie */}
+            {/* Category */}
             <div className="md:col-span-2">
-              <Label>Catégorie</Label>
+              <Label>Category</Label>
               <Input value={form.category} onChange={e => set("category", e.target.value)}
-                placeholder="Ex: Informatique, Électronique..." />
+                placeholder="e.g. IT, Electronics..." />
             </div>
           </div>
         </div>
@@ -201,11 +201,11 @@ function ProductModal({
         <div className="flex justify-end gap-3 p-6 border-t">
           <button onClick={onClose}
             className="px-4 py-2 border rounded-xl text-sm font-medium hover:bg-gray-50 transition">
-            Annuler
+            Cancel
           </button>
           <button onClick={handleSubmit} disabled={loading}
             className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60">
-            {loading ? "Enregistrement..." : product ? "Modifier" : "Créer"}
+            {loading ? "Saving..." : product ? "Update" : "Create"}
           </button>
         </div>
       </div>
@@ -213,7 +213,7 @@ function ProductModal({
   );
 }
 
-// ─── Page principale ──────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────
 export default function Products() {
   const { activeBusiness } = useBusiness();
   const businessId = activeBusiness?.id;
@@ -241,7 +241,7 @@ export default function Products() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       await api.delete(`/api/businesses/${businessId}/products/${id}`);
       setProducts(prev => prev.filter(p => p.id !== id));
@@ -275,19 +275,19 @@ export default function Products() {
     p.category?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="p-6">Chargement...</div>;
+  if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">Produits</h1>
-          <p className="text-muted-foreground mt-1">Gérez votre catalogue de produits</p>
+          <h1 className="text-3xl font-semibold text-foreground">Products</h1>
+          <p className="text-muted-foreground mt-1">Manage your product catalog</p>
         </div>
         <Button className="bg-primary hover:bg-primary/90" onClick={() => { setEditProduct(undefined); setShowModal(true); }}>
           <Plus className="h-4 w-4 mr-2" />
-          Nouveau produit
+          New Product
         </Button>
       </div>
 
@@ -295,13 +295,13 @@ export default function Products() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border shadow-sm">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Total produits</p>
+            <p className="text-sm text-muted-foreground">Total Products</p>
             <p className="text-2xl font-semibold mt-1">{products.length}</p>
           </CardContent>
         </Card>
         <Card className="border-border shadow-sm">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Produits actifs</p>
+            <p className="text-sm text-muted-foreground">Active Products</p>
             <p className="text-2xl font-semibold mt-1 text-green-600">
               {products.filter(p => p.is_active).length}
             </p>
@@ -309,7 +309,7 @@ export default function Products() {
         </Card>
         <Card className="border-border shadow-sm">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Catégories</p>
+            <p className="text-sm text-muted-foreground">Categories</p>
             <p className="text-2xl font-semibold mt-1">
               {new Set(products.map(p => p.category).filter(Boolean)).size}
             </p>
@@ -317,12 +317,12 @@ export default function Products() {
         </Card>
       </div>
 
-      {/* Recherche + toggle vue */}
+      {/* Search + View Toggle */}
       <Card className="border-border shadow-sm">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <SearchInput placeholder="Rechercher par nom, référence, catégorie..."
+              <SearchInput placeholder="Search by name, reference, category..."
                 value={search} onChange={setSearch} />
             </div>
             <div className="flex items-center gap-1 border rounded-lg p-1">
@@ -339,30 +339,30 @@ export default function Products() {
         </CardContent>
       </Card>
 
-      {/* Vue tableau */}
+      {/* Table View */}
       {view === "table" && (
         <Card className="border-border shadow-sm">
           <CardHeader>
-            <CardTitle>Liste des produits ({filtered.length})</CardTitle>
+            <CardTitle>Product List ({filtered.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {filtered.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-muted-foreground">Aucun produit trouvé</p>
+                <p className="text-muted-foreground">No products found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Nom</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Référence</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Catégorie</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Prix HT</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">TVA</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Unité</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Statut</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Reference</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Price excl. Tax</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">VAT</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Unit</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                       <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
@@ -383,18 +383,18 @@ export default function Products() {
                             </span>
                           ) : "-"}
                         </td>
-                        <td className="py-3 px-4 font-medium">{Number(p.unit_price).toFixed(3)} DT</td>
+                        <td className="py-3 px-4 font-medium">{Number(p.unit_price).toFixed(3)} TND</td>
                         <td className="py-3 px-4 text-sm">{p.tax_rate ? `${p.tax_rate}%` : "-"}</td>
                         <td className="py-3 px-4 text-sm text-muted-foreground">{p.unit ?? "-"}</td>
                         <td className="py-3 px-4">
                           <button onClick={() => handleToggle(p.id)}>
                             {p.is_active ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                                Actif
+                                Active
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-                                Inactif
+                                Inactive
                               </span>
                             )}
                           </button>
@@ -419,13 +419,13 @@ export default function Products() {
         </Card>
       )}
 
-      {/* Vue grid */}
+      {/* Grid View */}
       {view === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.length === 0 ? (
             <div className="col-span-3 text-center py-12">
               <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-muted-foreground">Aucun produit trouvé</p>
+              <p className="text-muted-foreground">No products found</p>
             </div>
           ) : (
             filtered.map(p => (
@@ -447,18 +447,18 @@ export default function Products() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Prix HT</span>
-                    <span className="font-semibold">{Number(p.unit_price).toFixed(3)} DT</span>
+                    <span className="text-muted-foreground">Price excl. Tax</span>
+                    <span className="font-semibold">{Number(p.unit_price).toFixed(3)} TND</span>
                   </div>
                   {p.cost_price && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Prix achat</span>
-                      <span>{Number(p.cost_price).toFixed(3)} DT</span>
+                      <span className="text-muted-foreground">Cost Price</span>
+                      <span>{Number(p.cost_price).toFixed(3)} TND</span>
                     </div>
                   )}
                   {p.tax_rate && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">TVA</span>
+                      <span className="text-muted-foreground">VAT</span>
                       <span>{p.tax_rate}%</span>
                     </div>
                   )}

@@ -55,6 +55,7 @@ export default function QuoteDetail() {
 const canConvert = true;
 const canDelete = true;
 const canUpdate = true;
+
   useEffect(() => {
     setIsClient(true);
     if (!businessId || !id) return;
@@ -67,7 +68,7 @@ const canUpdate = true;
       const res = await quoteService.getOne(businessId!, +id!);
       setQuote(res.data);
     } catch {
-      toast.error("Devis introuvable");
+      toast.error("Quote not found");
       navigate("/app/quotes");
     } finally {
       setLoading(false);
@@ -119,9 +120,9 @@ const canUpdate = true;
       });
       setQuote(res.data);
       setEditing(false);
-      toast.success("Devis mis à jour");
+      toast.success("Quote updated");
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
+      toast.error(err.response?.data?.message ?? "Error");
     } finally {
       setSaving(false);
     }
@@ -132,9 +133,9 @@ const canUpdate = true;
     try {
       const res = await quoteService.send(businessId!, +id!);
       setQuote(res.data);
-      toast.success("Devis envoyé");
+      toast.success("Quote sent");
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
+      toast.error(err.response?.data?.message ?? "Error");
     }
   };
 
@@ -142,24 +143,24 @@ const canUpdate = true;
     try {
       const res = await quoteService.updateStatus(businessId!, +id!, status);
       setQuote(res.data);
-      toast.success(`Statut mis à jour : ${status}`);
+      toast.success(`Status updated: ${status}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
+      toast.error(err.response?.data?.message ?? "Error");
     }
   };
 
-const handleConvert = () => {
-  navigate(`/app/invoices/new?quoteId=${id}`);
-};
+  const handleConvert = () => {
+    navigate(`/app/invoices/new?quoteId=${id}`);
+  };
 
   const handleDelete = async () => {
-    if (!confirm("Supprimer ce devis définitivement ?")) return;
+    if (!confirm("Are you sure you want to permanently delete this quote?")) return;
     try {
       await quoteService.remove(businessId!, +id!);
-      toast.success("Devis supprimé");
+      toast.success("Quote deleted");
       navigate("/app/quotes");
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
+      toast.error(err.response?.data?.message ?? "Error");
     }
   };
 
@@ -191,8 +192,8 @@ const handleConvert = () => {
             <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-semibold text-foreground">Devis {quote.quote_id}</h1>
-            <p className="text-muted-foreground mt-1">Détails du devis</p>
+            <h1 className="text-3xl font-semibold text-foreground">Quote {quote.quote_id}</h1>
+            <p className="text-muted-foreground mt-1">Quote details</p>
           </div>
         </div>
         <QuoteStatusBadge status={quote.status} />
@@ -211,7 +212,7 @@ const handleConvert = () => {
                 {({ loading: pdfLoading }) => (
                   <Button variant="outline" disabled={pdfLoading}>
                     <Download className="h-4 w-4 mr-2" />
-                    {pdfLoading ? "Génération..." : "Télécharger PDF"}
+                    {pdfLoading ? "Generating..." : "Download PDF"}
                   </Button>
                 )}
               </PDFDownloadLink>
@@ -220,7 +221,7 @@ const handleConvert = () => {
             {canUpdate && quote.status === 'draft' && (
               <Button onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="h-4 w-4 mr-2" />
-                Envoyer au client
+                Send to Client
               </Button>
             )}
 
@@ -229,11 +230,11 @@ const handleConvert = () => {
               <>
                 <Button onClick={() => handleStatus('accepted')} className="bg-green-600 hover:bg-green-700">
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Accepter
+                  Accept
                 </Button>
                 <Button onClick={() => handleStatus('rejected')} variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
                   <XCircle className="h-4 w-4 mr-2" />
-                  Refuser
+                  Reject
                 </Button>
               </>
             )}
@@ -242,7 +243,7 @@ const handleConvert = () => {
             {canConvert && quote.status === 'accepted' && (
               <Button onClick={handleConvert} className="bg-purple-600 hover:bg-purple-700">
                 <FileCheck className="h-4 w-4 mr-2" />
-                Convertir en facture
+                Convert to Invoice
               </Button>
             )}
 
@@ -250,7 +251,7 @@ const handleConvert = () => {
             {canUpdate && quote.status === 'draft' && !editing && (
               <Button onClick={startEdit} variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
-                Modifier
+                Edit
               </Button>
             )}
 
@@ -259,11 +260,11 @@ const handleConvert = () => {
               <>
                 <Button onClick={handleSaveEdit} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  Enregistrer
+                  Save
                 </Button>
                 <Button onClick={() => setEditing(false)} variant="outline">
                   <X className="h-4 w-4 mr-2" />
-                  Annuler
+                  Cancel
                 </Button>
               </>
             )}
@@ -272,7 +273,7 @@ const handleConvert = () => {
             {canDelete && ['draft', 'cancelled'].includes(quote.status) && !editing && (
               <Button onClick={handleDelete} variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer
+                Delete
               </Button>
             )}
           </div>
@@ -298,8 +299,8 @@ const handleConvert = () => {
               {activeBusiness?.phone   && <p className="text-sm text-muted-foreground">{activeBusiness.phone}</p>}
             </div>
             <div className="text-right">
-              <h2 className="text-3xl font-bold text-primary mb-2">DEVIS</h2>
-              <p className="text-sm text-muted-foreground">N° {quote.quote_id}</p>
+              <h2 className="text-3xl font-bold text-primary mb-2">QUOTE</h2>
+              <p className="text-sm text-muted-foreground">No. {quote.quote_id}</p>
               <QuoteStatusBadge status={quote.status} />
             </div>
           </div>
@@ -307,20 +308,20 @@ const handleConvert = () => {
           {/* Client + Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             <div>
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">ADRESSÉ À</h3>
+              <h3 className="font-semibold text-sm text-muted-foreground mb-2">BILL TO</h3>
               <p className="font-semibold text-foreground">{quote.clients?.name}</p>
               <p className="text-sm text-muted-foreground">{quote.clients?.email}</p>
               <p className="text-sm text-muted-foreground">{quote.clients?.phone}</p>
             </div>
             <div className="text-left md:text-right">
               <div className="mb-3">
-                <p className="text-sm text-muted-foreground">Date d'émission</p>
+                <p className="text-sm text-muted-foreground">Issue Date</p>
                 <p className="font-medium">
-                  {new Date(quote.issue_date).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" })}
+                  {new Date(quote.issue_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Date d'expiration</p>
+                <p className="text-sm text-muted-foreground">Expiration Date</p>
                 {editing ? (
                   <Input
                     type="date"
@@ -330,7 +331,7 @@ const handleConvert = () => {
                   />
                 ) : (
                   <p className="font-medium">
-                    {new Date(quote.expiration_date).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" })}
+                    {new Date(quote.expiration_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                   </p>
                 )}
               </div>
@@ -342,11 +343,11 @@ const handleConvert = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-border">
-                  <th className="text-left py-3 text-sm font-semibold text-muted-foreground">PRODUIT</th>
-                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">QTÉ</th>
-                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">PRIX UNIT.</th>
-                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">TVA</th>
-                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">TOTAL TTC</th>
+                  <th className="text-left py-3 text-sm font-semibold text-muted-foreground">PRODUCT</th>
+                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">QTY</th>
+                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">UNIT PRICE</th>
+                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">VAT</th>
+                  <th className="text-right py-3 text-sm font-semibold text-muted-foreground">TOTAL INCL. TAX</th>
                 </tr>
               </thead>
               <tbody>
@@ -365,9 +366,9 @@ const handleConvert = () => {
                               className="w-16 h-7 text-sm text-center ml-auto"
                             />
                           </td>
-                          <td className="py-3 text-right text-sm">{item.unit_price.toFixed(2)} DT</td>
+                          <td className="py-3 text-right text-sm">{item.unit_price.toFixed(2)} TND</td>
                           <td className="py-3 text-right text-sm">{item.tax_rate}%</td>
-                          <td className="py-3 text-right text-sm font-medium">{line.ttc.toFixed(2)} DT</td>
+                          <td className="py-3 text-right text-sm font-medium">{line.ttc.toFixed(2)} TND</td>
                         </tr>
                       );
                     })
@@ -379,9 +380,9 @@ const handleConvert = () => {
                         <tr key={d.id} className="border-b border-border">
                           <td className="py-4 text-sm">{d.products?.name}</td>
                           <td className="py-4 text-right text-sm">{d.quantity}</td>
-                          <td className="py-4 text-right text-sm">{price.toFixed(2)} DT</td>
+                          <td className="py-4 text-right text-sm">{price.toFixed(2)} TND</td>
                           <td className="py-4 text-right text-sm">{taxRate}%</td>
-                          <td className="py-4 text-right text-sm font-medium">{line.ttc.toFixed(2)} DT</td>
+                          <td className="py-4 text-right text-sm font-medium">{line.ttc.toFixed(2)} TND</td>
                         </tr>
                       );
                     })
@@ -394,17 +395,17 @@ const handleConvert = () => {
           <div className="flex justify-end">
             <div className="w-full md:w-80 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Sous-total HT</span>
-                <span className="font-medium">{totals.ht.toFixed(2)} DT</span>
+                <span className="text-muted-foreground">Subtotal excl. Tax</span>
+                <span className="font-medium">{totals.ht.toFixed(2)} TND</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">TVA</span>
-                <span className="font-medium">{totals.tax.toFixed(2)} DT</span>
+                <span className="text-muted-foreground">VAT</span>
+                <span className="font-medium">{totals.tax.toFixed(2)} TND</span>
               </div>
               <Separator />
               <div className="flex justify-between">
-                <span className="text-lg font-semibold">Total TTC</span>
-                <span className="text-2xl font-bold text-primary">{totals.ttc.toFixed(2)} DT</span>
+                <span className="text-lg font-semibold">Total incl. Tax</span>
+                <span className="text-2xl font-bold text-primary">{totals.ttc.toFixed(2)} TND</span>
               </div>
             </div>
           </div>
@@ -412,9 +413,9 @@ const handleConvert = () => {
           {/* Footer note */}
           <div className="mt-12 pt-8 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              <strong>Validité :</strong> Ce devis est valable jusqu'au{" "}
-              {new Date(quote.expiration_date).toLocaleDateString("fr-FR")}.
-              Merci pour votre confiance.
+              <strong>Validity:</strong> This quote is valid until{" "}
+              {new Date(quote.expiration_date).toLocaleDateString("en-US")}.
+              Thank you for your trust.
             </p>
           </div>
         </CardContent>

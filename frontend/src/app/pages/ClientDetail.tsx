@@ -14,7 +14,7 @@ export default function ClientDetail() {
   if (!client) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground">Client non trouvé</p>
+        <p className="text-muted-foreground">Client not found</p>
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function ClientDetail() {
 
   return (
     <div className="space-y-8">
-      {/* En-tête */}
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/app/clients">
           <Button variant="ghost" size="icon">
@@ -33,21 +33,19 @@ export default function ClientDetail() {
         </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-semibold text-foreground">{client.name}</h1>
-          <p className="text-muted-foreground mt-1">
-            Détails et historique du client
-          </p>
+          <p className="text-muted-foreground mt-1">Client details and history</p>
         </div>
         <Link to="/app/invoices/new">
           <Button className="bg-primary hover:bg-primary/90">
-            Créer une facture
+            Create Invoice
           </Button>
         </Link>
       </div>
 
-      {/* Informations client */}
+      {/* Client Info */}
       <Card className="border-border shadow-sm">
         <CardHeader>
-          <CardTitle>Informations</CardTitle>
+          <CardTitle>Information</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -62,14 +60,14 @@ export default function ClientDetail() {
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <p className="text-sm text-muted-foreground">Phone</p>
                   <p className="font-medium">{client.phone}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary mt-1" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Adresse</p>
+                  <p className="text-sm text-muted-foreground">Address</p>
                   <p className="font-medium">{client.address}</p>
                 </div>
               </div>
@@ -78,7 +76,7 @@ export default function ClientDetail() {
             <div className="grid grid-cols-2 gap-4">
               <Card className="border-border">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Total facturé</p>
+                  <p className="text-sm text-muted-foreground">Total Invoiced</p>
                   <p className="text-xl font-semibold mt-1">
                     {client.totalInvoiced.toLocaleString("fr-TN")} DT
                   </p>
@@ -86,7 +84,7 @@ export default function ClientDetail() {
               </Card>
               <Card className="border-border">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Total payé</p>
+                  <p className="text-sm text-muted-foreground">Total Paid</p>
                   <p className="text-xl font-semibold mt-1 text-success">
                     {totalPaid.toLocaleString("fr-TN")} DT
                   </p>
@@ -94,7 +92,7 @@ export default function ClientDetail() {
               </Card>
               <Card className="border-border">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Impayé</p>
+                  <p className="text-sm text-muted-foreground">Unpaid</p>
                   <p className="text-xl font-semibold mt-1 text-destructive">
                     {client.totalUnpaid.toLocaleString("fr-TN")} DT
                   </p>
@@ -102,7 +100,7 @@ export default function ClientDetail() {
               </Card>
               <Card className="border-border">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Factures</p>
+                  <p className="text-sm text-muted-foreground">Invoices</p>
                   <p className="text-xl font-semibold mt-1">
                     {clientInvoices.length}
                   </p>
@@ -113,11 +111,11 @@ export default function ClientDetail() {
         </CardContent>
       </Card>
 
-      {/* Onglets */}
+      {/* Tabs */}
       <Tabs defaultValue="invoices" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="invoices">Factures</TabsTrigger>
-          <TabsTrigger value="stats">Statistiques</TabsTrigger>
+          <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="stats">Statistics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="invoices" className="space-y-4">
@@ -127,42 +125,26 @@ export default function ClientDetail() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
-                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                        Numéro
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                        Date
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                        Échéance
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                        Montant
-                      </th>
-                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">
-                        Statut
-                      </th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Number</th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Date</th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Due Date</th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Amount</th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {clientInvoices.map((invoice) => (
-                      <tr
-                        key={invoice.id}
-                        className="border-b border-border hover:bg-muted/30"
-                      >
+                      <tr key={invoice.id} className="border-b border-border hover:bg-muted/30">
                         <td className="py-4 px-6">
-                          <Link
-                            to={`/app/invoices/${invoice.id}`}
-                            className="text-sm font-medium text-primary hover:underline"
-                          >
+                          <Link to={`/app/invoices/${invoice.id}`} className="text-sm font-medium text-primary hover:underline">
                             {invoice.number}
                           </Link>
                         </td>
                         <td className="py-4 px-6 text-sm text-muted-foreground">
-                          {new Date(invoice.date).toLocaleDateString("fr-FR")}
+                          {new Date(invoice.date).toLocaleDateString("en-GB")}
                         </td>
                         <td className="py-4 px-6 text-sm text-muted-foreground">
-                          {new Date(invoice.dueDate).toLocaleDateString("fr-FR")}
+                          {new Date(invoice.dueDate).toLocaleDateString("en-GB")}
                         </td>
                         <td className="py-4 px-6 text-sm font-medium">
                           {invoice.amount.toLocaleString("fr-TN")} DT
@@ -183,39 +165,30 @@ export default function ClientDetail() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-border shadow-sm">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Facture moyenne</p>
+                <p className="text-sm text-muted-foreground">Average Invoice</p>
                 <p className="text-2xl font-semibold mt-1">
                   {clientInvoices.length > 0
-                    ? (
-                        clientInvoices.reduce((sum, inv) => sum + inv.amount, 0) /
-                        clientInvoices.length
-                      ).toFixed(0)
-                    : 0}{" "}
-                  DT
+                    ? (clientInvoices.reduce((sum, inv) => sum + inv.amount, 0) / clientInvoices.length).toFixed(0)
+                    : 0}{" "}DT
                 </p>
               </CardContent>
             </Card>
             <Card className="border-border shadow-sm">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Taux de paiement</p>
+                <p className="text-sm text-muted-foreground">Payment Rate</p>
                 <p className="text-2xl font-semibold mt-1 text-success">
                   {clientInvoices.length > 0
-                    ? Math.round(
-                        (paidInvoices.length / clientInvoices.length) * 100
-                      )
-                    : 0}
-                  %
+                    ? Math.round((paidInvoices.length / clientInvoices.length) * 100)
+                    : 0}%
                 </p>
               </CardContent>
             </Card>
             <Card className="border-border shadow-sm">
               <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">Dernière facture</p>
+                <p className="text-sm text-muted-foreground">Last Invoice</p>
                 <p className="text-2xl font-semibold mt-1">
                   {clientInvoices.length > 0
-                    ? new Date(
-                        clientInvoices[clientInvoices.length - 1].date
-                      ).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })
+                    ? new Date(clientInvoices[clientInvoices.length - 1].date).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
                     : "N/A"}
                 </p>
               </CardContent>

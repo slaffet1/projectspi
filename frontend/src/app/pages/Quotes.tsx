@@ -33,6 +33,7 @@ export default function Quotes() {
 const canCreate = true;
 const canDelete = true;
 const canUpdate = true;
+
   useEffect(() => {
     if (!businessId) return;
     fetchQuotes();
@@ -44,7 +45,7 @@ const canUpdate = true;
       const res = await quoteService.getAll(businessId!);
       setQuotes(res.data);
     } catch {
-      toast.error("Erreur de chargement des devis");
+      toast.error("Failed to load quotes");
     } finally {
       setLoading(false);
     }
@@ -52,13 +53,13 @@ const canUpdate = true;
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Supprimer ce devis ?")) return;
+    if (!confirm("Are you sure you want to delete this quote?")) return;
     try {
       await quoteService.remove(businessId!, id);
       setQuotes(quotes.filter(q => q.id !== id));
-      toast.success("Devis supprimé");
+      toast.success("Quote deleted");
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur lors de la suppression");
+      toast.error(err.response?.data?.message ?? "Error while deleting");
     }
   };
 
@@ -67,9 +68,9 @@ const canUpdate = true;
     try {
       await quoteService.send(businessId!, id);
       setQuotes(quotes.map(q => q.id === id ? { ...q, status: 'sent' } : q));
-      toast.success("Devis marqué comme envoyé");
+      toast.success("Quote marked as sent");
     } catch (err: any) {
-      toast.error(err.response?.data?.message ?? "Erreur");
+      toast.error(err.response?.data?.message ?? "Error");
     }
   };
 
@@ -95,14 +96,14 @@ const canUpdate = true;
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">Devis</h1>
-          <p className="text-muted-foreground mt-1">Gérez tous vos devis clients</p>
+          <h1 className="text-3xl font-semibold text-foreground">Quotes</h1>
+          <p className="text-muted-foreground mt-1">Manage all your client quotes</p>
         </div>
         {canCreate && (
           <Link to="/app/quotes/new">
             <Button className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
-              Nouveau devis
+              New Quote
             </Button>
           </Link>
         )}
@@ -114,7 +115,7 @@ const canUpdate = true;
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <SearchInput
-                placeholder="Rechercher par numéro ou client..."
+                placeholder="Search by number or client..."
                 value={searchQuery}
                 onChange={setSearchQuery}
               />
@@ -122,16 +123,16 @@ const canUpdate = true;
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48">
                 <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Statut" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="draft">Brouillon</SelectItem>
-                <SelectItem value="sent">Envoyé</SelectItem>
-                <SelectItem value="accepted">Accepté</SelectItem>
-                <SelectItem value="rejected">Refusé</SelectItem>
-                <SelectItem value="cancelled">Annulé</SelectItem>
-                <SelectItem value="converted">Converti</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="converted">Converted</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -145,12 +146,12 @@ const canUpdate = true;
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Numéro</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Number</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Client</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Date</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Expiration</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Montant TTC</th>
-                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Statut</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Total incl. Tax</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Status</th>
                   <th className="text-left py-4 px-6 text-sm font-medium text-foreground">Actions</th>
                 </tr>
               </thead>
@@ -158,13 +159,13 @@ const canUpdate = true;
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                      Chargement...
+                      Loading...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                      Aucun devis trouvé
+                      No quotes found
                     </td>
                   </tr>
                 ) : filtered.map(q => (
@@ -178,13 +179,13 @@ const canUpdate = true;
                     </td>
                     <td className="py-4 px-6 text-sm">{q.clients?.name ?? '—'}</td>
                     <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {new Date(q.issue_date).toLocaleDateString("fr-FR")}
+                      {new Date(q.issue_date).toLocaleDateString("en-US")}
                     </td>
                     <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {new Date(q.expiration_date).toLocaleDateString("fr-FR")}
+                      {new Date(q.expiration_date).toLocaleDateString("en-US")}
                     </td>
                     <td className="py-4 px-6 text-sm font-medium">
-                      {Number(q.total_amount).toLocaleString("fr-TN")} DT
+                      {Number(q.total_amount).toLocaleString("en-US")} TND
                     </td>
                     <td className="py-4 px-6">
                       <QuoteStatusBadge status={q.status} />
@@ -192,7 +193,7 @@ const canUpdate = true;
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                         <Link to={`/app/quotes/${q.id}`}>
-                          <Button variant="ghost" size="sm" title="Voir">
+                          <Button variant="ghost" size="sm" title="View">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -200,7 +201,7 @@ const canUpdate = true;
                           <Button
                             variant="ghost"
                             size="sm"
-                            title="Envoyer"
+                            title="Send"
                             onClick={(e) => handleSend(q.id, e)}
                           >
                             <Send className="h-4 w-4 text-blue-600" />
@@ -210,7 +211,7 @@ const canUpdate = true;
                           <Button
                             variant="ghost"
                             size="sm"
-                            title="Supprimer"
+                            title="Delete"
                             onClick={(e) => handleDelete(q.id, e)}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -229,10 +230,10 @@ const canUpdate = true;
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total devis',   value: stats.total,                          color: '' },
-          { label: 'Brouillons',    value: stats.draft,                          color: 'text-gray-600' },
-          { label: 'Envoyés',       value: stats.sent,                           color: 'text-blue-600' },
-          { label: 'Acceptés',      value: stats.accepted,                       color: 'text-green-600' },
+          { label: 'Total Quotes',  value: stats.total,    color: '' },
+          { label: 'Drafts',        value: stats.draft,    color: 'text-gray-600' },
+          { label: 'Sent',          value: stats.sent,     color: 'text-blue-600' },
+          { label: 'Accepted',      value: stats.accepted, color: 'text-green-600' },
         ].map(s => (
           <Card key={s.label} className="border-border shadow-sm">
             <CardContent className="pt-6">
