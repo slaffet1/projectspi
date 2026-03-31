@@ -145,6 +145,16 @@ export default function Login() {
             </>
           )}
         </div>
+        <div className="mt-6 text-center text-sm text-gray-500">
+          Pas de compte ?{" "}
+          <a href="/register" className="text-blue-600 hover:underline">
+            Créer un compte
+          </a>
+          <br />
+          <a href="/" className="text-blue-600 hover:underline mt-2 inline-block">
+            ← Retour à l'accueil
+          </a>
+        </div>
       </div>
     </div>
   );
