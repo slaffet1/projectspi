@@ -38,9 +38,11 @@
     "pdfkit": "^0.18.0",
     "postmark": "^4.0.7",
     "puppeteer": "^24.40.0",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "resend": "^6.9.4",
     "rxjs": "^7.8.1",
+    "speakeasy": "^2.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

@@ -3,6 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import * as speakeasy from 'speakeasy';
+import * as QRCode from 'qrcode';
 import { EmailService } from 'src/email/email.service';
 import { JwtService } from '@nestjs/jwt';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -39,13 +41,33 @@ export class UserService {
     return { message: 'User created, verification email sent' };
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, twofaCode?: string) {
+    // Find user
     const user = await this.prisma.users.findUnique({ where: { email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
+    // Check password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
+    // Check 2FA
+    if (user.twofa_enabled) {
+      if (!twofaCode) {
+        // Frontend must ask for 2FA code
+        return { requires2FA: true, userId: user.id };
+      }
+
+      const valid2FA = speakeasy.totp.verify({
+        secret: user.twofa_secret!,
+        encoding: 'base32',
+        token: twofaCode,
+        window: 1, // allow ±1 step for clock drift
+      });
+
+      if (!valid2FA) throw new UnauthorizedException('Invalid 2FA code');
+    }
+
+    // Generate JWT
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
@@ -128,4 +150,65 @@ export class UserService {
       },
     });
   }
+  async setup2FA(userId: number) {
+    const secret = speakeasy.generateSecret({
+      name: `MySaaS (${userId})`,
+    });
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: {
+        twofa_secret: secret.base32,
+      },
+    });
+
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url!);
+
+    return { qrCode };
+  }
+  async enable2FA(userId: number, token: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    // ✅ ADD THIS CHECK
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.twofa_secret) {
+      throw new BadRequestException('2FA not initialized');
+    }
+
+    const valid = speakeasy.totp({
+      secret: user.twofa_secret,
+      encoding: 'base32',
+      token,
+    });
+
+    if (!valid)
+      throw new BadRequestException('Invalid code');
+
+    await this.prisma.users.update({
+      where: { id: userId },
+      data: { twofa_enabled: true },
+    });
+
+    return { message: '2FA enabled' };
+  }
+  async verify2FA(userId: number, token: string) {
+  const user = await this.prisma.users.findUnique({ where: { id: userId } });
+  if (!user || !user.twofa_secret || !user.twofa_enabled) {
+    throw new BadRequestException("2FA not enabled");
+  }
+
+  const valid = speakeasy.totp({ secret: user.twofa_secret, encoding: "base32", token });
+  if (!valid) throw new UnauthorizedException("Invalid 2FA code");
+
+  // Generate JWT
+  const payload = { sub: user.id, email: user.email };
+  const tokenJwt = this.jwtService.sign(payload);
+
+  return { access_token: tokenJwt };
+}
 }

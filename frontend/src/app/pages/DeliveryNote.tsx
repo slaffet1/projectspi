@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 const PAGE_SIZE = 8;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+
 
 interface Client {
     id: number;
@@ -75,13 +75,13 @@ interface InvoiceWithQuote extends Invoice {
 
 type Tab = "notes" | "quotes" | "invoices";
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 function safeArray(res: any): any[] {
     return Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
 }
 
-// ── Standalone print function ──────────────────────────────────────────────────
+
 
 function printDeliveryNote(note: DeliveryNote) {
     const client = note.quotes?.clients;
@@ -359,13 +359,12 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
                                     <p className="text-sm font-semibold text-sky-700">{invoice.invoice_number}</p>
                                 </div>
                             </div>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                invoice.status === "paid"
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${invoice.status === "paid"
                                     ? "bg-emerald-100 text-emerald-700"
                                     : invoice.status === "sent"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-slate-100 text-slate-600"
-                            }`}>
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-slate-100 text-slate-600"
+                                }`}>
                                 {invoice.status === "paid" ? "Paid" : invoice.status === "sent" ? "Sent" : invoice.status}
                             </span>
                         </div>
@@ -392,7 +391,7 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
     );
 }
 
-// ── Create BL Modal ────────────────────────────────────────────────────────────
+
 
 function CreateBLModal({
     quoteId,
@@ -725,18 +724,17 @@ export default function DeliveryNotes() {
             {/* Tabs */}
             <div className="flex gap-1 p-1 bg-muted/50 rounded-xl w-fit border border-border/60">
                 {([
-                    { key: "notes",    icon: <FileText className="w-4 h-4" />, label: "Delivery Notes",          count: deliveryNotes.length,      color: "bg-primary/10 text-primary" },
-                    { key: "quotes",   icon: <Package className="w-4 h-4" />,  label: "Quotes Without Invoice",  count: quotesNotInvoiced.length,   color: "bg-sky-100 text-sky-700" },
-                    { key: "invoices", icon: <Receipt className="w-4 h-4" />,  label: "Invoices Without Note",   count: invoicesWithoutBL.length,   color: "bg-amber-100 text-amber-700" },
+                    { key: "notes", icon: <FileText className="w-4 h-4" />, label: "Delivery Notes", count: deliveryNotes.length, color: "bg-primary/10 text-primary" },
+                    { key: "quotes", icon: <Package className="w-4 h-4" />, label: "Quotes Without Invoice", count: quotesNotInvoiced.length, color: "bg-sky-100 text-sky-700" },
+                    { key: "invoices", icon: <Receipt className="w-4 h-4" />, label: "Invoices Without Note", count: invoicesWithoutBL.length, color: "bg-amber-100 text-amber-700" },
                 ] as { key: Tab; icon: JSX.Element; label: string; count: number; color: string }[]).map(({ key, icon, label, count, color }) => (
                     <button
                         key={key}
                         onClick={() => switchTab(key)}
-                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                            tab === key
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${tab === key
                                 ? "bg-background text-foreground shadow-sm border border-border/60"
                                 : "text-muted-foreground hover:text-foreground"
-                        }`}
+                            }`}
                     >
                         {icon}
                         {label}

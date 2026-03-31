@@ -111,9 +111,12 @@ export default function EditProfile() {
 
     // ── Avatar ──
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-    
 
-    // ── Sync user → profile form ──
+    const [twoFAEnabled, setTwoFAEnabled] = useState(user?.twofa_enabled ?? false);
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [otpCode, setOtpCode] = useState("");
+    const [twoFALoading, setTwoFALoading] = useState(false);
+
     useEffect(() => {
         if (user) {
             setProfile({
@@ -124,7 +127,41 @@ export default function EditProfile() {
         }
     }, [user]);
 
-    // ── Validation ──
+
+    async function handleSetup2FA() {
+        try {
+            setTwoFALoading(true);
+
+            const res = await api.post("/users/2fa/setup");
+
+            setQrCode(res.data.qrCode);
+
+            toast.info("Scannez le QR code avec Google Authenticator");
+        } catch {
+            toast.error("Erreur activation 2FA");
+        } finally {
+            setTwoFALoading(false);
+        }
+    }
+    async function handleEnable2FA() {
+        try {
+            setTwoFALoading(true);
+
+            await api.post("/users/2fa/enable", {
+                token: otpCode,
+            });
+
+            setTwoFAEnabled(true);
+            setQrCode(null);
+            setOtpCode("");
+
+            toast.success("✅ 2FA activé !");
+        } catch {
+            toast.error("Code invalide");
+        } finally {
+            setTwoFALoading(false);
+        }
+    }
     function validateProfile(): boolean {
         const errs: Partial<ProfileForm> = {};
 
@@ -161,11 +198,11 @@ export default function EditProfile() {
         try {
             const res = await api.patch("/users/update-profile", profile);
 
-            updateUser(res.data); 
+            updateUser(res.data);
 
             toast.success("✅ Profil mis à jour avec succès", {
                 autoClose: 2000,
-               
+
             });
 
             // Refresh page after toast disappears
@@ -341,6 +378,60 @@ export default function EditProfile() {
                     >
                         {passwordLoading ? "Mise à jour..." : "Mettre à jour"}
                     </button>
+                </div>
+                {/* 2FA Card */}
+                <div className="bg-white p-6 rounded-2xl shadow-sm flex flex-col gap-4">
+                    <h2 className="font-semibold text-lg">
+                        Authentification à deux facteurs (2FA)
+                    </h2>
+
+                    {twoFAEnabled ? (
+                        <div className="text-green-600 text-sm font-medium">
+                            ✅ 2FA activé sur votre compte
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-gray-500">
+                                Sécurisez votre compte avec Google Authenticator.
+                            </p>
+
+                            {!qrCode && (
+                                <button
+                                    onClick={handleSetup2FA}
+                                    disabled={twoFALoading}
+                                    className="bg-blue-600 text-white px-5 py-2 rounded-xl self-start"
+                                >
+                                    Activer 2FA
+                                </button>
+                            )}
+
+                            {qrCode && (
+                                <div className="flex flex-col gap-4">
+                                    <img
+                                        src={qrCode}
+                                        alt="QR Code"
+                                        className="w-48 h-48 border rounded-xl"
+                                    />
+
+                                    <input
+                                        type="text"
+                                        placeholder="Entrer le code Google Authenticator"
+                                        value={otpCode}
+                                        onChange={(e) => setOtpCode(e.target.value)}
+                                        className="border rounded-xl px-3 py-2"
+                                    />
+
+                                    <button
+                                        onClick={handleEnable2FA}
+                                        disabled={twoFALoading}
+                                        className="bg-green-600 text-white px-5 py-2 rounded-xl self-start"
+                                    >
+                                        Confirmer activation
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
         </div>

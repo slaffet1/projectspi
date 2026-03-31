@@ -1,13 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../services/api';
 
-type User = {
+export interface User {
   id: number;
-  email: string;
   firstname: string;
   lastname: string;
-  phoneNumber?: string;
-};
+  email: string;
+
+
+  twofa_enabled?: boolean;
+}
 
 type AuthContextType = {
   user: User | null;

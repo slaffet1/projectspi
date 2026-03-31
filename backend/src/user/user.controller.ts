@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Patch, Post, Query, Req, Request, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -69,5 +69,28 @@ export class UserController {
         phone: updatedUser.phone_number,
       },
     };
+  }
+  @Post('2fa/setup')
+  @UseGuards(AuthGuard('jwt'))
+  setup2FA(@Req() req) {
+    return this.userService.setup2FA(req.user.id);
+  }
+  @Post('2fa/enable')
+  @UseGuards(AuthGuard('jwt'))
+  enable2FA(
+    @Req() req,
+    @Body('token') token: string,
+  ) {
+    return this.userService.enable2FA(req.user.id, token);
+  }
+  @Post('verify-2fa')
+  async verify2FA(@Body() body: { userId: number; code: string }) {
+    const { userId, code } = body;
+
+    if (!userId || !code) {
+      throw new BadRequestException('Missing parameters');
+    }
+
+    return this.userService.verify2FA(userId, code);
   }
 }
