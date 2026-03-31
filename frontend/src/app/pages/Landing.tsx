@@ -28,8 +28,8 @@ export default function Landing() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
-const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-const [joinOpen, setJoinOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,7 +89,7 @@ const [joinOpen, setJoinOpen] = useState(false);
                       Se connecter
                     </Button>
                   </Link>
-                  <Link to="/app">
+                  <Link to="/register">
                     <Button className="bg-primary hover:bg-accent">
                       Commencer gratuitement
                     </Button>
@@ -118,13 +118,13 @@ const [joinOpen, setJoinOpen] = useState(false);
                       </div>
 
                       <div className="py-2">
-                       <button
-  onClick={() => setChangePasswordOpen(true)}
-  className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition"
->
-  <Key className="h-4 w-4 text-primary" />
-  Changer mot de passe
-</button>
+                        <button
+                          onClick={() => setChangePasswordOpen(true)}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition"
+                        >
+                          <Key className="h-4 w-4 text-primary" />
+                          Changer mot de passe
+                        </button>
 
                         <button
                           onClick={() => {
@@ -239,11 +239,11 @@ const [joinOpen, setJoinOpen] = useState(false);
         )}
       </nav>
 
-    
 
 
 
-  
+
+
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -269,15 +269,15 @@ const [joinOpen, setJoinOpen] = useState(false);
                   </Button>
                 </Link>
                 {user && (
-  <Button
-    size="lg"
-    variant="outline"
-    className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white"
-    onClick={() => setJoinOpen(true)}
-  >
-    Join Company
-  </Button>
-)}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                    onClick={() => setJoinOpen(true)}
+                  >
+                    Join Company
+                  </Button>
+                )}
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-2 border-primary text-primary hover:bg-primary hover:text-white">
                   Voir une démo
                 </Button>
@@ -826,18 +826,17 @@ const [joinOpen, setJoinOpen] = useState(false);
           </div>
         </div>
       </footer>
-   {joinOpen && (
-  <JoinCompanyModal
-    onClose={() => setJoinOpen(false)}
-  />
-)}
-    <ChangePasswordModal
-      isOpen={changePasswordOpen}
-      onClose={() => setChangePasswordOpen(false)}
-    />
+      {joinOpen && (
+        <JoinCompanyModal
+          onClose={() => setJoinOpen(false)}
+        />
+      )}
+      <ChangePasswordModal
+        isOpen={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+      />
     </div>
-    
-                );
-              }
 
-              
+  );
+}
+
