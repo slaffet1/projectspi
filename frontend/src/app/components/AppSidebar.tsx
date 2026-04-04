@@ -136,9 +136,11 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <span className="text-lg font-bold text-white">B</span>
             </div>
-            <span className="text-lg font-semibold text-foreground">
-              Business<span className="text-primary">Manager</span>
-            </span>
+            <Link to="/onboarding">
+              <span className="text-lg font-semibold text-foreground">
+                Business<span className="text-primary">Manager</span>
+              </span>
+            </Link>
           </div>
         </div>
 
