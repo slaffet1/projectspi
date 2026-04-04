@@ -1,12 +1,52 @@
+
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeliveryNoteDto } from './dto/createdelivery-notes.dto';
 import { UpdateDeliveryNoteDto } from './dto/updatedelivery-note.dto';
 
+import { DeliveryStatus } from '@prisma/client';
 @Injectable()
 export class DeliveryNotesService {
     constructor(private readonly prisma: PrismaService) { }
 
+
+    async changeStatus(
+        businessId: number,
+        id: number,
+        status: DeliveryStatus,
+    ) {
+        const delivery = await this.prisma.delivery_notes.findFirst({
+            where: {
+                id,
+                quotes: { clients: { business_id: businessId } },
+            },
+            include: {
+                quotes: {
+                    include: {
+                        clients: true,
+                        invoices: true,
+                        quote_details: { include: { products: true } },
+                    },
+                },
+            },
+        });
+
+        if (!delivery) {
+            throw new NotFoundException('Delivery note not found');
+        }
+
+
+        if (delivery.status === 'DELIVERED') {
+            throw new BadRequestException(
+                'Delivered delivery note cannot be modified',
+            );
+        }
+
+        return this.prisma.delivery_notes.update({
+            where: { id },
+            data: { status },
+        });
+    }
     async getAll(businessId: number) {
         return this.prisma.delivery_notes.findMany({
             where: {
@@ -100,7 +140,7 @@ export class DeliveryNotesService {
             throw new NotFoundException(`Quote #${dto.quote_id} not found for this business`);
         }
 
-        
+
 
         if (quote.delivery_notes.length > 0) {
             throw new BadRequestException(

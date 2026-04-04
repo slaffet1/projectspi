@@ -31,4 +31,12 @@ export const deliveryNoteService = {
 
     delete: (businessId: number, id: number) =>
         api.delete(`${base(businessId)}/${id}`),
+    changeStatus: (
+        businessId: number,
+        id: number,
+        status: "PENDING" | "DELIVERED" | "CANCELLED"
+    ) =>
+        api.patch(`${base(businessId)}/${id}/status`, {
+            status,
+        }),
 };
