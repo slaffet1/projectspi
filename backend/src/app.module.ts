@@ -17,6 +17,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DeliveryNotesModule } from './delivery-notes/delivery-notes.module';
 import { DeliveryNotesService } from './delivery-notes/delivery-notes.service';
 import { BanksModule } from './banks/banks.module';
+import { StockModule } from './stock/stock.module';
 
 
 
@@ -35,7 +36,8 @@ import { BanksModule } from './banks/banks.module';
     ClientsModule,
     InvoiceSalesModule,
     DeliveryNotesModule,
-    BanksModule
+    BanksModule,
+    StockModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],

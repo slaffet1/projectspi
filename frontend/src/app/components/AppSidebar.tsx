@@ -18,12 +18,14 @@ import {
   UsersRound,
   ClipboardList,
   Landmark,
+  Warehouse,
+  BarChart3,
+  ArrowLeftRight,
+  ClipboardCheck,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface NavItem {
   title: string;
@@ -36,8 +38,6 @@ interface NavGroup {
   label: string;
   items: NavItem[];
 }
-
-// ─── Navigation structure ─────────────────────────────────────────────────────
 
 const navGroups: NavGroup[] = [
   {
@@ -60,6 +60,15 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Products", href: "/app/products", icon: Package },
       { title: "Expenses", href: "/app/expenses", icon: Receipt },
+    ],
+  },
+  {
+    label: "Stock",
+    items: [
+      { title: "Warehouses", href: "/app/stock/warehouses", icon: Warehouse },
+      { title: "Stock Levels", href: "/app/stock/levels", icon: BarChart3 },
+      { title: "Movements", href: "/app/stock/movements", icon: ArrowLeftRight },
+      { title: "Inventory", href: "/app/stock/inventory", icon: ClipboardCheck },
     ],
   },
   {
@@ -90,8 +99,6 @@ const bottomItems: NavItem[] = [
   },
   { title: "Help", href: "/app/help", icon: HelpCircle },
 ];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export function AppSidebar() {
   const location = useLocation();
@@ -136,11 +143,9 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <span className="text-lg font-bold text-white">B</span>
             </div>
-            <Link to="/onboarding">
-              <span className="text-lg font-semibold text-foreground">
-                Business<span className="text-primary">Manager</span>
-              </span>
-            </Link>
+            <span className="text-lg font-semibold text-foreground">
+              Business<span className="text-primary">Manager</span>
+            </span>
           </div>
         </div>
 
@@ -148,17 +153,13 @@ export function AppSidebar() {
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
           {navGroups.map((group) => (
             <div key={group.label}>
-              {/* Group label */}
               <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                 {group.label}
               </p>
-
-              {/* Group items */}
               <div className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
-
                   return (
                     <Link
                       key={item.href}
@@ -183,11 +184,8 @@ export function AppSidebar() {
         <div className="border-t border-border px-3 py-4 space-y-0.5 shrink-0">
           {bottomItems.map((item) => {
             const Icon = item.icon;
-
-            // Settings with children
             if (item.children) {
               const parentActive = location.pathname.startsWith("/app/settings");
-
               return (
                 <div key={item.href}>
                   <button
@@ -206,13 +204,11 @@ export function AppSidebar() {
                       : <ChevronRight className="h-3.5 w-3.5" />
                     }
                   </button>
-
                   {settingsOpen && (
                     <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         const childActive = location.pathname === child.href;
-
                         return (
                           <Link
                             key={child.href}
@@ -233,8 +229,6 @@ export function AppSidebar() {
                 </div>
               );
             }
-
-            // Normal item
             const active = isActive(item.href);
             return (
               <Link
