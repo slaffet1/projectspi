@@ -26,6 +26,10 @@ import CreateQuote from './pages/CreateQuote';
 import Banks from "@/app/pages/Banks";
 import QuoteDetail from "@/app/pages/QuoteDetail";
 import DeliveryNote from "./pages/DeliveryNote";
+import Warehouses from "@/app/pages/Warehouses";
+import StockLevels from "@/app/pages/StockLevels";
+import StockMovements from "@/app/pages/StockMovements";
+import InventorySessions from "@/app/pages/InventorySessions";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -61,7 +65,11 @@ export const router = createBrowserRouter([
       { path: "quotes/new", Component: CreateQuote },
       { path: "banks", Component: Banks },
       { path: "/app/quotes/:id", Component: QuoteDetail },
-      {path:"deliveryNotes",Component:DeliveryNote}
+      {path:"deliveryNotes",Component:DeliveryNote},
+      { path: "stock/warehouses", Component: Warehouses },
+      { path: "stock/levels", Component: StockLevels },
+      { path: "stock/movements", Component: StockMovements },
+      { path: "stock/inventory", Component: InventorySessions },
 
       
     ],

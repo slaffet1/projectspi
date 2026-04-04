@@ -16,6 +16,7 @@ import {
 } from "@/app/components/ui/select";
 import { api } from "@/app/services/api";
 import { quoteService } from "@/app/services/quoteService";
+import { productsService } from "@/app/services/productsService";
 import { clientService } from "@/app/services/clientService";
 import { useBusiness } from "@/app/context/BusinessContext";
 
@@ -57,7 +58,7 @@ export default function CreateQuote() {
         setLoading(true);
 
         try {
-            const productsRes = await api.get(`/api/businesses/${businessId}/products`);
+            const productsRes = await productsService.getProducts(businessId);
             setProducts(productsRes.data);
         } catch (error) {
             console.error("Error loading products:", error);
