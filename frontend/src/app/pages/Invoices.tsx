@@ -49,7 +49,7 @@ const markAsLatePaid = async (id: number) => {
   try {
     setLoadingIds((prev) => [...prev, id]);
     await invoiceService.markLatePaid(id, businessId);
-    
+
     setInvoices((prev) =>
       prev.map((inv) =>
         inv.id === id ? { ...inv, status: "paid" } : inv
@@ -57,6 +57,8 @@ const markAsLatePaid = async (id: number) => {
     );
 
     toast.success("Invoice marked as late paid!");
+
+    window.location.reload(); 
   } catch (err) {
     toast.error("Failed to mark as late paid");
   } finally {
