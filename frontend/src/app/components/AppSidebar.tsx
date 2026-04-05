@@ -22,6 +22,7 @@ import {
   BarChart3,
   ArrowLeftRight,
   ClipboardCheck,
+  Unplug,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -69,6 +70,8 @@ const navGroups: NavGroup[] = [
       { title: "Stock Levels", href: "/app/stock/levels", icon: BarChart3 },
       { title: "Movements", href: "/app/stock/movements", icon: ArrowLeftRight },
       { title: "Inventory", href: "/app/stock/inventory", icon: ClipboardCheck },
+      { title: "Suppliers", href: "/app/suppliers", icon: Unplug },
+
     ],
   },
   {

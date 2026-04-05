@@ -30,6 +30,8 @@ import Warehouses from "@/app/pages/Warehouses";
 import StockLevels from "@/app/pages/StockLevels";
 import StockMovements from "@/app/pages/StockMovements";
 import InventorySessions from "@/app/pages/InventorySessions";
+import SupplierForm from "./pages/SupplierForm";
+import Suppliers from "./pages/Suppliers";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -70,7 +72,9 @@ export const router = createBrowserRouter([
       { path: "stock/levels", Component: StockLevels },
       { path: "stock/movements", Component: StockMovements },
       { path: "stock/inventory", Component: InventorySessions },
-
+      { path: "/app/Suppliers/new", Component: SupplierForm },
+      { path: "/app/suppliers", Component: Suppliers },
+      { path: "/app/suppliers/:id/edit", Component: SupplierForm },
       
     ],
   },
