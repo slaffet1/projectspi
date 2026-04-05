@@ -10,11 +10,7 @@ export class DeliveryNotesService {
     constructor(private readonly prisma: PrismaService) { }
 
 
-    async changeStatus(
-        businessId: number,
-        id: number,
-        status: DeliveryStatus,
-    ) {
+    async changeStatus(businessId: number, id: number, status: DeliveryStatus) {
         const delivery = await this.prisma.delivery_notes.findFirst({
             where: {
                 id,
@@ -31,20 +27,72 @@ export class DeliveryNotesService {
             },
         });
 
-        if (!delivery) {
+        if (!delivery)
             throw new NotFoundException('Delivery note not found');
+
+        if (delivery.status === 'DELIVERED')
+            throw new BadRequestException('Delivered delivery note cannot be modified');
+
+        // Only run stock logic when transitioning TO DELIVERED
+        if (status === DeliveryStatus.DELIVERED) {
+            const quoteDetails = delivery.quotes?.quote_details ?? [];
+            const today = new Date();
+
+            for (const detail of quoteDetails) {
+                const productId = detail.product_id;
+                const qty = detail.quantity;
+
+                if (!productId || qty <= 0) continue;
+
+                // 1. Create mouvement OUT
+                await this.prisma.mouvements.create({
+                    data: {
+                        mouvement_date: today,
+                        quantity: qty,
+                        type: 'OUT',
+                        product_id: productId,
+                        note: `Delivery note #${delivery.delivery_number} — auto stock-out on delivery confirmation`,
+                    },
+                });
+
+                
+                const warehouseProduct = await this.prisma.warehouse_products.findFirst({
+                    where: {
+                        product_id: productId,
+                        warehouses: { business_id: businessId },
+                        quantity: { gt: 0 },
+                    },
+                    orderBy: { quantity: 'desc' }, 
+                });
+
+                if (warehouseProduct) {
+                    await this.prisma.warehouse_products.update({
+                        where: { id: warehouseProduct.id },
+                        data: { quantity: { decrement: qty } },
+                    });
+                }
+
+                // 3. Decrease inventaires.quantity_available
+                const inventaire = await this.prisma.inventaires.findFirst({
+                    where: { product_id: productId },
+                });
+
+                if (inventaire) {
+                    await this.prisma.inventaires.update({
+                        where: { id: inventaire.id },
+                        data: { quantity_available: { decrement: qty }, last_updated: today },
+                    });
+                }
+            }
         }
 
-
-        if (delivery.status === 'DELIVERED') {
-            throw new BadRequestException(
-                'Delivered delivery note cannot be modified',
-            );
-        }
-
+        // Finally update the status
         return this.prisma.delivery_notes.update({
             where: { id },
             data: { status },
+            include: {
+                quotes: { include: { clients: true, invoices: true } },
+            },
         });
     }
     async getAll(businessId: number) {
