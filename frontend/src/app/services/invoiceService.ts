@@ -20,6 +20,9 @@ getUnpaid(businessId: number) {
   markAsPaid: (invoiceId: number, businessId?: number) => {
     api.patch(`/api/businesses/${businessId}/invoices/${invoiceId}/mark-paid`)
   },
+   markLatePaid: (invoiceId: number, businessId?: number) => {
+    api.patch(`/api/businesses/${businessId}/invoices/${invoiceId}/mark-late-paid`)
+  },
    updateDueDate: (businessId: number, invoiceId: number, dueDate: string) =>
     api.patch(`${base(businessId)}/${invoiceId}/due-date`, { due_date: dueDate }),
 

@@ -29,7 +29,9 @@ export default function Invoices() {
   useEffect(() => {
     if (businessId) fetchInvoices();
   }, [businessId]);
-
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery, statusFilter]);
   const fetchInvoices = async () => {
     try {
       const res = await invoiceService.getAll(businessId!);
@@ -43,7 +45,24 @@ export default function Invoices() {
       toast.error("Failed to load invoices");
     }
   };
+const markAsLatePaid = async (id: number) => {
+  try {
+    setLoadingIds((prev) => [...prev, id]);
+    await invoiceService.markLatePaid(id, businessId);
+    
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv.id === id ? { ...inv, status: "paid" } : inv
+      )
+    );
 
+    toast.success("Invoice marked as late paid!");
+  } catch (err) {
+    toast.error("Failed to mark as late paid");
+  } finally {
+    setLoadingIds((prev) => prev.filter((i) => i !== id));
+  }
+};
   const markAsPaid = async (id: number) => {
     try {
       setLoadingIds((prev) => [...prev, id]);
@@ -65,18 +84,21 @@ export default function Invoices() {
       draft: "bg-slate-50 text-slate-600 border border-slate-200 ring-1 ring-slate-100",
       sent: "bg-sky-50 text-sky-700 border border-sky-200 ring-1 ring-sky-100",
       unpaid: "bg-rose-50 text-rose-700 border border-rose-200 ring-1 ring-rose-100",
+      late_paid: "bg-orange-50 text-orange-700 border border-orange-200 ring-1 ring-orange-100",
     };
     const labels: Record<string, string> = {
       paid: "✓ Paid",
       draft: "Draft",
       sent: "Sent",
       unpaid: "Unpaid",
+      late_paid: "⚠ Paid Late",
     };
     const dots: Record<string, string> = {
       paid: "bg-emerald-500",
       draft: "bg-slate-400",
       sent: "bg-sky-500",
       unpaid: "bg-rose-500",
+      late_paid: "bg-orange-500",
     };
     return (
       <span
@@ -106,7 +128,7 @@ export default function Invoices() {
 
   const totalInvoicesCount = filteredInvoices.length;
   const totalPaidAmount = filteredInvoices
-    .filter((i) => i.status === "paid")
+    .filter((i) => i.status === "paid" || i.status === "late_paid")
     .reduce((sum, i) => sum + Number(i.total_amount || 0), 0);
   const pendingAmount = filteredInvoices
     .filter((i) => i.status !== "paid")
@@ -116,7 +138,7 @@ export default function Invoices() {
   const paidThisMonth = invoices.filter((i) => {
     const d = new Date(i.issue_date);
     return (
-      i.status === "paid" &&
+      i.status === "paid" || i.status === "late_paid" &&
       d.getMonth() === now.getMonth() &&
       d.getFullYear() === now.getFullYear()
     );
@@ -222,6 +244,7 @@ export default function Invoices() {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="unpaid">Unpaid</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="late_paid">Paid Late</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="sent">Sent</SelectItem>
             </SelectContent>
@@ -313,6 +336,34 @@ export default function Invoices() {
                             )}
                           </Button>
                         )}
+                        {inv.status === "unpaid" && (
+  <Button
+    size="sm"
+    disabled={isLoading}
+    onClick={() => markAsLatePaid(inv.id)}
+    className={`inline-flex items-center gap-1.5 text-xs font-semibold
+      rounded-lg px-3 h-8 transition-all duration-200
+      ${isLoading
+        ? "bg-orange-300 text-white cursor-wait"
+        : "bg-orange-500 hover:bg-orange-600 text-white shadow-sm shadow-orange-200 hover:shadow-orange-300"
+      }`}
+  >
+    {isLoading ? (
+      <>
+        <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        </svg>
+        Processing...
+      </>
+    ) : (
+      <>
+        <Clock className="w-3.5 h-3.5" />
+        Mark Late Paid
+      </>
+    )}
+  </Button>
+)}
                       </div>
                     </td>
                   </tr>

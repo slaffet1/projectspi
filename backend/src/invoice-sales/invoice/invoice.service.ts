@@ -6,7 +6,7 @@ export class InvoicesService {
   constructor(private prisma: PrismaService) { }
 
   async create(businessId: number, dto: any) {
-    const { quote_id, issue_date, due_date,bank_id } = dto;
+    const { quote_id, issue_date, due_date,bank_id,total:totall } = dto;
 
     const quote = await this.prisma.quotes.findUnique({
       where: { id: quote_id },
@@ -63,7 +63,7 @@ export class InvoicesService {
           invoice_number: invoiceNumber,
           issue_date: new Date(issue_date),
           due_date: new Date(due_date),
-          total_amount: total + tax,
+          total_amount: totall,
           tax_amount: tax,
           status: 'draft',
           quote_id: quote.id,
@@ -104,10 +104,11 @@ async getBanksByBusiness(businessId: number) {
       },
     });
   }
-  async findOne(businessId: number, id: number) {
+    async findOne(businessId: number, id: number) {
     const invoice = await this.prisma.invoices.findUnique({
       where: { id },
       include: {
+        bank: true, 
         quotes: {
           include: {
             clients: {
@@ -125,22 +126,48 @@ async getBanksByBusiness(businessId: number) {
       },
     });
 
-    if (!invoice) throw new NotFoundException('Invoice not found');
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
 
     return invoice;
   }
-  async updateStatus(id: number, status: string) {
-    const invoice = await this.prisma.invoices.findUnique({
-      where: { id },
-    });
 
-    if (!invoice) throw new NotFoundException('Invoice not found');
+async updateStatus(id: number, status: string) {
+  const invoice = await this.prisma.invoices.findUnique({
+    where: { id },
+  });
 
-    return this.prisma.invoices.update({
-      where: { id },
-      data: { status },
+  if (!invoice) throw new NotFoundException('Invoice not found');
+
+  if (
+    (status === 'paid' || status === 'late_paid') &&
+    (invoice.status === 'paid' || invoice.status === 'late_paid')
+  ) {
+    throw new Error('Facture déjà payée');
+  }
+
+  const updatedInvoice = await this.prisma.invoices.update({
+    where: { id },
+    data: { status },
+  });
+
+  if (
+    (status === 'paid' || status === 'late_paid') &&
+    invoice.bank_id
+  ) {
+    await this.prisma.banks.update({
+      where: { id: invoice.bank_id },
+      data: {
+        balance: {
+          increment: invoice.total_amount,
+        },
+      },
     });
   }
+
+  return updatedInvoice;
+}
   async getUnpaid(businessId: number) {
     return this.prisma.invoices.findMany({
       where: {
@@ -149,35 +176,7 @@ async getBanksByBusiness(businessId: number) {
       orderBy: { due_date: 'desc' },
     });
   }
-  async generatePdf(invoice: any): Promise<Buffer> {
-    return new Promise((resolve) => {
-      const doc = new PDFDocument();
-      const buffers: Buffer[] = [];
-
-      doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => {
-        resolve(Buffer.concat(buffers));
-      });
-
-      doc.fontSize(20).text(`Facture #${invoice.invoice_number}`);
-      doc.moveDown();
-
-      const clientName = invoice.quotes?.clients?.name || 'Client';
-      doc.text(`Client: ${clientName}`);
-      doc.text(`Date: ${invoice.issue_date}`);
-      doc.moveDown();
-
-      invoice.quotes?.quote_details?.forEach((item) => {
-        const name = item.products?.name || 'Produit';
-        const price = Number(item.products?.unit_price || 0);
-        const total = item.quantity * price;
-
-        doc.text(`${name} - ${item.quantity} x ${price} = ${total} DT`);
-      });
-
-      doc.end();
-    });
-  }
+ 
 
   async deleteInvoice(id: number) {
     const invoice = await this.prisma.invoices.findUnique({ where: { id } });
@@ -211,4 +210,5 @@ async getBanksByBusiness(businessId: number) {
       data: updateData,
     });
   }
+  
 }
