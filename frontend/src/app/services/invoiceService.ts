@@ -25,5 +25,7 @@ getUnpaid(businessId: number) {
 
   deleteInvoice: (businessId: number, invoiceId: number) =>
     api.delete(`${base(businessId)}/${invoiceId}`),
+  getBanksByBusiness: (businessId: number) =>
+  api.get(`/api/businesses/${businessId}/invoices/banks`),
 };
 

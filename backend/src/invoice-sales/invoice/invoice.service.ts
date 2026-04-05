@@ -6,7 +6,7 @@ export class InvoicesService {
   constructor(private prisma: PrismaService) { }
 
   async create(businessId: number, dto: any) {
-    const { quote_id, issue_date, due_date } = dto;
+    const { quote_id, issue_date, due_date,bank_id } = dto;
 
     const quote = await this.prisma.quotes.findUnique({
       where: { id: quote_id },
@@ -67,7 +67,8 @@ export class InvoicesService {
           tax_amount: tax,
           status: 'draft',
           quote_id: quote.id,
-        },
+          bank_id: bank_id ?? null
+        }as any,
       }),
       this.prisma.quotes.update({
         where: { id: quote.id },
@@ -77,7 +78,11 @@ export class InvoicesService {
     return invoice;
 
   }
-
+async getBanksByBusiness(businessId: number) {
+  return this.prisma.banks.findMany({
+    where: { business_id: businessId },
+  });
+}
   async findAll(businessId: number) {
     return this.prisma.invoices.findMany({
       where: {
