@@ -8,12 +8,13 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { SearchInput } from "@/app/components/SearchInput";
 import { Link } from "react-router";
 import { deliveryNoteService } from "@/app/services/deliveryNoteService";
+import { invoiceService } from "@/app/services/invoiceService";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { toast } from "sonner";
 
 const PAGE_SIZE = 8;
 
-
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Client {
     id: number;
@@ -66,6 +67,7 @@ interface DeliveryNote {
     delivery_date: string;
     quote_id?: number;
     quotes?: Quote & { invoices?: Invoice[] };
+    status: "PENDING" | "DELIVERED" | "CANCELLED";
 }
 
 interface InvoiceWithQuote extends Invoice {
@@ -146,77 +148,217 @@ function printDeliveryNote(note: DeliveryNote) {
     setTimeout(() => { win.print(); }, 400);
 }
 
-// ── Spinner row ────────────────────────────────────────────────────────────────
+// ── Spinner / Empty / THead ────────────────────────────────────────────────────
 
 function SpinnerRow({ cols }: { cols: number }) {
     return (
-        <tr>
-            <td colSpan={cols} className="p-12 text-center">
-                <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Loading...
-                </div>
-            </td>
-        </tr>
+        <tr><td colSpan={cols} className="p-12 text-center">
+            <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Loading...
+            </div>
+        </td></tr>
     );
 }
-
-// ── Empty row ──────────────────────────────────────────────────────────────────
 
 function EmptyRow({ cols, message }: { cols: number; message: string }) {
-    return (
-        <tr>
-            <td colSpan={cols} className="p-12 text-center text-muted-foreground text-sm">
-                {message}
-            </td>
-        </tr>
-    );
+    return <tr><td colSpan={cols} className="p-12 text-center text-muted-foreground text-sm">{message}</td></tr>;
 }
-
-// ── THead ──────────────────────────────────────────────────────────────────────
 
 function THead({ cols }: { cols: string[] }) {
     return (
         <thead>
             <tr className="border-b bg-muted/40">
                 {cols.map((h) => (
-                    <th key={h} className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        {h}
-                    </th>
+                    <th key={h} className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{h}</th>
                 ))}
             </tr>
         </thead>
     );
 }
 
-// ── Pagination ─────────────────────────────────────────────────────────────────
-
-function Pagination({
-    current, total, onChange,
-}: { current: number; total: number; onChange: (p: number) => void }) {
+function Pagination({ current, total, onChange }: { current: number; total: number; onChange: (p: number) => void }) {
     if (total <= 1) return null;
     return (
         <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
             <p className="text-xs text-muted-foreground">Page {current} of {total}</p>
             <div className="flex gap-1">
-                <Button size="sm" variant="ghost" disabled={current === 1}
-                    onClick={() => onChange(current - 1)} className="w-8 h-8 p-0 rounded-lg">
-                    <ChevronLeft className="w-4 h-4" />
-                </Button>
+                <Button size="sm" variant="ghost" disabled={current === 1} onClick={() => onChange(current - 1)} className="w-8 h-8 p-0 rounded-lg"><ChevronLeft className="w-4 h-4" /></Button>
                 {Array.from({ length: total }, (_, i) => i + 1).map((p) => (
-                    <Button key={p} size="sm" variant={p === current ? "default" : "ghost"}
-                        onClick={() => onChange(p)}
-                        className={`w-8 h-8 p-0 rounded-lg text-xs ${p === current ? "shadow-sm" : "text-muted-foreground"}`}>
-                        {p}
-                    </Button>
+                    <Button key={p} size="sm" variant={p === current ? "default" : "ghost"} onClick={() => onChange(p)}
+                        className={`w-8 h-8 p-0 rounded-lg text-xs ${p === current ? "shadow-sm" : "text-muted-foreground"}`}>{p}</Button>
                 ))}
-                <Button size="sm" variant="ghost" disabled={current === total}
-                    onClick={() => onChange(current + 1)} className="w-8 h-8 p-0 rounded-lg">
-                    <ChevronRight className="w-4 h-4" />
-                </Button>
+                <Button size="sm" variant="ghost" disabled={current === total} onClick={() => onChange(current + 1)} className="w-8 h-8 p-0 rounded-lg"><ChevronRight className="w-4 h-4" /></Button>
+            </div>
+        </div>
+    );
+}
+
+// ── Convert to Invoice Modal ───────────────────────────────────────────────────
+// Backend auto-generates: invoice number, total, tax from quote_details
+// We only need to send: quote_id, issue_date, due_date
+
+interface ConvertToInvoiceState {
+    quoteId: number;
+    quoteRef: string;
+    clientName: string;
+    totalAmount: number;
+    deliveryNumber: string;
+}
+function StatusBadge({
+    status,
+}: {
+    status: "PENDING" | "DELIVERED" | "CANCELLED";
+}) {
+    const styles = {
+        PENDING: "bg-amber-100 text-amber-700",
+        DELIVERED: "bg-emerald-100 text-emerald-700",
+        CANCELLED: "bg-red-100 text-red-700",
+    };
+
+    return (
+        <span
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${styles[status]}`}
+        >
+            {status}
+        </span>
+    );
+}
+
+function ConvertToInvoiceModal({
+    data,
+    businessId,
+    onClose,
+    onSuccess,
+}: {
+    data: ConvertToInvoiceState;
+    businessId: number;
+    onClose: () => void;
+    onSuccess: () => void;
+}) {
+    const today = new Date().toISOString().split("T")[0];
+    const defaultDue = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+    const [issueDate, setIssueDate] = useState(today);
+    const [dueDate, setDueDate] = useState(defaultDue);
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async () => {
+        if (!issueDate) { toast.error("Issue date is required"); return; }
+        if (!dueDate) { toast.error("Due date is required"); return; }
+
+        try {
+            setLoading(true);
+
+            await invoiceService.create(businessId, {
+                quote_id: data.quoteId,
+                issue_date: issueDate,
+                due_date: dueDate,
+            });
+            toast.success("Invoice created successfully!");
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Error creating invoice");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-emerald-100">
+                            <Receipt className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-semibold">Convert to Invoice</h2>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                From delivery note {data.deliveryNumber}
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                        <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                </div>
+
+                {/* Summary — read-only, backend computes the rest */}
+                <div className="px-6 py-4 bg-muted/30 border-b border-border grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <p className="text-xs text-muted-foreground">Client</p>
+                        <p className="font-semibold">{data.clientName}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-muted-foreground">Linked Quote</p>
+                        <p className="font-semibold font-mono">{data.quoteRef}</p>
+                    </div>
+                </div>
+
+                {/* Info banner */}
+                <div className="mx-6 mt-5 bg-sky-50 border border-sky-200 rounded-xl px-4 py-3">
+                    <p className="text-xs text-sky-700 font-medium">
+                        The invoice number, total amount and tax will be calculated automatically by the server from the quote line items.
+                    </p>
+                </div>
+
+                {/* Form — only dates needed */}
+                <div className="px-6 py-5 grid grid-cols-2 gap-3">
+                    <div>
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
+                            Issue Date *
+                        </label>
+                        <input
+                            type="date"
+                            value={issueDate}
+                            onChange={(e) => setIssueDate(e.target.value)}
+                            className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
+                            Due Date *
+                        </label>
+                        <input
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        />
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-border flex gap-3 justify-end">
+                    <Button variant="outline" size="sm" onClick={onClose} className="rounded-xl">
+                        Cancel
+                    </Button>
+                    <Button
+                        size="sm"
+                        disabled={loading}
+                        onClick={handleSubmit}
+                        className="rounded-xl gap-2 min-w-[150px] bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                        {loading ? (
+                            <>
+                                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                                Creating...
+                            </>
+                        ) : (
+                            <><Receipt className="w-3.5 h-3.5" />Create Invoice</>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     );
@@ -232,13 +374,9 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-
-                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/20">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10">
-                            <Package className="w-5 h-5 text-primary" />
-                        </div>
+                        <div className="p-2 rounded-xl bg-primary/10"><Package className="w-5 h-5 text-primary" /></div>
                         <div>
                             <h2 className="text-base font-semibold">{note.delivery_number}</h2>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -252,28 +390,17 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
                 </div>
 
                 <div className="px-6 py-5 space-y-5">
-
-                    {/* BL Info */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-muted/40 rounded-xl p-3">
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                                <Calendar className="w-3 h-3" />Delivery Date
-                            </p>
-                            <p className="text-sm font-semibold">
-                                {new Date(note.delivery_date).toLocaleDateString("en-GB")}
-                            </p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1"><Calendar className="w-3 h-3" />Delivery Date</p>
+                            <p className="text-sm font-semibold">{new Date(note.delivery_date).toLocaleDateString("en-GB")}</p>
                         </div>
                         <div className="bg-muted/40 rounded-xl p-3">
-                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1">
-                                <FileText className="w-3 h-3" />Linked Quote
-                            </p>
-                            <p className="text-sm font-semibold font-mono">
-                                {note.quotes?.quote_id ?? "—"}
-                            </p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-1"><FileText className="w-3 h-3" />Linked Quote</p>
+                            <p className="text-sm font-semibold font-mono">{note.quotes?.quote_id ?? "—"}</p>
                         </div>
                     </div>
 
-                    {/* Total */}
                     {totalAmount !== undefined && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
                             <p className="text-sm text-emerald-700 font-medium">Total Amount (quote)</p>
@@ -283,73 +410,42 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
                         </div>
                     )}
 
-                    {/* Client */}
                     {client && (
                         <div>
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                Client Information
-                            </p>
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Client Information</p>
                             <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
                                 <div className="flex items-center gap-3 px-4 py-3">
-                                    <div className="p-1.5 rounded-lg bg-muted">
-                                        <User className="w-3.5 h-3.5 text-muted-foreground" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">Name</p>
-                                        <p className="text-sm font-medium">{client.name}</p>
-                                    </div>
+                                    <div className="p-1.5 rounded-lg bg-muted"><User className="w-3.5 h-3.5 text-muted-foreground" /></div>
+                                    <div><p className="text-xs text-muted-foreground">Name</p><p className="text-sm font-medium">{client.name}</p></div>
                                 </div>
                                 {client.email && (
                                     <div className="flex items-center gap-3 px-4 py-3">
-                                        <div className="p-1.5 rounded-lg bg-muted">
-                                            <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Email</p>
-                                            <p className="text-sm font-medium">{client.email}</p>
-                                        </div>
+                                        <div className="p-1.5 rounded-lg bg-muted"><Mail className="w-3.5 h-3.5 text-muted-foreground" /></div>
+                                        <div><p className="text-xs text-muted-foreground">Email</p><p className="text-sm font-medium">{client.email}</p></div>
                                     </div>
                                 )}
                                 {client.phone && (
                                     <div className="flex items-center gap-3 px-4 py-3">
-                                        <div className="p-1.5 rounded-lg bg-muted">
-                                            <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Phone</p>
-                                            <p className="text-sm font-medium">{client.phone}</p>
-                                        </div>
+                                        <div className="p-1.5 rounded-lg bg-muted"><Phone className="w-3.5 h-3.5 text-muted-foreground" /></div>
+                                        <div><p className="text-xs text-muted-foreground">Phone</p><p className="text-sm font-medium">{client.phone}</p></div>
                                     </div>
                                 )}
                                 {(client.address || client.city || client.country) && (
                                     <div className="flex items-center gap-3 px-4 py-3">
-                                        <div className="p-1.5 rounded-lg bg-muted">
-                                            <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Address</p>
-                                            <p className="text-sm font-medium">
-                                                {[client.address, client.city, client.country].filter(Boolean).join(", ")}
-                                            </p>
-                                        </div>
+                                        <div className="p-1.5 rounded-lg bg-muted"><MapPin className="w-3.5 h-3.5 text-muted-foreground" /></div>
+                                        <div><p className="text-xs text-muted-foreground">Address</p><p className="text-sm font-medium">{[client.address, client.city, client.country].filter(Boolean).join(", ")}</p></div>
                                     </div>
                                 )}
                                 {client.tax_number && (
                                     <div className="flex items-center gap-3 px-4 py-3">
-                                        <div className="p-1.5 rounded-lg bg-muted">
-                                            <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-muted-foreground">Tax Number</p>
-                                            <p className="text-sm font-medium font-mono">{client.tax_number}</p>
-                                        </div>
+                                        <div className="p-1.5 rounded-lg bg-muted"><Receipt className="w-3.5 h-3.5 text-muted-foreground" /></div>
+                                        <div><p className="text-xs text-muted-foreground">Tax Number</p><p className="text-sm font-medium font-mono">{client.tax_number}</p></div>
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* Linked invoice */}
                     {invoice && (
                         <div className="flex items-center justify-between bg-sky-50 border border-sky-200 rounded-xl px-4 py-3">
                             <div className="flex items-center gap-2">
@@ -359,170 +455,78 @@ function DetailsModal({ note, onClose }: { note: DeliveryNote; onClose: () => vo
                                     <p className="text-sm font-semibold text-sky-700">{invoice.invoice_number}</p>
                                 </div>
                             </div>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${invoice.status === "paid"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : invoice.status === "sent"
-                                        ? "bg-blue-100 text-blue-700"
-                                        : "bg-slate-100 text-slate-600"
-                                }`}>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${invoice.status === "paid" ? "bg-emerald-100 text-emerald-700" : invoice.status === "sent" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
                                 {invoice.status === "paid" ? "Paid" : invoice.status === "sent" ? "Sent" : invoice.status}
                             </span>
                         </div>
                     )}
                 </div>
 
-                {/* Footer */}
                 <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => printDeliveryNote(note)}
-                        className="rounded-xl gap-2 border-border/70 text-muted-foreground hover:text-foreground"
-                    >
-                        <Download className="w-3.5 h-3.5" />
-                        Download PDF
+                    <Button size="sm" variant="outline" onClick={() => printDeliveryNote(note)} className="rounded-xl gap-2 border-border/70 text-muted-foreground hover:text-foreground">
+                        <Download className="w-3.5 h-3.5" />Download PDF
                     </Button>
-                    <Button variant="outline" size="sm" onClick={onClose} className="rounded-xl">
-                        Close
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={onClose} className="rounded-xl">Close</Button>
                 </div>
             </div>
         </div>
     );
 }
 
+// ── Create BL Modal ────────────────────────────────────────────────────────────
 
+interface ModalState { quoteId: number; quoteRef: string; clientName: string; totalAmount: number; }
 
-function CreateBLModal({
-    quoteId,
-    quoteRef,
-    clientName,
-    totalAmount,
-    businessId,
-    onClose,
-    onSuccess,
-}: {
-    quoteId: number;
-    quoteRef: string;
-    clientName: string;
-    totalAmount: number;
-    businessId: number;
-    onClose: () => void;
-    onSuccess: () => void;
-}) {
-    const [deliveryNumber, setDeliveryNumber] = useState(
-        `BL-${quoteRef}-${Date.now().toString().slice(-4)}`
-    );
-    const [deliveryDate, setDeliveryDate] = useState(
-        new Date().toISOString().split("T")[0]
-    );
+function CreateBLModal({ quoteId, quoteRef, clientName, totalAmount, businessId, onClose, onSuccess }: ModalState & { businessId: number; onClose: () => void; onSuccess: () => void }) {
+    const [deliveryNumber, setDeliveryNumber] = useState(`BL-${quoteRef}-${Date.now().toString().slice(-4)}`);
+    const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split("T")[0]);
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async () => {
         if (!deliveryNumber.trim()) { toast.error("Delivery number is required"); return; }
         try {
             setLoading(true);
-            await deliveryNoteService.create(businessId, {
-                delivery_number: deliveryNumber,
-                delivery_date: deliveryDate,
-                quote_id: quoteId,
-            });
+            await deliveryNoteService.create(businessId, { delivery_number: deliveryNumber, delivery_date: deliveryDate, quote_id: quoteId });
             toast.success("Delivery note created successfully!");
-            onSuccess();
-            onClose();
+            onSuccess(); onClose();
         } catch (err: any) {
             toast.error(err?.response?.data?.message || "Error creating delivery note");
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-                {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <div>
                         <h2 className="text-base font-semibold">New Delivery Note</h2>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Quote {quoteRef} — {clientName}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Quote {quoteRef} — {clientName}</p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                        <X className="w-4 h-4 text-muted-foreground" />
-                    </button>
+                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4 text-muted-foreground" /></button>
                 </div>
-
-                {/* Summary */}
                 <div className="px-6 py-4 bg-muted/30 border-b border-border grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <p className="text-xs text-muted-foreground">Client</p>
-                        <p className="font-medium">{clientName}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-muted-foreground">Quote Amount</p>
-                        <p className="font-semibold text-emerald-600">
-                            {Number(totalAmount).toLocaleString("en")} DT
-                        </p>
-                    </div>
+                    <div><p className="text-xs text-muted-foreground">Client</p><p className="font-medium">{clientName}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Quote Amount</p><p className="font-semibold text-emerald-600">{Number(totalAmount).toLocaleString("en")} DT</p></div>
                 </div>
-
-                {/* Form */}
                 <div className="px-6 py-5 space-y-4">
                     <div>
-                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
-                            Delivery Note Number *
-                        </label>
-                        <input
-                            value={deliveryNumber}
-                            onChange={(e) => setDeliveryNumber(e.target.value)}
-                            className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Delivery Note Number *</label>
+                        <input value={deliveryNumber} onChange={(e) => setDeliveryNumber(e.target.value)} className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                     </div>
                     <div>
-                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">
-                            Delivery Date *
-                        </label>
-                        <input
-                            type="date"
-                            value={deliveryDate}
-                            onChange={(e) => setDeliveryDate(e.target.value)}
-                            className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Delivery Date *</label>
+                        <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="w-full px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                     </div>
                 </div>
-
-                {/* Footer */}
                 <div className="px-6 py-4 border-t border-border flex gap-3 justify-end">
-                    <Button variant="outline" size="sm" onClick={onClose} className="rounded-xl">
-                        Cancel
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={onClose} className="rounded-xl">Cancel</Button>
                     <Button size="sm" disabled={loading} onClick={handleSubmit} className="rounded-xl gap-2 min-w-[130px]">
-                        {loading ? (
-                            <>
-                                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                                </svg>
-                                Creating...
-                            </>
-                        ) : (
-                            <><Package className="w-3.5 h-3.5" />Create Note</>
-                        )}
+                        {loading ? (<><svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Creating...</>) : (<><Package className="w-3.5 h-3.5" />Create Note</>)}
                     </Button>
                 </div>
             </div>
         </div>
     );
-}
-
-// ── Modal state type ───────────────────────────────────────────────────────────
-
-interface ModalState {
-    quoteId: number;
-    quoteRef: string;
-    clientName: string;
-    totalAmount: number;
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
@@ -532,189 +536,107 @@ export default function DeliveryNotes() {
     const businessId = activeBusiness?.id;
 
     const [tab, setTab] = useState<Tab>("notes");
-
     const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNote[]>([]);
     const [quotesNotInvoiced, setQuotesNotInvoiced] = useState<Quote[]>([]);
     const [invoicesWithoutBL, setInvoicesWithoutBL] = useState<InvoiceWithQuote[]>([]);
-
     const [loadingNotes, setLoadingNotes] = useState(true);
     const [loadingQuotes, setLoadingQuotes] = useState(true);
     const [loadingInvoices, setLoadingInvoices] = useState(true);
-
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [modal, setModal] = useState<ModalState | null>(null);
     const [detailNote, setDetailNote] = useState<DeliveryNote | null>(null);
+    const [convertNote, setConvertNote] = useState<ConvertToInvoiceState | null>(null);
 
     useEffect(() => {
-        if (businessId) {
-            fetchDeliveryNotes();
-            fetchQuotesNotInvoiced();
-            fetchInvoicesWithoutBL();
-        }
+        if (businessId) { fetchDeliveryNotes(); fetchQuotesNotInvoiced(); fetchInvoicesWithoutBL(); }
     }, [businessId]);
+    const changeStatus = async (
+        id: number,
+        status: "DELIVERED" | "CANCELLED"
+    ) => {
+        try {
+            await deliveryNoteService.changeStatus(
+                businessId,
+                id,
+                status
+            );
 
+            toast.success("Status updated");
+
+            fetchDeliveryNotes(); // reload list
+        } catch (err: any) {
+            toast.error(
+                err?.response?.data?.message ||
+                "Failed to update status"
+            );
+        }
+    };
     const fetchDeliveryNotes = async () => {
-        try {
-            setLoadingNotes(true);
-            const res = await deliveryNoteService.getAll(businessId!);
-            setDeliveryNotes(safeArray(res));
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load delivery notes");
-        } finally {
-            setLoadingNotes(false);
-        }
+        try { setLoadingNotes(true); const res = await deliveryNoteService.getAll(businessId!); setDeliveryNotes(safeArray(res)); }
+        catch (err) { console.error(err); toast.error("Failed to load delivery notes"); }
+        finally { setLoadingNotes(false); }
     };
-
     const fetchQuotesNotInvoiced = async () => {
-        try {
-            setLoadingQuotes(true);
-            const res = await deliveryNoteService.getQuotesNotInvoiced(businessId!);
-            setQuotesNotInvoiced(safeArray(res));
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load quotes");
-        } finally {
-            setLoadingQuotes(false);
-        }
+        try { setLoadingQuotes(true); const res = await deliveryNoteService.getQuotesNotInvoiced(businessId!); setQuotesNotInvoiced(safeArray(res)); }
+        catch (err) { console.error(err); toast.error("Failed to load quotes"); }
+        finally { setLoadingQuotes(false); }
     };
-
     const fetchInvoicesWithoutBL = async () => {
-        try {
-            setLoadingInvoices(true);
-            const res = await deliveryNoteService.getInvoicesWithoutBL(businessId!);
-            setInvoicesWithoutBL(safeArray(res));
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load invoices");
-        } finally {
-            setLoadingInvoices(false);
-        }
+        try { setLoadingInvoices(true); const res = await deliveryNoteService.getInvoicesWithoutBL(businessId!); setInvoicesWithoutBL(safeArray(res)); }
+        catch (err) { console.error(err); toast.error("Failed to load invoices"); }
+        finally { setLoadingInvoices(false); }
     };
-
-    const refetchAll = () => {
-        fetchDeliveryNotes();
-        fetchQuotesNotInvoiced();
-        fetchInvoicesWithoutBL();
-    };
-
-    const switchTab = (t: Tab) => {
-        setTab(t);
-        setCurrentPage(1);
-        setSearchQuery("");
-    };
-
-    const openModal = (state: ModalState) => setModal(state);
+    const refetchAll = () => { fetchDeliveryNotes(); fetchQuotesNotInvoiced(); fetchInvoicesWithoutBL(); };
+    const switchTab = (t: Tab) => { setTab(t); setCurrentPage(1); setSearchQuery(""); };
 
     const q = searchQuery.toLowerCase();
+    const filteredNotes = deliveryNotes.filter((dn) => dn.delivery_number?.toLowerCase().includes(q) || dn.quotes?.clients?.name?.toLowerCase().includes(q) || dn.quotes?.quote_id?.toLowerCase().includes(q));
+    const filteredQuotes = quotesNotInvoiced.filter((qt) => qt.quote_id?.toLowerCase().includes(q) || qt.clients?.name?.toLowerCase().includes(q));
+    const filteredInvoices = invoicesWithoutBL.filter((inv) => inv.invoice_number?.toLowerCase().includes(q) || inv.quotes?.clients?.name?.toLowerCase().includes(q) || inv.quotes?.quote_id?.toLowerCase().includes(q));
 
-    const filteredNotes = deliveryNotes.filter((dn) =>
-        dn.delivery_number?.toLowerCase().includes(q) ||
-        dn.quotes?.clients?.name?.toLowerCase().includes(q) ||
-        dn.quotes?.quote_id?.toLowerCase().includes(q)
-    );
-
-    const filteredQuotes = quotesNotInvoiced.filter((qt) =>
-        qt.quote_id?.toLowerCase().includes(q) ||
-        qt.clients?.name?.toLowerCase().includes(q)
-    );
-
-    const filteredInvoices = invoicesWithoutBL.filter((inv) =>
-        inv.invoice_number?.toLowerCase().includes(q) ||
-        inv.quotes?.clients?.name?.toLowerCase().includes(q) ||
-        inv.quotes?.quote_id?.toLowerCase().includes(q)
-    );
-
-    const activeList =
-        tab === "notes" ? filteredNotes :
-            tab === "quotes" ? filteredQuotes :
-                filteredInvoices;
-
+    const activeList = tab === "notes" ? filteredNotes : tab === "quotes" ? filteredQuotes : filteredInvoices;
     const totalPages = Math.ceil(activeList.length / PAGE_SIZE);
     const paginated = activeList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     return (
         <div className="space-y-8">
 
-            {detailNote && (
-                <DetailsModal
-                    note={detailNote}
-                    onClose={() => setDetailNote(null)}
-                />
-            )}
-
-            {modal && (
-                <CreateBLModal
-                    {...modal}
-                    businessId={businessId!}
-                    onClose={() => setModal(null)}
-                    onSuccess={refetchAll}
-                />
-            )}
+            {detailNote && <DetailsModal note={detailNote} onClose={() => setDetailNote(null)} />}
+            {modal && <CreateBLModal {...modal} businessId={businessId!} onClose={() => setModal(null)} onSuccess={refetchAll} />}
+            {convertNote && <ConvertToInvoiceModal data={convertNote} businessId={businessId!} onClose={() => setConvertNote(null)} onSuccess={refetchAll} />}
 
             {/* Header */}
             <div>
                 <h1 className="text-3xl font-semibold tracking-tight">Delivery Notes</h1>
-                <p className="text-muted-foreground mt-1 text-sm">
-                    Manage your delivery notes and track the progress of your quotes and invoices
-                </p>
+                <p className="text-muted-foreground mt-1 text-sm">Manage your delivery notes and track the progress of your quotes and invoices</p>
             </div>
 
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card
-                    onClick={() => switchTab("notes")}
-                    className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform"
-                >
+                <Card onClick={() => switchTab("notes")} className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform">
                     <CardContent className="p-5">
                         <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Delivery Notes</p>
-                                <h2 className="text-4xl font-bold mt-2 tabular-nums">{deliveryNotes.length}</h2>
-                                <p className="text-xs text-slate-400 mt-2">Total created</p>
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-white/10">
-                                <FileText className="h-5 w-5 text-slate-200" />
-                            </div>
+                            <div><p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Delivery Notes</p><h2 className="text-4xl font-bold mt-2 tabular-nums">{deliveryNotes.length}</h2><p className="text-xs text-slate-400 mt-2">Total created</p></div>
+                            <div className="p-2.5 rounded-xl bg-white/10"><FileText className="h-5 w-5 text-slate-200" /></div>
                         </div>
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/5" />
                     </CardContent>
                 </Card>
-
-                <Card
-                    onClick={() => switchTab("quotes")}
-                    className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-sky-500 to-blue-700 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform"
-                >
+                <Card onClick={() => switchTab("quotes")} className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-sky-500 to-blue-700 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform">
                     <CardContent className="p-5">
                         <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-sky-100 uppercase tracking-widest">Quotes Without Invoice</p>
-                                <h2 className="text-4xl font-bold mt-2 tabular-nums">{quotesNotInvoiced.length}</h2>
-                                <p className="text-xs text-sky-200 mt-2">Pending delivery note</p>
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-white/20">
-                                <Package className="h-5 w-5 text-white" />
-                            </div>
+                            <div><p className="text-xs font-medium text-sky-100 uppercase tracking-widest">Quotes Without Invoice</p><h2 className="text-4xl font-bold mt-2 tabular-nums">{quotesNotInvoiced.length}</h2><p className="text-xs text-sky-200 mt-2">Pending delivery note</p></div>
+                            <div className="p-2.5 rounded-xl bg-white/20"><Package className="h-5 w-5 text-white" /></div>
                         </div>
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
                     </CardContent>
                 </Card>
-
-                <Card
-                    onClick={() => switchTab("invoices")}
-                    className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-amber-400 to-amber-600 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform"
-                >
+                <Card onClick={() => switchTab("invoices")} className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-amber-400 to-amber-600 text-white overflow-hidden relative cursor-pointer hover:scale-[1.01] transition-transform">
                     <CardContent className="p-5">
                         <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-medium text-amber-100 uppercase tracking-widest">Invoices Without Note</p>
-                                <h2 className="text-4xl font-bold mt-2 tabular-nums">{invoicesWithoutBL.length}</h2>
-                                <p className="text-xs text-amber-100 mt-2">Pending delivery note</p>
-                            </div>
-                            <div className="p-2.5 rounded-xl bg-white/20">
-                                <Receipt className="h-5 w-5 text-white" />
-                            </div>
+                            <div><p className="text-xs font-medium text-amber-100 uppercase tracking-widest">Invoices Without Note</p><h2 className="text-4xl font-bold mt-2 tabular-nums">{invoicesWithoutBL.length}</h2><p className="text-xs text-amber-100 mt-2">Pending delivery note</p></div>
+                            <div className="p-2.5 rounded-xl bg-white/20"><Receipt className="h-5 w-5 text-white" /></div>
                         </div>
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
                     </CardContent>
@@ -728,19 +650,10 @@ export default function DeliveryNotes() {
                     { key: "quotes", icon: <Package className="w-4 h-4" />, label: "Quotes Without Invoice", count: quotesNotInvoiced.length, color: "bg-sky-100 text-sky-700" },
                     { key: "invoices", icon: <Receipt className="w-4 h-4" />, label: "Invoices Without Note", count: invoicesWithoutBL.length, color: "bg-amber-100 text-amber-700" },
                 ] as { key: Tab; icon: JSX.Element; label: string; count: number; color: string }[]).map(({ key, icon, label, count, color }) => (
-                    <button
-                        key={key}
-                        onClick={() => switchTab(key)}
-                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${tab === key
-                                ? "bg-background text-foreground shadow-sm border border-border/60"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                    >
-                        {icon}
-                        {label}
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${tab === key ? color : "bg-muted text-muted-foreground"}`}>
-                            {count}
-                        </span>
+                    <button key={key} onClick={() => switchTab(key)}
+                        className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${tab === key ? "bg-background text-foreground shadow-sm border border-border/60" : "text-muted-foreground hover:text-foreground"}`}>
+                        {icon}{label}
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${tab === key ? color : "bg-muted text-muted-foreground"}`}>{count}</span>
                     </button>
                 ))}
             </div>
@@ -748,11 +661,7 @@ export default function DeliveryNotes() {
             {/* Search */}
             <Card className="rounded-2xl shadow-sm border border-border/60">
                 <CardContent className="pt-5 pb-5">
-                    <SearchInput
-                        placeholder="Search by number, client..."
-                        value={searchQuery}
-                        onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }}
-                    />
+                    <SearchInput placeholder="Search by number, client..." value={searchQuery} onChange={(v) => { setSearchQuery(v); setCurrentPage(1); }} />
                 </CardContent>
             </Card>
 
@@ -761,43 +670,32 @@ export default function DeliveryNotes() {
                 <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
                     <CardContent className="p-0">
                         <table className="w-full">
-                            <THead cols={["#", "Note #", "Client", "Linked Quote", "Delivery Date", "Linked Invoice", "Actions"]} />
+                            <THead cols={["#", "Note #", "Client", "Linked Quote", "Delivery Date", "Linked Invoice", "Status", "Actions"]} />
                             <tbody className="divide-y divide-border/50">
-                                {loadingNotes
-                                    ? <SpinnerRow cols={7} />
-                                    : (paginated as DeliveryNote[]).length === 0
-                                        ? <EmptyRow cols={7} message="No delivery notes found." />
+                                {loadingNotes ? <SpinnerRow cols={7} />
+                                    : (paginated as DeliveryNote[]).length === 0 ? <EmptyRow cols={7} message="No delivery notes found." />
                                         : (paginated as DeliveryNote[]).map((dn, i) => {
                                             const invoice = dn.quotes?.invoices?.[0];
+                                            const hasInvoice = !!invoice;
+                                            // Can convert to invoice only if quote exists and no invoice yet
+                                            const canConvert = !!dn.quotes && !hasInvoice;
+
                                             return (
                                                 <tr key={dn.id} className="hover:bg-muted/20 transition-colors">
-                                                    <td className="p-4 text-sm text-muted-foreground font-mono">
-                                                        {(currentPage - 1) * PAGE_SIZE + i + 1}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <span className="text-primary font-medium text-sm">
-                                                            {dn.delivery_number}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-4 text-sm font-medium">
-                                                        {dn.quotes?.clients?.name ?? "—"}
-                                                    </td>
+                                                    <td className="p-4 text-sm text-muted-foreground font-mono">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
+                                                    <td className="p-4"><span className="text-primary font-medium text-sm">{dn.delivery_number}</span></td>
+                                                    <td className="p-4 text-sm font-medium">{dn.quotes?.clients?.name ?? "—"}</td>
                                                     <td className="p-4">
                                                         {dn.quotes ? (
-                                                            <Link to={`/app/quotes/${dn.quotes.id}`}
-                                                                className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline underline-offset-4">
-                                                                {dn.quotes.quote_id}
-                                                            </Link>
+                                                            <Link to={`/app/quotes/${dn.quotes.id}`} className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline underline-offset-4">{dn.quotes.quote_id}</Link>
                                                         ) : <span className="text-xs text-muted-foreground">—</span>}
                                                     </td>
-                                                    <td className="p-4 text-sm text-muted-foreground">
-                                                        {new Date(dn.delivery_date).toLocaleDateString("en-GB")}
-                                                    </td>
+                                                    <td className="p-4 text-sm text-muted-foreground">{new Date(dn.delivery_date).toLocaleDateString("en-GB")}</td>
                                                     <td className="p-4">
-                                                        {invoice ? (
-                                                            <Link to={`/app/invoices/${invoice.id}`}>
+                                                        {hasInvoice ? (
+                                                            <Link to={`/app/invoices/${invoice!.id}`}>
                                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors">
-                                                                    <Receipt className="w-3 h-3" />{invoice.invoice_number}
+                                                                    <Receipt className="w-3 h-3" />{invoice!.invoice_number}
                                                                 </span>
                                                             </Link>
                                                         ) : (
@@ -807,24 +705,55 @@ export default function DeliveryNotes() {
                                                         )}
                                                     </td>
                                                     <td className="p-4">
+                                                        <StatusBadge status={dn.status} />
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="flex gap-2">
+
+                                                            {dn.status === "PENDING" && (
+                                                                <>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                                        onClick={() => changeStatus(dn.id, "DELIVERED")}
+                                                                    >
+                                                                        Deliver
+                                                                    </Button>
+
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="destructive"
+                                                                        onClick={() => changeStatus(dn.id, "CANCELLED")}
+                                                                    >
+                                                                        Cancel
+                                                                    </Button>
+                                                                </>
+                                                            )}
+
+                                                        </div>
                                                         <div className="flex items-center gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => setDetailNote(dn)}
-                                                                className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted"
-                                                            >
+                                                            <Button size="sm" variant="outline" onClick={() => setDetailNote(dn)} className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted">
                                                                 Details
                                                             </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => printDeliveryNote(dn)}
-                                                                title="Download PDF"
-                                                                className="rounded-lg h-8 w-8 p-0 border-border/70 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-                                                            >
+                                                            <Button size="sm" variant="outline" onClick={() => printDeliveryNote(dn)} title="Download PDF"
+                                                                className="rounded-lg h-8 w-8 p-0 border-border/70 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
                                                                 <Download className="w-3.5 h-3.5" />
                                                             </Button>
+                                                            {canConvert && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => setConvertNote({
+                                                                        quoteId: dn.quotes!.id,
+                                                                        quoteRef: dn.quotes!.quote_id,
+                                                                        clientName: dn.quotes!.clients?.name ?? "",
+                                                                        totalAmount: dn.quotes!.total_amount,
+                                                                        deliveryNumber: dn.delivery_number,
+                                                                    })}
+                                                                    className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                                >
+                                                                    <Receipt className="w-3.5 h-3.5" />To Invoice
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -845,33 +774,18 @@ export default function DeliveryNotes() {
                         <table className="w-full">
                             <THead cols={["#", "Quote #", "Client", "Date", "Expiry", "Amount", "Existing Note", "Actions"]} />
                             <tbody className="divide-y divide-border/50">
-                                {loadingQuotes
-                                    ? <SpinnerRow cols={8} />
-                                    : (paginated as Quote[]).length === 0
-                                        ? <EmptyRow cols={8} message="All accepted quotes already have an invoice." />
+                                {loadingQuotes ? <SpinnerRow cols={8} />
+                                    : (paginated as Quote[]).length === 0 ? <EmptyRow cols={8} message="All accepted quotes already have an invoice." />
                                         : (paginated as Quote[]).map((qt, i) => {
                                             const existingBL = qt.delivery_notes?.[0];
                                             return (
                                                 <tr key={qt.id} className="hover:bg-muted/20 transition-colors">
-                                                    <td className="p-4 text-sm text-muted-foreground font-mono">
-                                                        {(currentPage - 1) * PAGE_SIZE + i + 1}
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <Link to={`/app/quotes/${qt.id}`}
-                                                            className="text-primary font-medium text-sm hover:underline underline-offset-4 font-mono">
-                                                            {qt.quote_id}
-                                                        </Link>
-                                                    </td>
+                                                    <td className="p-4 text-sm text-muted-foreground font-mono">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
+                                                    <td className="p-4"><Link to={`/app/quotes/${qt.id}`} className="text-primary font-medium text-sm hover:underline underline-offset-4 font-mono">{qt.quote_id}</Link></td>
                                                     <td className="p-4 text-sm font-medium">{qt.clients?.name ?? "—"}</td>
-                                                    <td className="p-4 text-sm text-muted-foreground">
-                                                        {new Date(qt.issue_date).toLocaleDateString("en-GB")}
-                                                    </td>
-                                                    <td className="p-4 text-sm text-muted-foreground">
-                                                        {new Date(qt.expiration_date).toLocaleDateString("en-GB")}
-                                                    </td>
-                                                    <td className="p-4 text-sm font-semibold tabular-nums">
-                                                        {Number(qt.total_amount).toLocaleString("en")} DT
-                                                    </td>
+                                                    <td className="p-4 text-sm text-muted-foreground">{new Date(qt.issue_date).toLocaleDateString("en-GB")}</td>
+                                                    <td className="p-4 text-sm text-muted-foreground">{new Date(qt.expiration_date).toLocaleDateString("en-GB")}</td>
+                                                    <td className="p-4 text-sm font-semibold tabular-nums">{Number(qt.total_amount).toLocaleString("en")} DT</td>
                                                     <td className="p-4">
                                                         {existingBL ? (
                                                             <Link to={`/app/delivery-notes/${existingBL.id}`}>
@@ -886,19 +800,9 @@ export default function DeliveryNotes() {
                                                         )}
                                                     </td>
                                                     <td className="p-4">
-                                                        {existingBL ? (
-                                                            <span className="text-xs text-muted-foreground italic">Already created</span>
-                                                        ) : (
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => openModal({
-                                                                    quoteId: qt.id,
-                                                                    quoteRef: qt.quote_id,
-                                                                    clientName: qt.clients?.name ?? "",
-                                                                    totalAmount: qt.total_amount,
-                                                                })}
-                                                                className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 h-8 bg-sky-600 hover:bg-sky-700 text-white"
-                                                            >
+                                                        {existingBL ? <span className="text-xs text-muted-foreground italic">Already created</span> : (
+                                                            <Button size="sm" onClick={() => setModal({ quoteId: qt.id, quoteRef: qt.quote_id, clientName: qt.clients?.name ?? "", totalAmount: qt.total_amount })}
+                                                                className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 h-8 bg-sky-600 hover:bg-sky-700 text-white">
                                                                 <Plus className="w-3.5 h-3.5" />Create Note
                                                             </Button>
                                                         )}
@@ -921,58 +825,27 @@ export default function DeliveryNotes() {
                         <table className="w-full">
                             <THead cols={["#", "Invoice #", "Client", "Linked Quote", "Date", "Due Date", "Amount", "Actions"]} />
                             <tbody className="divide-y divide-border/50">
-                                {loadingInvoices
-                                    ? <SpinnerRow cols={8} />
-                                    : (paginated as InvoiceWithQuote[]).length === 0
-                                        ? <EmptyRow cols={8} message="All invoices already have a delivery note." />
+                                {loadingInvoices ? <SpinnerRow cols={8} />
+                                    : (paginated as InvoiceWithQuote[]).length === 0 ? <EmptyRow cols={8} message="All invoices already have a delivery note." />
                                         : (paginated as InvoiceWithQuote[]).map((inv, i) => (
                                             <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
-                                                <td className="p-4 text-sm text-muted-foreground font-mono">
-                                                    {(currentPage - 1) * PAGE_SIZE + i + 1}
-                                                </td>
+                                                <td className="p-4 text-sm text-muted-foreground font-mono">{(currentPage - 1) * PAGE_SIZE + i + 1}</td>
+                                                <td className="p-4"><Link to={`/app/invoices/${inv.id}`} className="text-primary font-medium text-sm hover:underline underline-offset-4">{inv.invoice_number}</Link></td>
+                                                <td className="p-4 text-sm font-medium">{inv.quotes?.clients?.name ?? "—"}</td>
                                                 <td className="p-4">
-                                                    <Link to={`/app/invoices/${inv.id}`}
-                                                        className="text-primary font-medium text-sm hover:underline underline-offset-4">
-                                                        {inv.invoice_number}
-                                                    </Link>
+                                                    {inv.quotes ? <Link to={`/app/quotes/${inv.quotes.id}`} className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline underline-offset-4">{inv.quotes.quote_id}</Link>
+                                                        : <span className="text-xs text-muted-foreground">—</span>}
                                                 </td>
-                                                <td className="p-4 text-sm font-medium">
-                                                    {inv.quotes?.clients?.name ?? "—"}
-                                                </td>
+                                                <td className="p-4 text-sm text-muted-foreground">{new Date(inv.issue_date).toLocaleDateString("en-GB")}</td>
+                                                <td className="p-4 text-sm text-muted-foreground">{new Date(inv.due_date).toLocaleDateString("en-GB")}</td>
+                                                <td className="p-4 text-sm font-semibold tabular-nums">{Number(inv.total_amount).toLocaleString("en")} DT</td>
                                                 <td className="p-4">
                                                     {inv.quotes ? (
-                                                        <Link to={`/app/quotes/${inv.quotes.id}`}
-                                                            className="text-xs font-mono text-muted-foreground hover:text-primary hover:underline underline-offset-4">
-                                                            {inv.quotes.quote_id}
-                                                        </Link>
-                                                    ) : <span className="text-xs text-muted-foreground">—</span>}
-                                                </td>
-                                                <td className="p-4 text-sm text-muted-foreground">
-                                                    {new Date(inv.issue_date).toLocaleDateString("en-GB")}
-                                                </td>
-                                                <td className="p-4 text-sm text-muted-foreground">
-                                                    {new Date(inv.due_date).toLocaleDateString("en-GB")}
-                                                </td>
-                                                <td className="p-4 text-sm font-semibold tabular-nums">
-                                                    {Number(inv.total_amount).toLocaleString("en")} DT
-                                                </td>
-                                                <td className="p-4">
-                                                    {inv.quotes ? (
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => openModal({
-                                                                quoteId: inv.quotes!.id,
-                                                                quoteRef: inv.quotes!.quote_id,
-                                                                clientName: inv.quotes!.clients?.name ?? "",
-                                                                totalAmount: inv.quotes!.total_amount,
-                                                            })}
-                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 h-8 bg-amber-500 hover:bg-amber-600 text-white"
-                                                        >
+                                                        <Button size="sm" onClick={() => setModal({ quoteId: inv.quotes!.id, quoteRef: inv.quotes!.quote_id, clientName: inv.quotes!.clients?.name ?? "", totalAmount: inv.quotes!.total_amount })}
+                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 h-8 bg-amber-500 hover:bg-amber-600 text-white">
                                                             <FilePlus className="w-3.5 h-3.5" />Create Note
                                                         </Button>
-                                                    ) : (
-                                                        <span className="text-xs text-muted-foreground italic">Quote missing</span>
-                                                    )}
+                                                    ) : <span className="text-xs text-muted-foreground italic">Quote missing</span>}
                                                 </td>
                                             </tr>
                                         ))

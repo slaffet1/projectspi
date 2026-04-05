@@ -33,29 +33,31 @@ model business_users {
 }
 
 model businesses {
-  id                Int              @id @default(autoincrement())
-  name              String           @db.VarChar(255)
-  legal_name        String?          @db.VarChar(255)
-  matricule_fiscale String?          @db.VarChar(100)
-  address           String?          @db.VarChar(255)
-  city              String?          @db.VarChar(100)
-  postal_code       String?          @db.VarChar(20)
-  country           String?          @db.VarChar(100)
-  phone             String?          @db.VarChar(20)
-  email             String?          @db.VarChar(255)
-  logo              String?          @db.VarChar(500)
-  invoice_prefix    String?          @default("INV-") @db.VarChar(20)
-  created_at        DateTime?        @default(now()) @db.Timestamp(6)
-  updated_at        DateTime?        @default(now()) @db.Timestamp(6)
-  banks             banks[]
-  business_users    business_users[]
-  clients           clients[]
-  commandes         commandes[]
-  expenses          expenses[]
-  invitations       invitations[]
-  products          products[]
-  taxes             taxes[]
-  join_requests     join_requests[]  @relation("BusinessJoinRequests")
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  legal_name         String?              @db.VarChar(255)
+  matricule_fiscale  String?              @db.VarChar(100)
+  address            String?              @db.VarChar(255)
+  city               String?              @db.VarChar(100)
+  postal_code        String?              @db.VarChar(20)
+  country            String?              @db.VarChar(100)
+  phone              String?              @db.VarChar(20)
+  email              String?              @db.VarChar(255)
+  logo               String?              @db.VarChar(500)
+  invoice_prefix     String?              @default("INV-") @db.VarChar(20)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
+  banks              banks[]
+  business_users     business_users[]
+  clients            clients[]
+  commandes          commandes[]
+  expenses           expenses[]
+  invitations        invitations[]
+  products           products[]
+  taxes              taxes[]
+  join_requests      join_requests[]      @relation("BusinessJoinRequests")
+  warehouses         warehouses[]
+  inventory_sessions inventory_sessions[]
 }
 
 model clients {
@@ -101,9 +103,14 @@ model delivery_notes {
   delivery_number String   @unique @db.VarChar(50)
   delivery_date   DateTime @db.Date
   quote_id        Int?
+  status          DeliveryStatus @default(PENDING)
   quotes          quotes?  @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
-
+enum DeliveryStatus {
+  PENDING
+  DELIVERED
+  CANCELLED
+}
 model expenses {
   id              Int            @id @default(autoincrement())
   label           String         @db.VarChar(255)
@@ -183,27 +190,29 @@ model permissions {
 }
 
 model products {
-  id             Int             @id @default(autoincrement())
-  name           String          @db.VarChar(255)
-  description    String?
-  reference      String?         @db.VarChar(100)
-  barcode        String?         @db.VarChar(100)
-  unit_price     Decimal         @db.Decimal(15, 2)
-  cost_price     Decimal?        @db.Decimal(15, 2)
-  tax_rate       Decimal?        @default(0) @db.Decimal(5, 2)
-  category       String?         @db.VarChar(100)
-  unit           String?         @default("pièce") @db.VarChar(50)
-  is_active      Boolean         @default(true)
-  business_id    Int?
-  fournisseur_id Int?
-  created_at     DateTime?       @default(now()) @db.Timestamp(6)
-  updated_at     DateTime?       @default(now()) @db.Timestamp(6)
-  commandes      commandes[]
-  inventaires    inventaires[]
-  mouvements     mouvements[]
-  businesses     businesses?     @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  fournisseurs   fournisseurs?   @relation(fields: [fournisseur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  quote_details  quote_details[]
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  description        String?
+  reference          String?              @db.VarChar(100)
+  barcode            String?              @db.VarChar(100)
+  unit_price         Decimal              @db.Decimal(15, 2)
+  cost_price         Decimal?             @db.Decimal(15, 2)
+  tax_rate           Decimal?             @default(0) @db.Decimal(5, 2)
+  category           String?              @db.VarChar(100)
+  unit               String?              @default("pièce") @db.VarChar(50)
+  is_active          Boolean              @default(true)
+  business_id        Int?
+  fournisseur_id     Int?
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
+  commandes          commandes[]
+  inventaires        inventaires[]
+  mouvements         mouvements[]
+  businesses         businesses?          @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fournisseurs       fournisseurs?        @relation(fields: [fournisseur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quote_details      quote_details[]
+  warehouse_products warehouse_products[]
+  inventory_counts   inventory_counts[]
 }
 
 model quote_details {
@@ -269,10 +278,10 @@ model users {
   email_verification_token String?   @db.VarChar(255)
   created_at               DateTime? @default(now()) @db.Timestamp(6)
   updated_at               DateTime? @default(now()) @db.Timestamp(6)
-twofa_enabled            Boolean   @default(false)
+  twofa_enabled            Boolean   @default(false)
   twofa_secret             String?
-  business_users business_users[]
-  join_requests  join_requests[]  @relation("UserJoinRequests")
+  business_users           business_users[]
+  join_requests            join_requests[]  @relation("UserJoinRequests")
 }
 
 model taxes {
@@ -311,9 +320,53 @@ model join_requests {
   business_id Int
   status      String   @default("pending")
   created_at  DateTime @default(now())
-
-  user     users      @relation("UserJoinRequests", fields: [user_id], references: [id], onDelete: Cascade)
-  business businesses @relation("BusinessJoinRequests", fields: [business_id], references: [id], onDelete: Cascade)
+  user        users      @relation("UserJoinRequests", fields: [user_id], references: [id], onDelete: Cascade)
+  business    businesses @relation("BusinessJoinRequests", fields: [business_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, business_id])
+}
+
+model warehouses {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @db.VarChar(255)
+  location           String?              @db.VarChar(255)
+  business_id        Int?
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  businesses         businesses?          @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  warehouse_products warehouse_products[]
+}
+
+model warehouse_products {
+  id           Int        @id @default(autoincrement())
+  warehouse_id Int
+  product_id   Int
+  quantity     Int        @default(0)
+  warehouses   warehouses @relation(fields: [warehouse_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products     products   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([warehouse_id, product_id])
+}
+
+model inventory_sessions {
+  id          Int                @id @default(autoincrement())
+  name        String             @db.VarChar(255)
+  status      String             @default("open") @db.VarChar(20)
+  business_id Int?
+  created_at  DateTime?          @default(now()) @db.Timestamp(6)
+  closed_at   DateTime?
+  businesses  businesses?        @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  counts      inventory_counts[]
+}
+
+model inventory_counts {
+  id                Int                @id @default(autoincrement())
+  session_id        Int
+  product_id        Int
+  system_quantity   Int
+  physical_quantity Int
+  variance          Int
+  adjusted          Boolean            @default(false)
+  created_at        DateTime?          @default(now()) @db.Timestamp(6)
+  inventory_sessions inventory_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products          products           @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }

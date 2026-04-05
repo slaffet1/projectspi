@@ -7,6 +7,7 @@ import { Label } from "@/app/components/ui/label";
 import { SearchInput } from "@/app/components/SearchInput";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { api } from "@/app/services/api";
+import { productsService } from "@/app/services/productsService";
 
 // ─── Types ────────────────────────────────────────────────────
 interface Product {
@@ -97,9 +98,9 @@ function ProductModal({
         unit: form.unit || "piece",
       };
       if (product) {
-        await api.put(`/api/businesses/${businessId}/products/${product.id}`, payload);
+       await productsService.updateProduct(businessId, product.id, payload);
       } else {
-        await api.post(`/api/businesses/${businessId}/products`, payload);
+        await productsService.createProduct(businessId, payload);
       }
       onSave();
       onClose();
@@ -231,7 +232,7 @@ export default function Products() {
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get(`/api/businesses/${businessId}/products`);
+      const res = await productsService.getProducts(businessId!);
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -243,7 +244,7 @@ export default function Products() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
-      await api.delete(`/api/businesses/${businessId}/products/${id}`);
+      await productsService.deleteProduct(businessId!, id);
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
@@ -252,7 +253,7 @@ export default function Products() {
 
   const handleToggle = async (id: number) => {
     try {
-      const res = await api.patch(`/api/businesses/${businessId}/products/${id}/toggle`);
+      const res = await productsService.toggleProduct(businessId!, id);
       setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: res.data.is_active } : p));
     } catch (err) {
       console.error(err);
