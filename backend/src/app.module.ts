@@ -18,7 +18,7 @@ import { DeliveryNotesModule } from './delivery-notes/delivery-notes.module';
 import { DeliveryNotesService } from './delivery-notes/delivery-notes.service';
 import { BanksModule } from './banks/banks.module';
 import { StockModule } from './stock/stock.module';
-
+import { SuppliersModule } from './suppliers/suppliers.module';
 
 
 @Module({
@@ -37,7 +37,8 @@ import { StockModule } from './stock/stock.module';
     InvoiceSalesModule,
     DeliveryNotesModule,
     BanksModule,
-    StockModule
+    StockModule,
+    SuppliersModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
