@@ -54,6 +54,12 @@ async markAsPaid(
  
   return this.invoicesService.updateStatus(id, 'paid');
 }
+@Patch(':id/mark-late-paid')
+async markLatePaid(
+  @Param('id', ParseIntPipe) id: number,
+) {
+  return this.invoicesService.updateStatus(id, 'late_paid');
+}
 @Get('unpaid')
 getUnpaid(@Param('businessId', ParseIntPipe) businessId: number) {
   return this.invoicesService.getUnpaid(businessId);

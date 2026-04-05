@@ -42,7 +42,6 @@ export default function InvoiceDetail() {
       const html2canvas = (await import("html2canvas")).default;
       const jsPDF = (await import("jspdf")).default;
 
-      // Fix: replace all oklch colors with rgb equivalents so html2canvas can parse them
       const allElements = element.querySelectorAll("*");
       const overrides: Array<{ el: HTMLElement; props: Record<string, string> }> = [];
 
@@ -79,7 +78,6 @@ export default function InvoiceDetail() {
         logging: false,
       });
 
-     
       overrides.forEach(({ el, props }) => {
         Object.keys(props).forEach((p) => {
           (el.style as any)[p] = props[p];
@@ -112,7 +110,6 @@ export default function InvoiceDetail() {
       setSending(false);
     }
   };
-
 
   const validateDueDate = (value: string): string => {
     if (!value) return "Veuillez saisir une date.";
@@ -204,7 +201,9 @@ export default function InvoiceDetail() {
     (s, i) => s + i.quantity * Number(i.products.unit_price) * (Number(i.products.tax_rate) / 100),
     0
   );
-  const total = subtotal + tax;
+  const totaltax = subtotal + tax;
+  const total = invoice.total_amount;
+  const remise = totaltax - total;
 
   const business = JSON.parse(localStorage.getItem("activeBusiness") || "{}");
   const businessName = business?.name || "Mon entreprise";
@@ -220,7 +219,6 @@ export default function InvoiceDetail() {
     <div className="space-y-6 max-w-5xl mx-auto py-8">
       <Toaster position="top-right" />
 
-    
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/app/invoices">
@@ -237,12 +235,10 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-
       <Card className="rounded-2xl border border-border/60 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="flex items-stretch divide-x divide-border/60">
 
-            {/* Download */}
             <button
               onClick={downloadPDF}
               disabled={!invoice}
@@ -255,7 +251,6 @@ export default function InvoiceDetail() {
               <span className="text-xs font-medium text-slate-600">Télécharger PDF</span>
             </button>
 
-      
             <button
               onClick={sendEmail}
               disabled={sending || invoice.status === "sent"}
@@ -278,7 +273,6 @@ export default function InvoiceDetail() {
               </span>
             </button>
 
-            {}
             <button
               onClick={() => { setShowDueInput(!showDueInput); setDateError(""); }}
               className="flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4
@@ -290,7 +284,6 @@ export default function InvoiceDetail() {
               <span className="text-xs font-medium text-amber-600">Modifier échéance</span>
             </button>
 
-            {/* Delete */}
             <button
               onClick={deleteInvoice}
               className="flex-1 flex flex-col items-center justify-center gap-2 py-5 px-4
@@ -303,12 +296,9 @@ export default function InvoiceDetail() {
             </button>
 
           </div>
-
-
         </CardContent>
       </Card>
 
-    
       <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
         <CardContent
           id="invoice"
@@ -328,17 +318,16 @@ export default function InvoiceDetail() {
               <p style={{ color: "#888888" }} className="text-sm">
                 {new Date(invoice.issue_date).toLocaleDateString("fr-FR")}
               </p>
-           
             </div>
           </div>
 
-          {/* CLIENT + DATES */}
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div>
               <p style={{ color: "#888888" }} className="text-xs mb-1 uppercase tracking-widest">Facturé à</p>
               <p style={{ color: "#000000" }} className="font-semibold text-base">{client.name}</p>
               <p style={{ color: "#4b5563" }} className="text-sm mt-0.5">{client.email}</p>
             </div>
+
             <div className="text-right">
               <p style={{ color: "#888888" }} className="text-xs uppercase tracking-widest mb-1">Échéance</p>
               <p style={{ color: "#000000" }} className="font-semibold">
@@ -382,10 +371,16 @@ export default function InvoiceDetail() {
                   invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("fr-FR") : "-"
                 )}
               </p>
+
+              {invoice.bank && (
+                <div className="mt-2 text-sm" style={{ color: "#000000" }}>
+                  <p>{invoice.bank.bank_name}</p>
+                  <p>{invoice.bank.account_number}</p>
+                </div>
+              )}
             </div>
           </div>
 
-         
           <table className="w-full border-collapse mb-8">
             <thead>
               <tr style={{ backgroundColor: "#f5f5f5", color: "#000000" }}>
@@ -413,7 +408,6 @@ export default function InvoiceDetail() {
             </tbody>
           </table>
 
-     
           <div className="flex justify-end">
             <div className="w-72 space-y-2">
               <div className="flex justify-between text-sm" style={{ color: "#000000" }}>
@@ -424,7 +418,16 @@ export default function InvoiceDetail() {
                 <span style={{ color: "#888888" }}>TVA</span>
                 <span>{tax.toLocaleString("fr-TN")} DT</span>
               </div>
+
+              {remise > 0 && (
+                <div className="flex justify-between text-sm" style={{ color: "#000000" }}>
+                  <span style={{ color: "#888888" }}>Remise</span>
+                  <span>-{remise.toLocaleString("fr-TN")} DT</span>
+                </div>
+              )}
+
               <Separator />
+
               <div className="flex justify-between text-lg font-bold" style={{ color: "#000000" }}>
                 <span>Total</span>
                 <span>{total.toLocaleString("fr-TN")} DT</span>
@@ -432,7 +435,6 @@ export default function InvoiceDetail() {
             </div>
           </div>
 
-       
           <div className="mt-12 text-center text-xs" style={{ color: "#888888" }}>
             Merci pour votre confiance — {businessName}
           </div>
