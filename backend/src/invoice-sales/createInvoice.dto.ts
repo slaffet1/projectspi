@@ -5,4 +5,5 @@ export class CreateInvoiceDto {
   total_amount: number;
   tax_amount?: number;
   quote_id: number;
+  
 }

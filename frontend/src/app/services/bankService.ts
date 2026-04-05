@@ -1,9 +1,25 @@
 import { api } from './api';
 
 export const bankService = {
-  getBanks: () => api.get('/banks'),
+ getBanks: () => {
+  const activeBusiness = JSON.parse(localStorage.getItem('activeBusiness') || '{}');
 
-  createBank: (data: any) => api.post('/banks', data),
+  return api.get('/banks', {
+    params: {
+      businessId: activeBusiness.id,
+    },
+  });
+},
+
+   createBank: (data: any) => {
+    const activeBusiness = JSON.parse(localStorage.getItem('activeBusiness') || '{}');
+
+    return api.post('/banks', data, {
+      params: {
+        businessId: activeBusiness.id,
+      },
+    });
+  },
 
   updateBank: (id: number, data: any) =>
     api.patch(`/banks/${id}`, data),

@@ -19,6 +19,12 @@ import { EmailService } from '../email/email.service';
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService, private readonly emailService: EmailService) {}
 
+@Get('banks')
+getBanks(
+  @Param('businessId', ParseIntPipe) businessId: number,
+) {
+  return this.invoicesService.getBanksByBusiness(businessId);
+}
 
   @Post()
   create(
@@ -87,4 +93,5 @@ async sendInvoice(
   async deleteInvoice(@Param('id') id: string) {
     return this.invoicesService.deleteInvoice(+id);
   }
+
 }

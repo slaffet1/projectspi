@@ -8,17 +8,18 @@ import { CreateBankDto } from './dto/create-bank.dto';
 export class BanksController {
   constructor(private readonly banksService: BanksService) {}
 
-  @Post()
-  create(@Body() dto: CreateBankDto, @Req() req: any) {
-    const businessId = req.user.businessId;
-    return this.banksService.create(dto, businessId);
-  }
+@Post()
+create(
+  @Body() dto: CreateBankDto,
+  @Query('businessId') businessId: string,
+) {
+  return this.banksService.create(dto, Number(businessId));
+}
 
-  @Get()
-  findAll(@Req() req: any) {
-    const businessId = req.user.businessId;
-    return this.banksService.findAll(businessId);
-  }
+@Get()
+findAll(@Query('businessId') businessId: string) {
+  return this.banksService.findAll(Number(businessId));
+}
 
   @Get('search')
   search(@Query('q') q: string, @Req() req: any) {
