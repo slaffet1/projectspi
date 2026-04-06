@@ -102,6 +102,7 @@ export class DeliveryNotesService {
             },
         });
     }
+    
     async getAll(businessId: number) {
         return this.prisma.delivery_notes.findMany({
             where: {

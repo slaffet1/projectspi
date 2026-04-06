@@ -19,9 +19,10 @@ import { DeliveryNotesService } from './delivery-notes/delivery-notes.service';
 import { BanksModule } from './banks/banks.module';
 import { StockModule } from './stock/stock.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
-import { CreditNotesModule } from './credit-notes/credit-notes.module'; // ✅ TON travail
-import { ExpensesModule } from './expenses/expenses.module';             // ✅ Mariem
-import { CategoriesModule } from './categories/categories.module';       // ✅ Mariem
+import { CreditNotesModule } from './credit-notes/credit-notes.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { CategoriesModule } from './categories/categories.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -41,9 +42,10 @@ import { CategoriesModule } from './categories/categories.module';       // ✅ 
     BanksModule,
     StockModule,
     SuppliersModule,
-    CreditNotesModule,  
-    ExpensesModule,    
-    CategoriesModule, 
+    CreditNotesModule,
+    ExpensesModule,
+    CategoriesModule,
+    TelegramModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
