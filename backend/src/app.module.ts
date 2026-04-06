@@ -21,7 +21,7 @@ import { StockModule } from './stock/stock.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CreditNotesModule } from './credit-notes/credit-notes.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
-
+import { EmployeeModule } from './employees/employee.module';
 
 @Module({
   imports: [
@@ -43,6 +43,7 @@ import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
     SuppliersModule,
     CreditNotesModule,
     PurchaseOrdersModule,
+    EmployeeModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],

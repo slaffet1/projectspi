@@ -61,6 +61,38 @@ model businesses {
   inventory_sessions inventory_sessions[]
   credit_notes       credit_notes[]
   purchase_orders    purchase_orders[]
+  employees          Employee[]
+}
+
+model Employee {
+  id             Int        @id @default(autoincrement())
+  businessId     Int
+  businesses     businesses @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String
+  isHeadOfFamily Boolean    @default(false)
+  childrenCount  Int        @default(0)
+  baseSalary     Float
+  salaryType     String     @default("BRUT") // "BRUT" ou "NET"
+  payslips       Payslip[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  businessesId   Int?
+}
+
+model Payslip {
+  id               Int      @id @default(autoincrement())
+  employeeId       Int
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month            Int
+  year             Int
+  salaireBrut      Float
+  retenueCnss      Float
+  salaireImposable Float
+  retenueIrpp      Float
+  retenueCss       Float
+  salaireNet       Float
+  createdAt        DateTime @default(now())
 }
 
 model clients {
