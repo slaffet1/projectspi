@@ -47,4 +47,5 @@ import { TelegramModule } from './telegram/telegram.module';
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
 })
+
 export class AppModule { }
