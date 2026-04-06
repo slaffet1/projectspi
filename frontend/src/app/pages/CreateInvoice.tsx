@@ -14,8 +14,10 @@ export default function CreateInvoice() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const quoteId = params.get("quoteId");
-const [banks, setBanks] = useState([]);
-const [selectedBank, setSelectedBank] = useState("");
+
+  const [banks, setBanks] = useState([]);
+  const [selectedBank, setSelectedBank] = useState("");
+
   const { activeBusiness } = useBusiness();
   const businessId = activeBusiness?.id;
 
@@ -52,22 +54,18 @@ const [selectedBank, setSelectedBank] = useState("");
       toast.error("Erreur chargement devis");
     }
   };
-useEffect(() => {
-  if (businessId) fetchBanks();
-}, [businessId]);
 
-const fetchBanks = async () => {
-  try {
-    const res = await invoiceService.getBanksByBusiness(businessId);
-    setBanks(res.data);
-  } catch {
-    toast.error("Erreur chargement banques");
-  }
-};
-  const calculateItemTotal = (item) => {
-    const subtotal = item.quantity * item.unitPrice;
-    const tax = subtotal * (item.taxRate / 100);
-    return subtotal + tax;
+  useEffect(() => {
+    if (businessId) fetchBanks();
+  }, [businessId]);
+
+  const fetchBanks = async () => {
+    try {
+      const res = await invoiceService.getBanksByBusiness(businessId);
+      setBanks(res.data);
+    } catch {
+      toast.error("Erreur chargement banques");
+    }
   };
 
   const calculateTotals = () => {
@@ -105,17 +103,19 @@ const fetchBanks = async () => {
       toast.error("La date d'échéance doit être supérieure à aujourd'hui !");
       return;
     }
-    
-if (!selectedBank) {
-  toast.error("Veuillez choisir une banque");
-  return;
-}
+
+    if (!selectedBank) {
+      toast.error("Veuillez choisir une banque");
+      return;
+    }
+
     try {
       const res = await invoiceService.create(businessId, {
         quote_id: Number(quoteId),
         issue_date: invoiceDate,
         due_date: dueDate,
-         bank_id: selectedBank ? Number(selectedBank) : null,
+        bank_id: selectedBank ? Number(selectedBank) : null,
+        total: Number(totals.finalTotal)
       });
 
       toast.success("Facture créée !");
@@ -176,24 +176,8 @@ if (!selectedBank) {
           </div>
         </CardContent>
       </Card>
-<div>
-  <Label>Choisir une banque</Label>
-  <select
-    value={selectedBank}
-    onChange={(e) => setSelectedBank(e.target.value)}
-    className="w-full border rounded p-2"
-    required
-  >
-    <option value="">-- Sélectionner une banque --</option>
-    {banks.map((bank) => (
-      <option key={bank.id} value={bank.id}>
-        {bank.bank_name} ({bank.account_number})
-      </option>
-    ))}
-  </select>
-</div>
-   
-      <Card className="shadow-md rounded-xl border border-gray-200">
+
+      <Card className="rounded-2xl shadow-lg border-0">
         <CardHeader>
           <CardTitle>Bank</CardTitle>
         </CardHeader>
