@@ -11,6 +11,7 @@ export class DeliveryNotesService {
 
 
     async changeStatus(businessId: number, id: number, status: DeliveryStatus) {
+        const today = new Date();
         const delivery = await this.prisma.delivery_notes.findFirst({
             where: {
                 id,
@@ -36,7 +37,7 @@ export class DeliveryNotesService {
         // Only run stock logic when transitioning TO DELIVERED
         if (status === DeliveryStatus.DELIVERED) {
             const quoteDetails = delivery.quotes?.quote_details ?? [];
-            const today = new Date();
+
 
             for (const detail of quoteDetails) {
                 const productId = detail.product_id;
@@ -55,14 +56,14 @@ export class DeliveryNotesService {
                     },
                 });
 
-                
+
                 const warehouseProduct = await this.prisma.warehouse_products.findFirst({
                     where: {
                         product_id: productId,
                         warehouses: { business_id: businessId },
                         quantity: { gt: 0 },
                     },
-                    orderBy: { quantity: 'desc' }, 
+                    orderBy: { quantity: 'desc' },
                 });
 
                 if (warehouseProduct) {
@@ -85,7 +86,13 @@ export class DeliveryNotesService {
                 }
             }
         }
-
+        const invoice = delivery.quotes?.invoices?.[0];
+        if (invoice && invoice.status !== 'paid') {
+            await this.prisma.invoices.update({
+                where: { id: invoice.id },
+                data: { status: 'paid' },
+            });
+        }
         // Finally update the status
         return this.prisma.delivery_notes.update({
             where: { id },

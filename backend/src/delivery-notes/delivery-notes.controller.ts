@@ -7,13 +7,16 @@ import {
   Param,
   Body,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { DeliveryNotesService } from './delivery-notes.service';
 import { CreateDeliveryNoteDto } from './dto/createdelivery-notes.dto';
 import { UpdateDeliveryNoteDto } from './dto/updatedelivery-note.dto';
 import { DeliveryStatus } from '@prisma/client';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('api/businesses/:businessId/delivery-notes')
+@UseGuards(AuthGuard('jwt'))
 export class DeliveryNotesController {
   constructor(private readonly deliveryNotesService: DeliveryNotesService) { }
 
