@@ -19,8 +19,9 @@ import { DeliveryNotesService } from './delivery-notes/delivery-notes.service';
 import { BanksModule } from './banks/banks.module';
 import { StockModule } from './stock/stock.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
-import { CreditNotesModule } from './credit-notes/credit-notes.module';
-
+import { CreditNotesModule } from './credit-notes/credit-notes.module'; // ✅ TON travail
+import { ExpensesModule } from './expenses/expenses.module';             // ✅ Mariem
+import { CategoriesModule } from './categories/categories.module';       // ✅ Mariem
 
 @Module({
   imports: [
@@ -40,9 +41,11 @@ import { CreditNotesModule } from './credit-notes/credit-notes.module';
     BanksModule,
     StockModule,
     SuppliersModule,
-    CreditNotesModule
+    CreditNotesModule,  
+    ExpensesModule,    
+    CategoriesModule, 
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
 })
-export class AppModule { }
+export class AppModule {}
