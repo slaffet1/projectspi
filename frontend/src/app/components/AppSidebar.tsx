@@ -23,6 +23,8 @@ import {
   ArrowLeftRight,
   ClipboardCheck,
   Unplug,
+  Truck,
+  RotateCcw,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -51,10 +53,11 @@ const navGroups: NavGroup[] = [
     label: "Sales",
     items: [
       { title: "Quotes", href: "/app/quotes", icon: FileSignature },
-      { title: "Invoices", href: "/app/invoices", icon: FileText },
-      { title: "Delivery Notes", href: "/app/deliveryNotes", icon: FileText },
+      { title: "Invoices", href: "/app/invoices", icon: Receipt },
+      { title: "Delivery Notes", href: "/app/delivery-notes", icon: Truck },
+      { title: "Credit Notes", href: "/app/credit-notes", icon: RotateCcw },
       { title: "Clients", href: "/app/clients", icon: Users },
-    ],
+    ]
   },
   {
     label: "Purchases",
@@ -146,9 +149,11 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <span className="text-lg font-bold text-white">B</span>
             </div>
-            <span className="text-lg font-semibold text-foreground">
-              Business<span className="text-primary">Manager</span>
-            </span>
+            <Link to="/onboarding">
+              <span className="text-lg font-semibold text-foreground">
+                Business<span className="text-primary">Manager</span>
+              </span>
+            </Link>
           </div>
         </div>
 

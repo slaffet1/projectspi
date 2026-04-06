@@ -9,15 +9,18 @@ import {
   Patch,
   BadRequestException,
   Delete,
+  Query,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { InvoicesService } from '../invoice/invoice.service';
 import { EmailService } from '../email/email.service';
-
+import { GeminiService } from '../gemini/gemini.service';
 @Controller('api/businesses/:businessId/invoices')
 @UseGuards(AuthGuard('jwt'))
 export class InvoicesController {
-  constructor(private readonly invoicesService: InvoicesService, private readonly emailService: EmailService) {}
+  constructor(private readonly invoicesService: InvoicesService, private readonly emailService: EmailService,private readonly geminiService: GeminiService,) {}
 
 @Get('banks')
 getBanks(
@@ -39,7 +42,20 @@ getBanks(
     return this.invoicesService.findAll(businessId);
   }
 
-
+@Get('translate-labels')
+  async translateLabels(
+    @Param('businessId', ParseIntPipe) businessId: number,
+    @Query('language') language: string = 'fr',
+  ) {
+    try {
+      return await this.geminiService.translateInvoiceLabels(language);
+    } catch (err) {
+      throw new HttpException(
+        'Erreur lors de la traduction des labels',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
   @Get(':id')
   findOne(
     @Param('businessId', ParseIntPipe) businessId: number,

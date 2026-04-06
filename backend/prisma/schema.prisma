@@ -59,6 +59,7 @@ model businesses {
   join_requests      join_requests[]      @relation("BusinessJoinRequests")
   warehouses         warehouses[]
   inventory_sessions inventory_sessions[]
+  credit_notes  credit_notes[]
 }
 
 model clients {
@@ -75,6 +76,7 @@ model clients {
   updated_at  DateTime?   @default(now()) @db.Timestamp(6)
   businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   quotes      quotes[]
+  credit_notes  credit_notes[]
 }
 
 model commande_notes {
@@ -120,6 +122,7 @@ model delivery_notes {
   quote_id        Int?
   status          DeliveryStatus @default(PENDING)
   quotes          quotes?        @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  credit_notes  credit_notes[]
 }
 
 enum DeliveryStatus {
@@ -176,6 +179,7 @@ model invoices {
   quote_id       Int?
   created_at     DateTime? @default(now()) @db.Timestamp(6)
   quotes         quotes?   @relation(fields: [quote_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  credit_notes  credit_notes[]
 }
 
 model mouvements {
@@ -219,6 +223,7 @@ model products {
   quote_details      quote_details[]
   warehouse_products warehouse_products[]
   inventory_counts   inventory_counts[]
+  credit_note_items credit_note_items[]
 }
 
 model quote_details {
@@ -391,11 +396,11 @@ model credit_notes {
   total_amount     Decimal           @db.Decimal(15, 2)
   status           CreditNoteStatus  @default(DRAFT)
 
-  // Source: linked to invoice OR delivery note (one of them)
+  
   invoice_id       Int?
   delivery_note_id Int?
 
-  // Always linked to a client directly for easy querying
+
   client_id        Int?
   business_id      Int?
 
