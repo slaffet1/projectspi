@@ -33,6 +33,7 @@ import InventorySessions from "@/app/pages/InventorySessions";
 import SupplierForm from "./pages/SupplierForm";
 import Suppliers from "./pages/Suppliers";
 import CreditNotes from "./pages/creditNotes";
+import StockImport from "@/app/pages/StockImport"; 
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -74,6 +75,7 @@ export const router = createBrowserRouter([
       { path: "stock/levels", Component: StockLevels },
       { path: "stock/movements", Component: StockMovements },
       { path: "stock/inventory", Component: InventorySessions },
+      { path: "stock/import", Component: StockImport }, 
       { path: "/app/Suppliers/new", Component: SupplierForm },
       { path: "/app/suppliers", Component: Suppliers },
       { path: "/app/suppliers/:id/edit", Component: SupplierForm },

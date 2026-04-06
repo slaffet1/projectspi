@@ -4,16 +4,18 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { stockService } from "@/app/services/stockService";
+import { useBusiness } from "@/app/context/BusinessContext";
 
 export default function StockLevels() {
   const { toast } = useToast();
+  const { activeBusiness } = useBusiness();
   const [levels, setLevels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   const fetchLevels = async () => {
     try {
-      const res = await stockService.getStockLevels();
+      const res = await stockService.getStockLevels(activeBusiness!.id);
       setLevels(res.data);
     } catch {
       toast({ title: "Error", description: "Failed to load stock levels", variant: "destructive" });
@@ -22,7 +24,9 @@ export default function StockLevels() {
     }
   };
 
-  useEffect(() => { fetchLevels(); }, []);
+  useEffect(() => {
+    if (activeBusiness?.id) fetchLevels();
+  }, [activeBusiness?.id]);
 
   const filtered = levels.filter(l =>
     l.products?.name?.toLowerCase().includes(search.toLowerCase())

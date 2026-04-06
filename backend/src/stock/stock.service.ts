@@ -1,8 +1,13 @@
+/// <reference types="multer" />
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { AssignProductDto } from './dto/assign-product.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
+import * as ExcelJS from 'exceljs';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ImportReportDto } from './dto/import-stock.dto';
 
 @Injectable()
 export class StockService {
@@ -38,7 +43,6 @@ export class StockService {
 
   // ── US-81: Assign Product to Warehouse ─────────────────────────
   async assignProduct(warehouseId: number, dto: AssignProductDto) {
-    // 1. Upsert dans warehouse_products
     const result = await this.prisma.warehouse_products.upsert({
       where: {
         warehouse_id_product_id: {
@@ -54,14 +58,12 @@ export class StockService {
       },
     });
 
-    // 2. Agréger la quantité totale sur tous les warehouses du produit
     const totalQty = await this.prisma.warehouse_products.aggregate({
       where: { product_id: dto.product_id },
       _sum: { quantity: true },
     });
     const total = totalQty._sum.quantity ?? 0;
 
-    // 3. Sync inventaires (upsert)
     const existing = await this.prisma.inventaires.findFirst({
       where: { product_id: dto.product_id },
     });
@@ -101,7 +103,6 @@ export class StockService {
 
   // ── US-83: Manual Stock Movement ───────────────────────────────
   async createMovement(dto: StockMovementDto, businessId: number) {
-    // Create movement record
     const movement = await this.prisma.mouvements.create({
       data: {
         product_id: dto.product_id,
@@ -112,7 +113,6 @@ export class StockService {
       },
     });
 
-    // Update inventory
     const existing = await this.prisma.inventaires.findFirst({
       where: { product_id: dto.product_id },
     });
@@ -208,9 +208,12 @@ export class StockService {
 
     return this.prisma.inventory_counts.upsert({
       where: {
-        id: (await this.prisma.inventory_counts.findFirst({
-          where: { session_id: sessionId, product_id: productId },
-        }))?.id ?? 0,
+        id:
+          (
+            await this.prisma.inventory_counts.findFirst({
+              where: { session_id: sessionId, product_id: productId },
+            })
+          )?.id ?? 0,
       },
       update: { physical_quantity: physicalQty, variance },
       create: {
@@ -245,7 +248,10 @@ export class StockService {
       if (existing) {
         await this.prisma.inventaires.update({
           where: { id: existing.id },
-          data: { quantity_available: count.physical_quantity, last_updated: new Date() },
+          data: {
+            quantity_available: count.physical_quantity,
+            last_updated: new Date(),
+          },
         });
       }
 
@@ -286,5 +292,195 @@ export class StockService {
       variance: c.variance,
       adjusted: c.adjusted,
     }));
+  }
+
+  // ── Import from Excel ───────────────────────────────────────────
+  async importFromExcel(
+    file: Express.Multer.File,
+    businessId: number,
+    userId?: number,
+  ): Promise<ImportReportDto> {
+    const importId = `import_${Date.now()}`;
+    const report: ImportReportDto = {
+      import_id: importId,
+      business_id: businessId,
+      user_id: userId,
+      file_name: file.originalname,
+      imported_at: new Date().toISOString(),
+      total_rows: 0,
+      success_rows: 0,
+      error_rows: 0,
+      status: 'success',
+      errors: [],
+      summary: {
+        products_created: 0,
+        products_updated: 0,
+        stock_added: 0,
+      },
+    };
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(file.buffer as any);
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        throw new Error('No worksheet found in Excel file');
+      }
+
+      const rows = worksheet.getRows(2, worksheet.rowCount - 1) || [];
+      report.total_rows = rows.length;
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 2;
+
+        try {
+          const name = row.getCell(1).value?.toString().trim() ?? '';
+          const reference = row.getCell(2).value?.toString().trim() ?? '';
+          const unit_price = parseFloat(
+            row.getCell(3).value?.toString() || '0',
+          );
+          const cost_price = row.getCell(4).value
+  ? parseFloat(row.getCell(4).value?.toString() ?? '0')  
+  : null;
+
+const tax_rate = row.getCell(5).value
+  ? parseFloat(row.getCell(5).value?.toString() ?? '0')
+  : 0;
+          const category = row.getCell(6).value?.toString().trim() || null;
+          const unit = row.getCell(7).value?.toString().trim() || 'piece';
+          const quantity = parseInt(row.getCell(8).value?.toString() || '0');
+          const warehouseName = row.getCell(9).value?.toString().trim();
+
+          if (!name) {
+            report.errors.push({
+              row: rowNumber,
+              error: 'Product name is required',
+            });
+            report.error_rows++;
+            continue;
+          }
+
+          if (isNaN(unit_price) || unit_price < 0) {
+            report.errors.push({
+              row: rowNumber,
+              product: name,
+              error: 'Invalid unit_price',
+            });
+            report.error_rows++;
+            continue;
+          }
+
+          if (isNaN(quantity) || quantity < 0) {
+            report.errors.push({
+              row: rowNumber,
+              product: name,
+              error: 'Invalid quantity',
+            });
+            report.error_rows++;
+            continue;
+          }
+
+          let product = await this.prisma.products.findFirst({
+            where: {
+              business_id: businessId,
+              name: name,
+            },
+          });
+
+          if (product) {
+            await this.prisma.products.update({
+              where: { id: product.id },
+              data: {
+                unit_price,
+                cost_price,
+                tax_rate,
+                category,
+                unit,
+                reference: reference || undefined,
+              },
+            });
+            report.summary.products_updated++;
+          } else {
+            product = await this.prisma.products.create({
+              data: {
+                name,
+                reference: reference || undefined,
+                unit_price,
+                cost_price,
+                tax_rate,
+                category,
+                unit,
+                business_id: businessId,
+              },
+            });
+            report.summary.products_created++;
+          }
+
+          if (warehouseName && quantity > 0) {
+            const warehouse = await this.prisma.warehouses.findFirst({
+              where: {
+                business_id: businessId,
+                name: warehouseName,
+              },
+            });
+
+            if (!warehouse) {
+              report.errors.push({
+                row: rowNumber,
+                product: name,
+                warehouse: warehouseName,
+                error: `Warehouse '${warehouseName}' not found`,
+              });
+              report.error_rows++;
+              continue;
+            }
+
+            await this.assignProduct(warehouse.id, {
+              product_id: product.id,
+              quantity: quantity,
+            });
+
+            report.summary.stock_added += quantity;
+          }
+
+          report.success_rows++;
+        } catch (err: any) {
+          report.errors.push({
+            row: rowNumber,
+            error: err.message || 'Unknown error',
+          });
+          report.error_rows++;
+        }
+      }
+
+      if (report.error_rows === 0) {
+        report.status = 'success';
+      } else if (report.success_rows === 0) {
+        report.status = 'failed';
+      } else {
+        report.status = 'partial';
+      }
+
+      const reportDir = path.join(
+        process.cwd(),
+        'uploads',
+        'imports',
+        `business_${businessId}`,
+      );
+      if (!fs.existsSync(reportDir)) {
+        fs.mkdirSync(reportDir, { recursive: true });
+      }
+
+      const reportPath = path.join(reportDir, `${importId}.json`);
+      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+
+      return report;
+    } catch (error: any) {
+      report.status = 'failed';
+      report.errors.push({ row: 0, error: error.message });
+      return report;
+    }
   }
 }

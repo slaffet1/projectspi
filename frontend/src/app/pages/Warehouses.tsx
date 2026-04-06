@@ -28,7 +28,7 @@ export default function Warehouses() {
 
   const fetchWarehouses = async () => {
     try {
-      const res = await stockService.getWarehouses();
+      const res = await stockService.getWarehouses(activeBusiness!.id);
       setWarehouses(res.data);
     } catch {
       toast({ title: "Error", description: "Failed to load warehouses", variant: "destructive" });
@@ -37,12 +37,14 @@ export default function Warehouses() {
     }
   };
 
-  useEffect(() => { fetchWarehouses(); }, []);
+  useEffect(() => {
+    if (activeBusiness?.id) fetchWarehouses();
+  }, [activeBusiness?.id]);
 
   const handleCreate = async () => {
     setFormLoading(true);
     try {
-      await stockService.createWarehouse(form);
+      await stockService.createWarehouse(activeBusiness!.id, form);
       toast({ title: "Success 🎉", description: "Warehouse created" });
       setIsCreateOpen(false);
       setForm(emptyForm);
@@ -57,7 +59,7 @@ export default function Warehouses() {
   const handleUpdate = async () => {
     setFormLoading(true);
     try {
-      await stockService.updateWarehouse(selected.id, form);
+      await stockService.updateWarehouse(activeBusiness!.id, selected.id, form);
       toast({ title: "Success ✨", description: "Warehouse updated" });
       setIsEditOpen(false);
       setForm(emptyForm);
@@ -71,7 +73,7 @@ export default function Warehouses() {
 
   const handleDelete = async () => {
     try {
-      await stockService.deleteWarehouse(selected.id);
+      await stockService.deleteWarehouse(activeBusiness!.id, selected.id);
       toast({ title: "Deleted 🗑", description: "Warehouse removed" });
       setIsDeleteOpen(false);
       fetchWarehouses();
@@ -96,7 +98,7 @@ export default function Warehouses() {
   const handleAssign = async () => {
     setFormLoading(true);
     try {
-      await stockService.assignProduct(selected.id, {
+      await stockService.assignProduct(activeBusiness!.id, selected.id, {
         product_id: Number(assignForm.product_id),
         quantity: Number(assignForm.quantity),
       });
@@ -195,7 +197,6 @@ export default function Warehouses() {
                 )}
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
-                  {/* ✅ Utilise openAssign au lieu de setIsAssignOpen directement */}
                   <Button variant="outline" size="sm" onClick={() => openAssign(w)}>
                     <Package className="h-3 w-3 mr-1" /> Assign Product
                   </Button>
@@ -239,7 +240,7 @@ export default function Warehouses() {
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Assign Product Modal — Select au lieu d'Input ID */}
+      {/* Assign Product Modal */}
       <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
         <DialogContent>
           <DialogHeader>

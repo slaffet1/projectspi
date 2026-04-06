@@ -33,7 +33,7 @@ export default function StockMovements() {
 
   const fetchMovements = async () => {
     try {
-      const res = await stockService.getMovements();
+      const res = await stockService.getMovements(activeBusiness!.id);
       setMovements(res.data);
     } catch {
       toast({ title: "Error", description: "Failed to load movements", variant: "destructive" });
@@ -42,7 +42,9 @@ export default function StockMovements() {
     }
   };
 
-  useEffect(() => { fetchMovements(); }, []);
+  useEffect(() => {
+    if (activeBusiness?.id) fetchMovements();
+  }, [activeBusiness?.id]);
 
   // ── Ouvre le modal New Movement + charge les produits ──────────
   const openCreateModal = async () => {
@@ -62,7 +64,7 @@ export default function StockMovements() {
     try {
       const [prodRes, whRes] = await Promise.all([
         productsService.getProducts(activeBusiness!.id),
-        stockService.getWarehouses(),
+        stockService.getWarehouses(activeBusiness!.id),
       ]);
       setProducts(prodRes.data);
       setWarehouses(whRes.data);
@@ -75,7 +77,7 @@ export default function StockMovements() {
   const handleCreate = async () => {
     setFormLoading(true);
     try {
-      await stockService.createMovement({
+      await stockService.createMovement(activeBusiness!.id, {
         product_id: Number(form.product_id),
         quantity: Number(form.quantity),
         type: form.type,
@@ -95,7 +97,7 @@ export default function StockMovements() {
   const handleTransfer = async () => {
     setFormLoading(true);
     try {
-      await stockService.transferStock({
+      await stockService.transferStock(activeBusiness!.id, {
         fromWarehouseId: Number(transferForm.fromWarehouseId),
         toWarehouseId: Number(transferForm.toWarehouseId),
         productId: Number(transferForm.productId),
@@ -239,7 +241,7 @@ export default function StockMovements() {
         </Card>
       )}
 
-      {/* ✅ Create Modal — Select produit */}
+      {/* Create Modal */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => { if (!open) { setIsCreateOpen(false); setForm(emptyForm); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>New Stock Movement</DialogTitle></DialogHeader>
@@ -301,7 +303,7 @@ export default function StockMovements() {
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Transfer Modal — Select warehouses + produit */}
+      {/* Transfer Modal */}
       <Dialog open={isTransferOpen} onOpenChange={(open) => { if (!open) { setIsTransferOpen(false); setTransferForm(emptyTransfer); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Transfer Stock</DialogTitle></DialogHeader>

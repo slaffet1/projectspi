@@ -29,7 +29,7 @@ export default function InventorySessions() {
 
   const fetchSessions = async () => {
     try {
-      const res = await stockService.getSessions();
+      const res = await stockService.getSessions(activeBusiness!.id);
       setSessions(res.data);
     } catch {
       toast({ title: "Error", description: "Failed to load sessions", variant: "destructive" });
@@ -38,7 +38,9 @@ export default function InventorySessions() {
     }
   };
 
-  useEffect(() => { fetchSessions(); }, []);
+  useEffect(() => {
+    if (activeBusiness?.id) fetchSessions();
+  }, [activeBusiness?.id]);
 
   // ── Ouvre le modal Record Count + charge les produits ──────────
   const openCountModal = async (session: any) => {
@@ -57,7 +59,7 @@ export default function InventorySessions() {
     if (!sessionName) return;
     setFormLoading(true);
     try {
-      await stockService.createSession(sessionName);
+      await stockService.createSession(activeBusiness!.id, sessionName);
       toast({ title: "Success 🎉", description: "Inventory session created" });
       setIsCreateOpen(false);
       setSessionName("");
@@ -72,7 +74,7 @@ export default function InventorySessions() {
   const handleRecordCount = async () => {
     setFormLoading(true);
     try {
-      await stockService.recordCount(selected.id, {
+      await stockService.recordCount(activeBusiness!.id, selected.id, {
         product_id: Number(countForm.product_id),
         physical_quantity: Number(countForm.physical_quantity),
       });
@@ -89,7 +91,7 @@ export default function InventorySessions() {
 
   const handleAdjust = async (sessionId: number) => {
     try {
-      await stockService.adjustInventory(sessionId);
+      await stockService.adjustInventory(activeBusiness!.id, sessionId);
       toast({ title: "Success ✨", description: "Inventory adjusted and session closed" });
       fetchSessions();
     } catch {
@@ -99,7 +101,7 @@ export default function InventorySessions() {
 
   const handleViewReport = async (session: any) => {
     try {
-      const res = await stockService.getVarianceReport(session.id);
+      const res = await stockService.getVarianceReport(activeBusiness!.id, session.id);
       setReport(res.data);
       setSelected(session);
       setIsReportOpen(true);
@@ -261,7 +263,6 @@ export default function InventorySessions() {
                   <div className="flex gap-2 pt-2">
                     {session.status === "open" && (
                       <>
-                        {/* ✅ openCountModal au lieu de setIsCountOpen directement */}
                         <Button size="sm" variant="outline" onClick={() => openCountModal(session)}>
                           <Plus className="h-3 w-3 mr-1" /> Record Count
                         </Button>
@@ -303,7 +304,7 @@ export default function InventorySessions() {
         </DialogContent>
       </Dialog>
 
-      {/* ✅ Record Count Modal — Select produit */}
+      {/* Record Count Modal */}
       <Dialog open={isCountOpen} onOpenChange={(open) => { if (!open) { setIsCountOpen(false); setCountForm({ product_id: "", physical_quantity: "" }); } }}>
         <DialogContent>
           <DialogHeader>

@@ -25,6 +25,7 @@ import {
   Unplug,
   Truck,
   RotateCcw,
+  FileUp
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -73,6 +74,7 @@ const navGroups: NavGroup[] = [
       { title: "Stock Levels", href: "/app/stock/levels", icon: BarChart3 },
       { title: "Movements", href: "/app/stock/movements", icon: ArrowLeftRight },
       { title: "Inventory", href: "/app/stock/inventory", icon: ClipboardCheck },
+      { title: "Import Excel", href: "/app/stock/import", icon: FileUp },
       { title: "Suppliers", href: "/app/suppliers", icon: Unplug },
 
     ],

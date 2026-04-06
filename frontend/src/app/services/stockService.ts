@@ -1,34 +1,70 @@
 import { api } from './api';
 
 export const stockService = {
-  // Warehouses
-  getWarehouses: () => api.get('/stock/warehouses'),
-  createWarehouse: (data: any) => api.post('/stock/warehouses', data),
-  updateWarehouse: (id: number, data: any) => api.patch(`/stock/warehouses/${id}`, data),
-  deleteWarehouse: (id: number) => api.delete(`/stock/warehouses/${id}`),
+  // ── Warehouses ──────────────────────────────────────────────────
+  getWarehouses: (businessId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/warehouses`),
 
-  // Assign product to warehouse
-  assignProduct: (warehouseId: number, data: any) => api.post(`/stock/warehouses/${warehouseId}/products`, data),
-  removeProduct: (warehouseId: number, productId: number) => api.delete(`/stock/warehouses/${warehouseId}/products/${productId}`),
+  createWarehouse: (businessId: number, data: any) =>
+    api.post(`/api/businesses/${businessId}/stock/warehouses`, data),
 
-  // Stock levels
-  getStockLevels: () => api.get('/stock/levels'),
+  updateWarehouse: (businessId: number, id: number, data: any) =>
+    api.patch(`/api/businesses/${businessId}/stock/warehouses/${id}`, data),
 
-  // Movements
-  createMovement: (data: any) => api.post('/stock/movements', data),
-  getMovements: () => api.get('/stock/movements'),
+  deleteWarehouse: (businessId: number, id: number) =>
+    api.delete(`/api/businesses/${businessId}/stock/warehouses/${id}`),
 
-  // Transfer
-  transferStock: (data: any) => api.post('/stock/transfer', data),
+  // ── Assign product to warehouse ─────────────────────────────────
+  assignProduct: (businessId: number, warehouseId: number, data: any) =>
+    api.post(`/api/businesses/${businessId}/stock/warehouses/${warehouseId}/products`, data),
 
-  // Inventory sessions
-  getSessions: () => api.get('/stock/inventory/sessions'),
-  createSession: (name: string) => api.post('/stock/inventory/sessions', { name }),
-  getSessionCounts: (sessionId: number) => api.get(`/stock/inventory/sessions/${sessionId}/counts`),
-  recordCount: (sessionId: number, data: any) => api.post(`/stock/inventory/sessions/${sessionId}/counts`, data),
-  adjustInventory: (sessionId: number) => api.post(`/stock/inventory/sessions/${sessionId}/adjust`, {}),
-  getVarianceReport: (sessionId: number) => api.get(`/stock/inventory/sessions/${sessionId}/report`),
+  removeProduct: (businessId: number, warehouseId: number, productId: number) =>
+    api.delete(`/api/businesses/${businessId}/stock/warehouses/${warehouseId}/products/${productId}`),
 
-  // History
-  getAdjustmentHistory: () => api.get('/stock/inventory/history'),
+  // ── Stock Levels ────────────────────────────────────────────────
+  getStockLevels: (businessId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/levels`),
+
+  // ── Movements ───────────────────────────────────────────────────
+  createMovement: (businessId: number, data: any) =>
+    api.post(`/api/businesses/${businessId}/stock/movements`, data),
+
+  getMovements: (businessId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/movements`),
+
+  // ── Transfer ────────────────────────────────────────────────────
+  transferStock: (businessId: number, data: any) =>
+    api.post(`/api/businesses/${businessId}/stock/transfer`, data),
+
+  // ── Inventory Sessions ──────────────────────────────────────────
+  getSessions: (businessId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/inventory/sessions`),
+
+  createSession: (businessId: number, name: string) =>
+    api.post(`/api/businesses/${businessId}/stock/inventory/sessions`, { name }),
+
+  getSessionCounts: (businessId: number, sessionId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/inventory/sessions/${sessionId}/counts`),
+
+  recordCount: (businessId: number, sessionId: number, data: any) =>
+    api.post(`/api/businesses/${businessId}/stock/inventory/sessions/${sessionId}/counts`, data),
+
+  adjustInventory: (businessId: number, sessionId: number) =>
+    api.post(`/api/businesses/${businessId}/stock/inventory/sessions/${sessionId}/adjust`, {}),
+
+  getVarianceReport: (businessId: number, sessionId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/inventory/sessions/${sessionId}/report`),
+
+  // ── History ─────────────────────────────────────────────────────
+  getAdjustmentHistory: (businessId: number) =>
+    api.get(`/api/businesses/${businessId}/stock/inventory/history`),
+  importFromExcel: (businessId: number, file: File, userId?: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(
+      `/api/businesses/${businessId}/stock/import${userId ? `?userId=${userId}` : ''}`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+  },
 };

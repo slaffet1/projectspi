@@ -1,41 +1,50 @@
+/// <reference types="multer" />
 import {
   Controller, Get, Post, Patch, Delete,
-  Body, Param, ParseIntPipe, Req, UseGuards
+  Body, Param, ParseIntPipe, UseGuards,
+  UploadedFile, UseInterceptors, Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { StockService } from './stock.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { AssignProductDto } from './dto/assign-product.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
 
 @UseGuards(AuthGuard('jwt'))
-@Controller('stock')
+@Controller('api/businesses/:businessId/stock')
 export class StockController {
   constructor(private readonly stockService: StockService) {}
 
   // ── Warehouses ──────────────────────────────────────────────────
   @Post('warehouses')
-  createWarehouse(@Body() dto: CreateWarehouseDto, @Req() req: any) {
-    return this.stockService.createWarehouse(dto, req.user.businessId);
+  createWarehouse(
+    @Body() dto: CreateWarehouseDto,
+    @Param('businessId', ParseIntPipe) businessId: number,
+  ) {
+    return this.stockService.createWarehouse(dto, businessId);
   }
 
   @Get('warehouses')
-  getWarehouses(@Req() req: any) {
-    return this.stockService.getWarehouses(req.user.businessId);
+  getWarehouses(@Param('businessId', ParseIntPipe) businessId: number) {
+    return this.stockService.getWarehouses(businessId);
   }
 
   @Patch('warehouses/:id')
   updateWarehouse(
     @Param('id', ParseIntPipe) id: number,
+    @Param('businessId', ParseIntPipe) businessId: number,
     @Body() dto: CreateWarehouseDto,
-    @Req() req: any,
   ) {
-    return this.stockService.updateWarehouse(id, dto, req.user.businessId);
+    return this.stockService.updateWarehouse(id, dto, businessId);
   }
 
   @Delete('warehouses/:id')
-  deleteWarehouse(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
-    return this.stockService.deleteWarehouse(id, req.user.businessId);
+  deleteWarehouse(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('businessId', ParseIntPipe) businessId: number,
+  ) {
+    return this.stockService.deleteWarehouse(id, businessId);
   }
 
   // ── Assign Product to Warehouse ─────────────────────────────────
@@ -57,25 +66,33 @@ export class StockController {
 
   // ── Stock Levels ────────────────────────────────────────────────
   @Get('levels')
-  getStockLevels(@Req() req: any) {
-    return this.stockService.getStockLevels(req.user.businessId);
+  getStockLevels(@Param('businessId', ParseIntPipe) businessId: number) {
+    return this.stockService.getStockLevels(businessId);
   }
 
   // ── Stock Movements ─────────────────────────────────────────────
   @Post('movements')
-  createMovement(@Body() dto: StockMovementDto, @Req() req: any) {
-    return this.stockService.createMovement(dto, req.user.businessId);
+  createMovement(
+    @Body() dto: StockMovementDto,
+    @Param('businessId', ParseIntPipe) businessId: number,
+  ) {
+    return this.stockService.createMovement(dto, businessId);
   }
 
   @Get('movements')
-  getMovementHistory(@Req() req: any) {
-    return this.stockService.getMovementHistory(req.user.businessId);
+  getMovementHistory(@Param('businessId', ParseIntPipe) businessId: number) {
+    return this.stockService.getMovementHistory(businessId);
   }
 
   // ── Transfer Stock ──────────────────────────────────────────────
   @Post('transfer')
   transferStock(
-    @Body() body: { fromWarehouseId: number; toWarehouseId: number; productId: number; quantity: number },
+    @Body() body: {
+      fromWarehouseId: number;
+      toWarehouseId: number;
+      productId: number;
+      quantity: number;
+    },
   ) {
     return this.stockService.transferStock(
       body.fromWarehouseId,
@@ -87,13 +104,16 @@ export class StockController {
 
   // ── Inventory Sessions ──────────────────────────────────────────
   @Post('inventory/sessions')
-  createSession(@Body('name') name: string, @Req() req: any) {
-    return this.stockService.createInventorySession(name, req.user.businessId);
+  createSession(
+    @Body('name') name: string,
+    @Param('businessId', ParseIntPipe) businessId: number,
+  ) {
+    return this.stockService.createInventorySession(name, businessId);
   }
 
   @Get('inventory/sessions')
-  getSessions(@Req() req: any) {
-    return this.stockService.getInventorySessions(req.user.businessId);
+  getSessions(@Param('businessId', ParseIntPipe) businessId: number) {
+    return this.stockService.getInventorySessions(businessId);
   }
 
   @Get('inventory/sessions/:id/counts')
@@ -106,7 +126,11 @@ export class StockController {
     @Param('id', ParseIntPipe) sessionId: number,
     @Body() body: { product_id: number; physical_quantity: number },
   ) {
-    return this.stockService.recordCount(sessionId, body.product_id, body.physical_quantity);
+    return this.stockService.recordCount(
+      sessionId,
+      body.product_id,
+      body.physical_quantity,
+    );
   }
 
   @Post('inventory/sessions/:id/adjust')
@@ -116,13 +140,28 @@ export class StockController {
 
   // ── Adjustment History ──────────────────────────────────────────
   @Get('inventory/history')
-  getAdjustmentHistory(@Req() req: any) {
-    return this.stockService.getAdjustmentHistory(req.user.businessId);
+  getAdjustmentHistory(@Param('businessId', ParseIntPipe) businessId: number) {
+    return this.stockService.getAdjustmentHistory(businessId);
   }
 
   // ── Variance Report ─────────────────────────────────────────────
   @Get('inventory/sessions/:id/report')
   getVarianceReport(@Param('id', ParseIntPipe) sessionId: number) {
     return this.stockService.getVarianceReport(sessionId);
+  }
+
+  // ── Import Excel ────────────────────────────────────────────────
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  importFromExcel(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('businessId', ParseIntPipe) businessId: number,
+    @Query('userId') userId?: string,
+  ) {
+    return this.stockService.importFromExcel(
+      file,
+      businessId,
+      userId ? parseInt(userId) : undefined,
+    );
   }
 }
