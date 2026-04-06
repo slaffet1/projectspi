@@ -20,6 +20,7 @@ import { BanksModule } from './banks/banks.module';
 import { StockModule } from './stock/stock.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CreditNotesModule } from './credit-notes/credit-notes.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 
 @Module({
@@ -40,7 +41,8 @@ import { CreditNotesModule } from './credit-notes/credit-notes.module';
     BanksModule,
     StockModule,
     SuppliersModule,
-    CreditNotesModule
+    CreditNotesModule,
+    TelegramModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],

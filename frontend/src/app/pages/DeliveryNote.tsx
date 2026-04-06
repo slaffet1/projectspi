@@ -88,67 +88,209 @@ function safeArray(res: any): any[] {
 function printDeliveryNote(note: DeliveryNote) {
     const client = note.quotes?.clients;
     const invoice = note.quotes?.invoices?.[0];
-    const win = window.open("", "_blank", "width=800,height=900");
+
+    const win = window.open("", "_blank", "width=900,height=1000");
     if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/>
-    <title>Delivery Note - ${note.delivery_number}</title>
-    <style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:40px}
-      .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;padding-bottom:20px;border-bottom:2px solid #e5e7eb}
-      .header h1{font-size:22px;font-weight:700}
-      .header p{font-size:13px;color:#6b7280;margin-top:4px}
-      .badge{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;padding:4px 14px;border-radius:999px;font-size:13px;font-weight:600}
-      .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin:24px 0 8px}
-      .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-      .info-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px}
-      .info-box .label{font-size:11px;color:#9ca3af;margin-bottom:3px}
-      .info-box .value{font-size:14px;font-weight:600}
-      .total-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-top:20px}
-      .total-box .label{font-size:13px;color:#15803d;font-weight:500}
-      .total-box .amount{font-size:26px;font-weight:700;color:#15803d}
-      .client-block{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden}
-      .client-row{padding:10px 14px;font-size:13px;border-bottom:1px solid #f3f4f6;display:flex;gap:12px}
-      .client-row:last-child{border-bottom:none}
-      .row-label{color:#9ca3af;min-width:120px;font-size:12px}
-      .row-value{font-weight:500}
-      .invoice-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-      .footer{margin-top:48px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
-    </style>
-  </head><body>
-    <div class="header">
-      <div><h1>Delivery Note</h1><p>Generated on ${new Date().toLocaleDateString("en-GB")}</p></div>
-      <div><span class="badge">${note.delivery_number}</span></div>
-    </div>
-    <div class="section-title">Delivery Information</div>
-    <div class="info-grid">
-      <div class="info-box"><div class="label">Delivery Date</div><div class="value">${new Date(note.delivery_date).toLocaleDateString("en-GB")}</div></div>
-      <div class="info-box"><div class="label">Linked Quote</div><div class="value">${note.quotes?.quote_id ?? "—"}</div></div>
-    </div>
-    ${note.quotes?.total_amount !== undefined ? `<div class="total-box"><span class="label">Total Amount (quote)</span><span class="amount">${Number(note.quotes.total_amount).toLocaleString("en")} DT</span></div>` : ""}
-    ${client ? `
-    <div class="section-title">Client Information</div>
-    <div class="client-block">
-      <div class="client-row"><span class="row-label">Name</span><span class="row-value">${client.name}</span></div>
-      ${client.email ? `<div class="client-row"><span class="row-label">Email</span><span class="row-value">${client.email}</span></div>` : ""}
-      ${client.phone ? `<div class="client-row"><span class="row-label">Phone</span><span class="row-value">${client.phone}</span></div>` : ""}
-      ${(client.address || client.city || client.country) ? `<div class="client-row"><span class="row-label">Address</span><span class="row-value">${[client.address, client.city, client.country].filter(Boolean).join(", ")}</span></div>` : ""}
-      ${client.tax_number ? `<div class="client-row"><span class="row-label">Tax Number</span><span class="row-value">${client.tax_number}</span></div>` : ""}
-    </div>` : ""}
-    ${invoice ? `
-    <div class="section-title">Linked Invoice</div>
-    <div class="invoice-box">
-      <div><div style="font-size:12px;color:#3b82f6">Invoice Number</div><div style="font-size:14px;font-weight:700;color:#1d4ed8">${invoice.invoice_number}</div></div>
-      <span style="font-size:12px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-weight:600">${invoice.status === "paid" ? "Paid" : invoice.status === "sent" ? "Sent" : invoice.status}</span>
-    </div>` : ""}
-    <div class="footer">Auto-generated document — ${note.delivery_number}</div>
-  </body></html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 400);
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Delivery Note - ${note.delivery_number}</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    color: #000;
+    background: #fff;
+    padding: 40px;
+    line-height: 1.4;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 15px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .badge {
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 30px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .info-box {
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+
+  .info-box .label {
+    font-size: 11px;
+    color: #000;
+    margin-bottom: 4px;
+  }
+
+  .info-box .value {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .total-box {
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #000;
+    background: #fff;
+  }
+
+  .client-block {
+    border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .client-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #000;
+    font-size: 13px;
+  }
+
+  .client-row:last-child {
+    border-bottom: none;
+  }
+
+  .row-label {
+    font-weight: 700;
+  }
+
+  .row-value {
+    font-weight: 500;
+  }
+
+  .invoice-box {
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+
+ .signature-box {
+  border: 1px solid #000;
+  width: 150px;        
+  height: 150px;        
+  margin-top: 40px;
+  margin-left: auto;  /* pushes the box to the right */
+  margin-right: 0;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 }
 
-// ── Spinner / Empty / THead ────────────────────────────────────────────────────
+
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Delivery Note</h1>
+      <p>Generated on ${new Date().toLocaleDateString("en-GB")}</p>
+    </div>
+    <div><span class="badge">${note.delivery_number}</span></div>
+  </div>
+
+  <div class="section-title">Delivery Information</div>
+  <div class="info-grid">
+    <div class="info-box">
+      <div class="label">Delivery Date</div>
+      <div class="value">${new Date(note.delivery_date).toLocaleDateString("en-GB")}</div>
+    </div>
+    <div class="info-box">
+      <div class="label">Linked Quote</div>
+      <div class="value">${note.quotes?.quote_id ?? "—"}</div>
+    </div>
+  </div>
+
+  ${note.quotes?.total_amount !== undefined
+            ? `<div class="total-box">
+         <span>Total Amount (quote)</span>
+         <span>${Number(note.quotes.total_amount).toLocaleString("en")} DT</span>
+       </div>`
+            : ""}
+
+  ${client ? `<div class="section-title">Client Information</div>
+  <div class="client-block">
+    <div class="client-row"><span class="row-label">Name</span><span class="row-value">${client.name}</span></div>
+    ${client.email ? `<div class="client-row"><span class="row-label">Email</span><span class="row-value">${client.email}</span></div>` : ""}
+    ${client.phone ? `<div class="client-row"><span class="row-label">Phone</span><span class="row-value">${client.phone}</span></div>` : ""}
+    ${(client.address || client.city || client.country)
+                ? `<div class="client-row"><span class="row-label">Address</span><span class="row-value">${[client.address, client.city, client.country].filter(Boolean).join(", ")}</span></div>`
+                : ""}
+    ${client.tax_number ? `<div class="client-row"><span class="row-label">Tax Number</span><span class="row-value">${client.tax_number}</span></div>` : ""}
+  </div>` : ""}
+
+  ${invoice ? `<div class="section-title">Linked Invoice</div>
+  <div class="invoice-box">
+    <div>
+      <div>Invoice Number</div>
+      <div>${invoice.invoice_number}</div>
+    </div>
+    <span>${invoice.status}</span>
+  </div>` : ""}
+
+  <fieldset class="signature-box">
+  <legend>client signature</legend>
+    
+  </fieldset>
+</body>
+</html>`;
+
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 400);
+}
 
 function SpinnerRow({ cols }: { cols: number }) {
     return (
