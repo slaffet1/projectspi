@@ -33,6 +33,7 @@ import InventorySessions from "@/app/pages/InventorySessions";
 import SupplierForm from "./pages/SupplierForm";
 import Suppliers from "./pages/Suppliers";
 import CreditNotes from "./pages/creditNotes";
+import PurchaseOrders from "./pages/PurchaseOrders";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
       { path: "/app/Suppliers/new", Component: SupplierForm },
       { path: "/app/suppliers", Component: Suppliers },
       { path: "/app/suppliers/:id/edit", Component: SupplierForm },
+      { path: "/app/purchase-orders", Component: PurchaseOrders },
 
     ],
   },
