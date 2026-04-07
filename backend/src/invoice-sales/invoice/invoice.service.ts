@@ -84,31 +84,33 @@ async getBanksByBusiness(businessId: number) {
   });
 }
   async findAll(businessId: number) {
-    return this.prisma.invoices.findMany({
-      where: {
-        quotes: {
-          clients: {
-            business_id: businessId,
+  return this.prisma.invoices.findMany({
+    where: {
+      OR: [
+        {
+          quotes: {
+            clients: { business_id: businessId },
           },
         },
-      },
-      include: {
-        quotes: {
-          include: {
-            clients: true,
+        {
+          purchase_orders_client: {
+            clients: { business_id: businessId },
           },
         },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
-  }
-    async findOne(businessId: number, id: number) {
+      ],
+    },
+    include: {
+      quotes: { include: { clients: true } },
+      purchase_orders_client: { include: { clients: true } },
+    },
+    orderBy: { created_at: 'desc' },
+  });
+}
+   async findOne(businessId: number, id: number) {
     const invoice = await this.prisma.invoices.findUnique({
       where: { id },
       include: {
-        bank: true, 
+        bank: true,
         quotes: {
           include: {
             clients: {
@@ -123,13 +125,24 @@ async getBanksByBusiness(businessId: number) {
             },
           },
         },
+       
+        purchase_orders_client: {
+          include: {
+            clients: true,
+            order_details: {
+              include: {
+                products: true,
+              },
+            },
+          },
+        },
       },
     });
-
+ 
     if (!invoice) {
       throw new NotFoundException('Invoice not found');
     }
-
+ 
     return invoice;
   }
 
@@ -178,12 +191,35 @@ async updateStatus(id: number, status: string) {
   }
  
 
-  async deleteInvoice(id: number) {
-    const invoice = await this.prisma.invoices.findUnique({ where: { id } });
-    if (!invoice) throw new NotFoundException('Invoice not found');
+ async deleteInvoice(id: number) {
+  const invoice = await this.prisma.invoices.findUnique({
+    where: { id },
+  });
 
-    return this.prisma.invoices.delete({ where: { id } });
+  if (!invoice) {
+    throw new NotFoundException('Invoice not found');
   }
+
+
+  if (invoice.purchase_order_id) {
+    await this.prisma.purchase_orders_client.update({
+      where: { id: invoice.purchase_order_id },
+      data: { status: 'draft' },
+    });
+  }
+
+  if (invoice.quote_id) {
+    await this.prisma.quotes.update({
+      where: { id: invoice.quote_id },
+      data: { status: 'draft' },
+    });
+  }
+
+
+  return this.prisma.invoices.delete({
+    where: { id },
+  });
+}
 
   async updateDueDate(id: number, newDueDate: string | Date) {
     if (!newDueDate) throw new Error("La date d’échéance est obligatoire");

@@ -33,9 +33,13 @@ import InventorySessions from "@/app/pages/InventorySessions";
 import SupplierForm from "./pages/SupplierForm";
 import Suppliers from "./pages/Suppliers";
 import CreditNotes from "./pages/creditNotes";
-import StockImport from "@/app/pages/StockImport"; 
+import StockImport from "@/app/pages/StockImport";
 import PurchaseOrders from "./pages/PurchaseOrders";
 import Employees from "./pages/Employees";
+import PurchaseOrdersClient from "./pages/PurchaseOrdersClient";
+import CreatePurchaseOrder from "./pages/Createpurchaseorder";
+import PurchaseOrderDetail from "./pages/Purchaseorderdetail";
+
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -77,13 +81,15 @@ export const router = createBrowserRouter([
       { path: "stock/levels", Component: StockLevels },
       { path: "stock/movements", Component: StockMovements },
       { path: "stock/inventory", Component: InventorySessions },
-      { path: "stock/import", Component: StockImport }, 
+      { path: "stock/import", Component: StockImport },
       { path: "/app/Suppliers/new", Component: SupplierForm },
       { path: "/app/suppliers", Component: Suppliers },
       { path: "/app/suppliers/:id/edit", Component: SupplierForm },
       { path: "/app/purchase-orders", Component: PurchaseOrders },
       { path: "/app/employees", Component: Employees },
-
+      { path: "purchase-orders-client", Component: PurchaseOrdersClient },
+      { path: "purchase-orders-client/create", Component: CreatePurchaseOrder },
+      { path: "purchase-orders-client/:id", Component: PurchaseOrderDetail },
     ],
   },
 ]);

@@ -25,6 +25,7 @@ import { EmployeeModule } from './employees/employee.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { PurchaseOrdersClientModule } from './purchase-orders-client/purchase-orders-client.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -49,6 +50,7 @@ import { TelegramModule } from './telegram/telegram.module';
     ExpensesModule,
     CategoriesModule,
     TelegramModule,
+    PurchaseOrdersClientModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
