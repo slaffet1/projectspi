@@ -35,6 +35,9 @@ import Suppliers from "./pages/Suppliers";
 import CreditNotes from "./pages/creditNotes";
 import StockImport from "@/app/pages/StockImport"; 
 import PurchaseOrders from "./pages/PurchaseOrders";
+import PurchaseOrdersClient from "./pages/PurchaseOrdersClient";
+import CreatePurchaseOrder from "./pages/Createpurchaseorder";
+import PurchaseOrderDetail from "./pages/Purchaseorderdetail";
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
   { path: "/", Component: Landing },
@@ -81,6 +84,9 @@ export const router = createBrowserRouter([
       { path: "/app/suppliers", Component: Suppliers },
       { path: "/app/suppliers/:id/edit", Component: SupplierForm },
       { path: "/app/purchase-orders", Component: PurchaseOrders },
+{ path: "purchase-orders-client", Component: PurchaseOrdersClient },
+{ path: "purchase-orders-client/create", Component: CreatePurchaseOrder },
+{ path: "purchase-orders-client/:id", Component: PurchaseOrderDetail },
 
     ],
   },

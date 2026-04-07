@@ -45,6 +45,7 @@ useEffect(() => {
       toast.error("Failed to load invoices");
     }
   };
+  
 const markAsLatePaid = async (id: number) => {
   try {
     setLoadingIds((prev) => [...prev, id]);
@@ -253,6 +254,7 @@ const markAsLatePaid = async (id: number) => {
           </Select>
         </CardContent>
       </Card>
+      
 
       {/* TABLE */}
       <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
@@ -273,6 +275,10 @@ const markAsLatePaid = async (id: number) => {
             <tbody className="divide-y divide-border/50">
               {paginatedInvoices.map((inv, index) => {
                 const isLoading = loadingIds.includes(inv.id);
+                  const clientName =
+    inv.quotes?.clients?.name ||
+    inv.purchase_orders_client?.clients?.name ||
+    "—";
                 return (
                   <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
                     <td className="p-4 text-sm text-muted-foreground font-mono">
@@ -286,7 +292,8 @@ const markAsLatePaid = async (id: number) => {
                         {inv.invoice_number}
                       </Link>
                     </td>
-                    <td className="p-4 text-sm font-medium">{inv.quotes?.clients?.name}</td>
+                    
+                    <td className="p-4 text-sm font-medium">{clientName}</td>
                     <td className="p-4 text-sm text-muted-foreground">
                       {new Date(inv.issue_date).toLocaleDateString("en-GB")}
                     </td>

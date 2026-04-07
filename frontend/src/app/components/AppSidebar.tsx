@@ -60,6 +60,7 @@ const navGroups: NavGroup[] = [
       { title: "Delivery Notes", href: "/app/delivery-notes", icon: Truck },
       { title: "Credit Notes", href: "/app/credit-notes", icon: RotateCcw },
       { title: "Clients", href: "/app/clients", icon: Users },
+      { title: "Purchase Orders", href: "/app/purchase-orders-client", icon: Truck  },
     ]
   },
   {

@@ -160,7 +160,6 @@ export default function InvoiceDetail() {
   // Modals
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  // ✅ FIX Bug 2: dédié modal pour la traduction en temps réel (plus de window.prompt)
   const [showTranslateModal, setShowTranslateModal] = useState(false);
 
   useEffect(() => {
@@ -185,7 +184,6 @@ export default function InvoiceDetail() {
     return res.data as TranslatedLabels;
   };
 
-  // ✅ FIX Bug 2: handler pour la traduction en temps réel — utilise le modal propre
   const handleLiveTranslate = async (lang: string) => {
     setShowTranslateModal(false);
     if (lang === "fr") {
@@ -206,7 +204,19 @@ export default function InvoiceDetail() {
     }
   };
 
-  // ✅ PDF 100% frontend : html2canvas → jsPDF
+  // ── Helper: extraire source (quote ou bon de commande) ────────────────────
+  const resolveSource = (inv: any) => {
+    const quote = Array.isArray(inv.quotes) ? inv.quotes[0] : inv.quotes;
+    const purchaseOrder = Array.isArray(inv.purchase_orders_client)
+      ? inv.purchase_orders_client[0]
+      : inv.purchase_orders_client;
+    const source = quote ?? purchaseOrder;
+    const client = source?.clients || {};
+    const items: any[] = quote?.quote_details || purchaseOrder?.order_details || [];
+    return { quote, purchaseOrder, source, client, items };
+  };
+
+  // ── PDF 100% frontend : html2canvas → jsPDF ───────────────────────────────
   const downloadPDF = async (lang: string) => {
     if (!invoice) return toast.error("Facture non chargée");
 
@@ -221,13 +231,12 @@ export default function InvoiceDetail() {
       }
 
       // 2. Build a standalone off-screen div with the invoice HTML
-      //    (avoids any ref/state timing issues entirely)
       const container = document.createElement("div");
       container.style.cssText = [
         "position:fixed",
         "left:-9999px",
         "top:0",
-        "width:794px",          // A4 at 96dpi
+        "width:794px",
         "background:#ffffff",
         "padding:32px",
         "font-family:Arial,sans-serif",
@@ -235,9 +244,8 @@ export default function InvoiceDetail() {
         "z-index:-1",
       ].join(";");
 
-      const quote = Array.isArray(invoice.quotes) ? invoice.quotes[0] : invoice.quotes;
-      const client = quote?.clients || {};
-      const items: any[] = quote?.quote_details || [];
+      // ✅ FIX : résolution de la source (quote ou bon de commande)
+      const { client, items } = resolveSource(invoice);
       const bank = invoice.bank;
 
       const subtotal = items.reduce((s: number, i: any) => s + i.quantity * Number(i.products.unit_price), 0);
@@ -354,9 +362,8 @@ export default function InvoiceDetail() {
       setTranslating(false);
     }
   };
- 
 
-  // ── Send email via backend (NestJS handles Gemini translation + Nodemailer) ──
+  // ── Send email via backend ────────────────────────────────────────────────
   const sendEmail = async (lang: string) => {
     setShowEmailModal(false);
     if (!activeBusiness?.id || !invoice) return;
@@ -448,9 +455,8 @@ export default function InvoiceDetail() {
 
   if (!invoice) return null;
 
-  const quote = Array.isArray(invoice.quotes) ? invoice.quotes[0] : invoice.quotes;
-  const client = quote?.clients || { name: "Nom client", email: "Email client" };
-  const items = quote?.quote_details || [];
+  // ✅ FIX : résolution de la source (quote ou bon de commande client)
+  const { client, items } = resolveSource(invoice);
 
   const subtotal = items.reduce((s: number, i: any) => s + i.quantity * Number(i.products.unit_price), 0);
   const tax = items.reduce(
@@ -492,7 +498,6 @@ export default function InvoiceDetail() {
         confirmLabel="Envoyer"
         showToggle={true}
       />
-      {/* ✅ FIX Bug 2: Modal dédié pour traduction en temps réel — sans toggle, toujours afficher le sélecteur */}
       <LanguageModal
         open={showTranslateModal}
         onClose={() => setShowTranslateModal(false)}
@@ -518,7 +523,7 @@ export default function InvoiceDetail() {
         </div>
       </div>
 
-      {/* ✅ FIX Bug 2: Bouton ouvre le modal propre au lieu de window.prompt */}
+      {/* Bouton traduction en temps réel */}
       <Button
         variant="outline"
         className="flex items-center gap-2"
@@ -537,7 +542,7 @@ export default function InvoiceDetail() {
         <CardContent className="p-0">
           <div className="flex items-stretch divide-x divide-border/60">
 
-            {/* Download PDF → opens modal */}
+            {/* Download PDF */}
             <button
               onClick={() => setShowPdfModal(true)}
               disabled={!invoice || translating}
@@ -556,7 +561,7 @@ export default function InvoiceDetail() {
               </span>
             </button>
 
-            {/* Send email → opens modal */}
+            {/* Send email */}
             <button
               onClick={() => !sending && invoice.status !== "sent" && setShowEmailModal(true)}
               disabled={sending || invoice.status === "sent"}
