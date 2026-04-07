@@ -8,24 +8,24 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class PurchaseOrderEmailService {
 
 
-  private readonly baseUrl = 'https://herb-unlaminated-yolanda.ngrok-free.dev';
+  private readonly baseUrl = 'https://unpostponable-tony-ontically.ngrok-free.dev';
 
   private transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user:'mohamedaminechoukani02@gmail.com',
-      pass:'qtrx kzmw tpry dkgn',
+      user: 'mohamedaminechoukani02@gmail.com',
+      pass: 'qtrx kzmw tpry dkgn',
     },
   });
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // ─── Render purchase-order HTML (PDF attachment) ─────────────────────────
 
   private renderOrderHtml(order: any): string {
     const businessName = order.clients?.businesses?.name || 'Business';
-    const client       = order.clients;
-    const items        = order.order_details || [];
+    const client = order.clients;
+    const items = order.order_details || [];
 
     const subtotal = items.reduce(
       (s: number, i: any) => s + i.quantity * Number(i.products?.unit_price || 0),
@@ -115,9 +115,9 @@ export class PurchaseOrderEmailService {
   // ─── Generate PDF attachment ──────────────────────────────────────────────
 
   async generatePdf(order: any): Promise<Buffer> {
-    const html    = this.renderOrderHtml(order);
+    const html = this.renderOrderHtml(order);
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
-    const page    = await browser.newPage();
+    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfArray = await page.pdf({
       format: 'A4', printBackground: true,
@@ -130,9 +130,9 @@ export class PurchaseOrderEmailService {
   // ─── Send email with Accept / Reject buttons ──────────────────────────────
 
   async sendPurchaseOrder(to: string, order: any) {
-    const pdfBuffer   = await this.generatePdf(order);
-    const acceptUrl   = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=accept`;
-    const rejectUrl   = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=reject`;
+    //const pdfBuffer = await this.generatePdf(order);
+    const acceptUrl = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=accept`;
+    const rejectUrl = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=reject`;
     const businessName = order.clients?.businesses?.name;
 
     const html = `
@@ -172,13 +172,13 @@ export class PurchaseOrderEmailService {
       </div>`;
 
     await this.transporter.sendMail({
-      from:    `"${businessName}" <${process.env.EMAIL_USER || 'mohamedaminechoukani02@gmail.com'}>`,
+      from: `"${businessName}" <${process.env.EMAIL_USER || 'mohamedaminechoukani02@gmail.com'}>`,
       to,
       subject: `Purchase Order #${order.order_number} — Action Required`,
       html,
       attachments: [{
-        filename:    `purchase-order-${order.order_number}.pdf`,
-        content:     pdfBuffer,
+        filename: `purchase-order-${order.order_number}.pdf`,
+        //content: pdfBuffer,
         contentType: 'application/pdf',
       }],
     });

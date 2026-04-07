@@ -10,6 +10,7 @@ import { useBusiness } from "@/app/context/BusinessContext";
 import { api } from "@/app/services/api";
 import { productsService } from "@/app/services/productsService";
 import { SemanticSearch } from "../components/SemanticSearch";
+import { predictCategory } from '@/ml/productClassifier';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -136,9 +137,26 @@ function ProductModal({
             {/* Name */}
             <div className="md:col-span-2">
               <Label>Product Name *</Label>
-              <Input value={form.name} onChange={e => set("name", e.target.value)}
-                placeholder="e.g. Dell XPS Laptop" className={errors.name ? "border-red-500" : ""} />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              <Input
+                value={form.name}
+                onChange={e => {
+                  const name = e.target.value;
+                  set("name", name);
+
+                  // Clear category if product name is deleted
+                  if (!name.trim()) {
+                    set("category", "");
+                  }
+                }}
+                onBlur={async () => {
+                  // Predict category only if product name exists and category is empty
+                  if (form.name.trim() && !form.category) {
+                    const predicted = await predictCategory(form.name);
+                    set("category", predicted);
+                  }
+                }}
+                placeholder="e.g. Dell XPS Laptop"
+              />
             </div>
 
             {/* Description */}
