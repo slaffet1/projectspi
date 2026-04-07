@@ -3,6 +3,7 @@ import { SearchInput } from "@/app/components/SearchInput";
 import { Button } from "@/app/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { useAccessibility } from "@/app/context/AccessibilityContext";
+import { Volume2, VolumeX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,7 @@ export function AppHeader() {
     navigate("/login");
   };
   const { increaseFont, decreaseFont, resetFont, fontSize } = useAccessibility();
-
+const { speechEnabled, toggleSpeech } = useAccessibility();
   const initials = user
     ? `${user.firstname?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase()
     : "?";
@@ -57,6 +58,13 @@ export function AppHeader() {
     <RotateCcw className="h-4 w-4" />
   </Button>
 </div>
+<Button variant="ghost" size="icon" onClick={toggleSpeech}>
+  {speechEnabled ? (
+    <Volume2 className="h-4 w-4 text-green-600" />
+  ) : (
+    <VolumeX className="h-4 w-4" />
+  )}
+</Button>
         <BusinessSwitcher />
 
 
