@@ -60,7 +60,7 @@ const navGroups: NavGroup[] = [
       { title: "Delivery Notes", href: "/app/delivery-notes", icon: Truck },
       { title: "Credit Notes", href: "/app/credit-notes", icon: RotateCcw },
       { title: "Clients", href: "/app/clients", icon: Users },
-      { title: "Purchase Orders", href: "/app/purchase-orders-client", icon: ClipboardList  },
+      { title: "Purchase Orders Client", href: "/app/purchase-orders-client", icon: ClipboardList  },
     ]
   },
   {
@@ -91,7 +91,7 @@ const navGroups: NavGroup[] = [
   {
     label: "Team",
     items: [
-      { title: "Companies", href: "/app/businesses", icon: Building2 },
+
       { title: "Members", href: "/app/members", icon: UsersRound },
       { title: "Requests", href: "/app/join-requests", icon: ClipboardList },
       { title: "Employees", href: "/app/employees", icon: Briefcase },
@@ -166,11 +166,11 @@ export function AppSidebar() {
         <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary" aria-hidden="true">
-              <span className="text-lg font-bold text-white">B</span>
+              <span className="text-lg font-bold text-white">C</span>
             </div>
             <Link to="/onboarding" aria-label="BusinessManager — Accueil">
               <span className="text-lg font-semibold text-foreground">
-                Business<span className="text-primary">Manager</span>
+                Charikty<span className="text-primary">.Tn</span>
               </span>
             </Link>
           </div>

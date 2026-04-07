@@ -89,7 +89,7 @@ const [joinOpen, setJoinOpen] = useState(false);
                       Se connecter
                     </Button>
                   </Link>
-                  <Link to="/app">
+                  <Link to="/register">
                     <Button className="bg-primary hover:bg-accent">
                       Commencer gratuitement
                     </Button>
