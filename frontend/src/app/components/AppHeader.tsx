@@ -1,6 +1,8 @@
 import { Bell, User, LogOut, Settings } from "lucide-react";
 import { SearchInput } from "@/app/components/SearchInput";
 import { Button } from "@/app/components/ui/button";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { useAccessibility } from "@/app/context/AccessibilityContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +24,7 @@ export function AppHeader() {
     logout();
     navigate("/login");
   };
+  const { increaseFont, decreaseFont, resetFont, fontSize } = useAccessibility();
 
   const initials = user
     ? `${user.firstname?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase()
@@ -39,6 +42,21 @@ export function AppHeader() {
 
       {/* User actions */}
       <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 border rounded-md px-2 py-1">
+  <Button variant="ghost" size="icon" onClick={decreaseFont}>
+    <ZoomOut className="h-4 w-4" />
+  </Button>
+
+  <span className="text-xs w-6 text-center">{fontSize}</span>
+
+  <Button variant="ghost" size="icon" onClick={increaseFont}>
+    <ZoomIn className="h-4 w-4" />
+  </Button>
+
+  <Button variant="ghost" size="icon" onClick={resetFont}>
+    <RotateCcw className="h-4 w-4" />
+  </Button>
+</div>
         <BusinessSwitcher />
 
 
