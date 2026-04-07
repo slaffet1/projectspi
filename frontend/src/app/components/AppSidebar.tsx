@@ -60,7 +60,7 @@ const navGroups: NavGroup[] = [
       { title: "Delivery Notes", href: "/app/delivery-notes", icon: Truck },
       { title: "Credit Notes", href: "/app/credit-notes", icon: RotateCcw },
       { title: "Clients", href: "/app/clients", icon: Users },
-      { title: "Purchase Orders", href: "/app/purchase-orders-client", icon: Truck  },
+      { title: "Purchase Orders", href: "/app/purchase-orders-client", icon: ClipboardList  },
     ]
   },
   {
@@ -122,10 +122,14 @@ export function AppSidebar() {
     location.pathname.startsWith("/app/settings")
   );
 
-  const isActive = (href: string) =>
-    href === "/app"
-      ? location.pathname === "/app"
-      : location.pathname.startsWith(href);
+ const isActive = (href: string) => {
+  if (href === "/app") return location.pathname === "/app";
+
+  return (
+    location.pathname === href ||
+    location.pathname.startsWith(href + "/")
+  );
+};
 
   return (
     <>
