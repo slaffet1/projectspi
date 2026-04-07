@@ -222,8 +222,7 @@ export default function EditProfile() {
 
         setPasswordLoading(true);
         try {
-            console.log("oldPassword:", passwords.currentPassword);
-            console.log("user.password:", passwords.newPassword);
+            
             await api.patch("/users/change-password", {
                 oldPassword: passwords.currentPassword,
                 newPassword: passwords.newPassword,
