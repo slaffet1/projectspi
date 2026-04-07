@@ -8,6 +8,7 @@ import { SearchInput } from "@/app/components/SearchInput";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { api } from "@/app/services/api";
 import { productsService } from "@/app/services/productsService";
+import { predictCategory } from "@/ml/productClassifier";
 
 interface Product {
   id: number;
@@ -138,7 +139,21 @@ function ProductModal({
               <Input
                 id="product-name"
                 value={form.name}
-                onChange={e => set("name", e.target.value)}
+                onChange={e => {
+                  const name = e.target.value;
+                  set("name", name);
+                  // Clear category if product name is deleted
+                  if (!name.trim()) {
+                    set("category", "");
+                  }
+                }}
+                onBlur={async () => {
+                  // Predict category only if product name exists and category is empty
+                  if (form.name.trim() && !form.category) {
+                    const predicted = await predictCategory(form.name);
+                    set("category", predicted);
+                  }
+                }}
                 placeholder="e.g. Dell XPS Laptop"
                 className={errors.name ? "border-red-500" : ""}
                 aria-describedby={errors.name ? "error-name" : undefined}
