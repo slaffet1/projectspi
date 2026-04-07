@@ -133,7 +133,7 @@ export class PurchaseOrderEmailService {
     const pdfBuffer   = await this.generatePdf(order);
     const acceptUrl   = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=accept`;
     const rejectUrl   = `${this.baseUrl}/api/purchase-orders-client/${order.id}/respond?action=reject`;
-    const businessName = order.clients?.businesses?.name || 'Us';
+    const businessName = order.clients?.businesses?.name;
 
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:32px;background:#f9fafb;border-radius:12px">
