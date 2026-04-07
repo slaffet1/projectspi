@@ -54,13 +54,12 @@ model businesses {
   expenses           expenses[]
   invitations        invitations[]
   fournisseurs       fournisseurs[]
-  fournisseurs       fournisseurs[]
   products           products[]
   taxes              taxes[]
   join_requests      join_requests[]      @relation("BusinessJoinRequests")
   warehouses         warehouses[]
   inventory_sessions inventory_sessions[]
-  credit_notes            credit_notes[]
+  credit_notes       credit_notes[]
   expenseCategories  expense_categories[]
   purchase_orders    purchase_orders[]
   employees          Employee[]
@@ -161,7 +160,6 @@ model delivery_notes {
   status          DeliveryStatus @default(PENDING)
   quotes          quotes?        @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   credit_notes    credit_notes[]
-  credit_notes    credit_notes[]
 }
 
 enum DeliveryStatus {
@@ -171,23 +169,23 @@ enum DeliveryStatus {
 }
 
 model expenses {
-  id           Int      @id @default(autoincrement())
-  label        String   @db.VarChar(255)
-  amount       Decimal  @db.Decimal(15, 2)
-  expense_date DateTime @db.Date
-  status       String   @default("pending") @db.VarChar(20)
-  category_id  Int?
-  category     expense_categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  payment_method  String?
-  business_id     Int?
-  facture_item_id Int?
-  created_at      DateTime?      @default(now())
-  businesses      businesses?    @relation(fields: [businessesId], references: [id])
-  businessesId    Int?
-  factureItems    facture_items? @relation(fields: [facture_itemsId], references: [id])
-  facture_itemsId Int?
+  id                Int                 @id @default(autoincrement())
+  label             String              @db.VarChar(255)
+  amount            Decimal             @db.Decimal(15, 2)
+  expense_date      DateTime            @db.Date
+  status            String              @default("pending") @db.VarChar(20)
+  category_id       Int?
+  category          expense_categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  payment_method    String?
+  business_id       Int?
+  facture_item_id   Int?
+  created_at        DateTime?           @default(now())
+  businesses        businesses?         @relation(fields: [businessesId], references: [id])
+  businessesId      Int?
+  factureItems      facture_items?      @relation(fields: [facture_itemsId], references: [id])
+  facture_itemsId   Int?
   purchase_order_id Int?
-  purchase_orders   purchase_orders? @relation(fields: [purchase_order_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  purchase_orders   purchase_orders?    @relation(fields: [purchase_order_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model facture_items {
@@ -428,7 +426,6 @@ model inventory_counts {
   products           products           @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-
 enum CreditNoteStatus {
   DRAFT
   CONFIRMED
@@ -436,22 +433,22 @@ enum CreditNoteStatus {
 }
 
 model credit_notes {
-  id               Int              @id @default(autoincrement())
-  credit_number    String           @unique @db.VarChar(50)
-  return_date      DateTime         @db.Date
-  reason           String           @db.VarChar(500)
-  note             String?
-  total_amount     Decimal          @db.Decimal(15, 2)
-  status           CreditNoteStatus @default(DRAFT)
-  invoice_id       Int?
-  delivery_note_id Int?
-  client_id        Int?
-  business_id      Int?
-  created_at       DateTime?        @default(now()) @db.Timestamp(6)
-  invoices         invoices?        @relation(fields: [invoice_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  delivery_notes   delivery_notes?  @relation(fields: [delivery_note_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  clients          clients?         @relation(fields: [client_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  businesses       businesses?      @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                Int                 @id @default(autoincrement())
+  credit_number     String              @unique @db.VarChar(50)
+  return_date       DateTime            @db.Date
+  reason            String              @db.VarChar(500)
+  note              String?
+  total_amount      Decimal             @db.Decimal(15, 2)
+  status            CreditNoteStatus    @default(DRAFT)
+  invoice_id        Int?
+  delivery_note_id  Int?
+  client_id         Int?
+  business_id       Int?
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  invoices          invoices?           @relation(fields: [invoice_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  delivery_notes    delivery_notes?     @relation(fields: [delivery_note_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  clients           clients?            @relation(fields: [client_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  businesses        businesses?         @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   credit_note_items credit_note_items[]
 }
 

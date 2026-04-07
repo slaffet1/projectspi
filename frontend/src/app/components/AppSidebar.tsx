@@ -25,7 +25,9 @@ import {
   Unplug,
   Truck,
   RotateCcw,
-  FileUp
+  FileUp,
+  ShoppingCart,
+  Briefcase
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
@@ -65,6 +67,8 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Products", href: "/app/products", icon: Package },
       { title: "Expenses", href: "/app/expenses", icon: Receipt },
+      { title: "Purchase Orders", href: "/app/purchase-orders", icon: ShoppingCart },
+
     ],
   },
   {
@@ -91,6 +95,8 @@ const navGroups: NavGroup[] = [
       { title: "Companies", href: "/app/businesses", icon: Building2 },
       { title: "Members", href: "/app/members", icon: UsersRound },
       { title: "Requests", href: "/app/join-requests", icon: ClipboardList },
+      { title: "Employees", href: "/app/employees", icon: Briefcase },
+
     ],
   },
 ];

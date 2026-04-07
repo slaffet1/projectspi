@@ -21,10 +21,10 @@ import { StockModule } from './stock/stock.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CreditNotesModule } from './credit-notes/credit-notes.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
-import { EmployeeModule } from './employees/employee.module';import { ExpensesModule } from './expenses/expenses.module';
+import { EmployeeModule } from './employees/employee.module';
+import { ExpensesModule } from './expenses/expenses.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TelegramModule } from './telegram/telegram.module';
-import { ExpensesModule } from './expenses/expenses.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
