@@ -8,10 +8,11 @@ export class PurchaseOrdersService {
   // 1. Création d'un Bon de Commande (Statut: DRAFT)
   async create(businessId: number, data: any) {
     // Génération automatique du numéro de commande (ex: PO-2026-001)
-    const orderCount = await this.prisma.purchase_orders.count({
-      where: { business_id: businessId }
-    });
-    const orderNumber = `PO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
+    const lastOrder = await this.prisma.purchase_orders.findFirst({
+  orderBy: { id: 'desc' },
+});
+const nextNumber = lastOrder ? lastOrder.id + 1 : 1;
+const orderNumber = `PO-${new Date().getFullYear()}-${String(nextNumber).padStart(3, '0')}`;
 
     return this.prisma.purchase_orders.create({
       data: {

@@ -7,7 +7,7 @@ export class EmployeeService {
 
   // ─── GESTION DES EMPLOYÉS ──────────────────────────────────────
 
-async createEmployee(data: any) {
+  async createEmployee(data: any) {
     // 1. On crée l'employé
     const newEmployee = await this.prisma.employee.create({
       data: {
@@ -63,22 +63,38 @@ async createEmployee(data: any) {
       throw new BadRequestException('Une fiche de paie existe déjà pour ce mois et cet employé.');
     }
 
+    // Calculer les valeurs avec gestion des NaN
+    const salaireBrut = Number(data.salaireBrut) || 0;
+    const retenueCnss = Number(data.retenueCnss) || 0;
+    let salaireImposable = Number(data.salaireImposable);
+    
+    // Si salaireImposable est NaN, on le calcule
+    if (isNaN(salaireImposable)) {
+      salaireImposable = salaireBrut - retenueCnss;
+    }
+    
+    const retenueIrpp = Number(data.retenueIrpp) || 0;
+    const retenueCss = Number(data.retenueCss) || 0;
+    const salaireNet = Number(data.salaireNet) || 0;
+
     return this.prisma.payslip.create({
       data: {
-        employeeId: Number(data.employeeId),
+        employee: {
+          connect: { id: Number(data.employeeId) }
+        },
         month: Number(data.month),
         year: Number(data.year),
-        salaireBrut: Number(data.salaireBrut),
-        retenueCnss: Number(data.retenueCnss),
-        salaireImposable: Number(data.salaireImposable),
-        retenueIrpp: Number(data.retenueIrpp),
-        retenueCss: Number(data.retenueCss),
-        salaireNet: Number(data.salaireNet),
+        salaireBrut: salaireBrut,
+        retenueCnss: retenueCnss,
+        salaireImposable: salaireImposable,
+        retenueIrpp: retenueIrpp,
+        retenueCss: retenueCss,
+        salaireNet: salaireNet,
       },
     });
   }
 
-async getEmployeePayslips(employeeId: number) {
+  async getEmployeePayslips(employeeId: number) {
     return this.prisma.payslip.findMany({
       where: {
         employeeId: employeeId,
