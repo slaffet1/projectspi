@@ -26,6 +26,8 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { PurchaseOrdersClientModule } from './purchase-orders-client/purchase-orders-client.module';
+import { SearchModule } from './search/search.module';
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -51,6 +53,7 @@ import { PurchaseOrdersClientModule } from './purchase-orders-client/purchase-or
     CategoriesModule,
     TelegramModule,
     PurchaseOrdersClientModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],
