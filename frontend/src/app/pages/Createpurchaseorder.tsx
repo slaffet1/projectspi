@@ -259,7 +259,7 @@ if (expirationDate < today) {
 
        
         <div className="flex justify-end gap-4">
-          <Link to="/app/purchase-orders">
+          <Link to="/app/purchase-orders-client">
             <Button type="button" variant="outline">Cancel</Button>
           </Link>
           <Button type="submit" disabled={loading}>

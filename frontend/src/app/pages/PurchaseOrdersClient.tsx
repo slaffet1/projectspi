@@ -51,11 +51,11 @@ export default function PurchaseOrdersClient() {
       cancelled: "bg-rose-50 text-rose-700 border border-rose-200 ring-1 ring-rose-100",
     };
     const labels: Record<string, string> = {
-      draft:     "Draft",
-      sent:      "Sent",
-      confirmed: "Confirmed",
-      invoiced:  "Invoiced",
-      cancelled: "Cancelled",
+      draft:     "Brouillon",
+      sent:      "Envoyé",
+      confirmed: "Confirmé",
+      invoiced:  "Facturé",
+      cancelled: "Annulé",
     };
     const dots: Record<string, string> = {
       draft:     "bg-slate-400",
@@ -64,10 +64,17 @@ export default function PurchaseOrdersClient() {
       invoiced:  "bg-violet-500",
       cancelled: "bg-rose-500",
     };
+    const statusLabel = labels[status ?? ""] || "Inconnu";
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${styles[status ?? ""] || "bg-slate-50 text-slate-600 border border-slate-200"}`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${dots[status ?? ""] || "bg-slate-400"}`} />
-        {labels[status ?? ""] || "Unknown"}
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+          styles[status ?? ""] || "bg-slate-50 text-slate-600 border border-slate-200"
+        }`}
+       
+      >
+        
+        <span className={`w-1.5 h-1.5 rounded-full ${dots[status ?? ""] || "bg-slate-400"}`} aria-hidden="true" />
+        {statusLabel}
       </span>
     );
   };
@@ -90,126 +97,203 @@ export default function PurchaseOrdersClient() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+
+      <a
+        href="#orders-table"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50"
+      >
+        Aller au tableau des commandes
+      </a>
+
+      {/* En-tête */}
+      <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Purchase Orders</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Manage all client purchase orders</p>
+   
+          <h1 className="text-3xl font-semibold tracking-tight">Bons de commande</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Gérer tous les bons de commande clients
+          </p>
         </div>
         <Link to="/app/purchase-orders-client/create">
-          <Button className="rounded-xl gap-2 shadow-sm">
-            <Plus className="h-4 w-4" /> New Order
+          <Button className="rounded-xl gap-2 shadow-sm" aria-label="Créer un nouveau bon de commande">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Nouveau bon de commande
           </Button>
         </Link>
-      </div>
+      </header>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Orders</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalCount}</h2>
-                <p className="text-xs text-slate-400 mt-2">All periods</p>
+      <section aria-label="Statistiques des bons de commande">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+ 
+          <article
+            aria-label={`Total des bons de commande : ${totalCount}`}
+            className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative"
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">
+                    Total des commandes
+                  </p>
+                  <p className="text-4xl font-bold mt-2 tabular-nums" aria-hidden="true">
+                    {totalCount}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">Toutes périodes</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-sm" aria-hidden="true">
+                  <FileText className="h-5 w-5 text-slate-200" />
+                </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-sm">
-                <FileText className="h-5 w-5 text-slate-200" />
-              </div>
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/5" aria-hidden="true" />
             </div>
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/5" />
+          </article>
+
+          
+          <article
+            aria-label={`Bons de commande confirmés : ${confirmedCount}`}
+            className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white overflow-hidden relative"
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">
+                    Confirmés
+                  </p>
+                  <p className="text-4xl font-bold mt-2 tabular-nums" aria-hidden="true">
+                    {confirmedCount}
+                  </p>
+                  <p className="text-xs text-emerald-200 mt-2">Prêts à facturer</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm" aria-hidden="true">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+              </div>
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" aria-hidden="true" />
+            </div>
+          </article>
+
+      
+          <article
+            aria-label={`Bons de commande facturés : ${invoicedCount}`}
+            className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-violet-500 to-violet-700 text-white overflow-hidden relative"
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-violet-100 uppercase tracking-widest">
+                    Facturés
+                  </p>
+                  <p className="text-4xl font-bold mt-2 tabular-nums" aria-hidden="true">
+                    {invoicedCount}
+                  </p>
+                  <p className="text-xs text-violet-200 mt-2">Convertis en facture</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm" aria-hidden="true">
+                  <Clock className="h-5 w-5 text-white" />
+                </div>
+              </div>
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" aria-hidden="true" />
+            </div>
+          </article>
+
+          <article
+            aria-label={`Bons de commande annulés : ${cancelledCount}`}
+            className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-rose-700 text-white overflow-hidden relative"
+          >
+            <div className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">
+                    Annulés
+                  </p>
+                  <p className="text-4xl font-bold mt-2 tabular-nums" aria-hidden="true">
+                    {cancelledCount}
+                  </p>
+                  <p className="text-xs text-rose-200 mt-2">Commandes annulées</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm" aria-hidden="true">
+                  <XCircle className="h-5 w-5 text-white" />
+                </div>
+              </div>
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" aria-hidden="true" />
+            </div>
+          </article>
+        </div>
+      </section>
+
+    
+      <search aria-label="Filtrer les bons de commande">
+        <Card className="rounded-2xl shadow-sm border border-border/60">
+          <CardContent className="pt-5 pb-5 flex gap-4">
+           
+            <SearchInput
+              placeholder="Rechercher par numéro ou client…"
+              value={searchQuery}
+              onChange={setSearchQuery}
+         
+              aria-label="Rechercher un bon de commande ou un client"
+            />
+            <div className="flex items-center gap-2">
+          
+              <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger
+                  className="w-52 rounded-xl"
+                  aria-label="Filtrer par statut"
+                >
+                  <SelectValue placeholder="Filtrer par statut" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="draft">Brouillon</SelectItem>
+                  <SelectItem value="sent">Envoyé</SelectItem>
+                  <SelectItem value="confirmed">Confirmé</SelectItem>
+                  <SelectItem value="invoiced">Facturé</SelectItem>
+                  <SelectItem value="cancelled">Annulé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
+      </search>
 
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-emerald-500 to-emerald-700 text-white overflow-hidden relative">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">Confirmed</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{confirmedCount}</h2>
-                <p className="text-xs text-emerald-200 mt-2">Ready to invoice</p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                <CheckCircle className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-violet-500 to-violet-700 text-white overflow-hidden relative">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-violet-100 uppercase tracking-widest">Invoiced</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{invoicedCount}</h2>
-                <p className="text-xs text-violet-200 mt-2">Converted to invoice</p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                <Clock className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-rose-700 text-white overflow-hidden relative">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">Cancelled</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{cancelledCount}</h2>
-                <p className="text-xs text-rose-200 mt-2">Cancelled orders</p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                <XCircle className="h-5 w-5 text-white" />
-              </div>
-            </div>
-            <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="rounded-2xl shadow-sm border border-border/60">
-        <CardContent className="pt-5 pb-5 flex gap-4">
-          <SearchInput
-            placeholder="Search order or client..."
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-52 flex items-center gap-2 rounded-xl">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="invoiced">Invoiced</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
+ 
       <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
         <CardContent className="p-0">
-          <table className="w-full">
+     
+          <div
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {filteredOrders.length} bon(s) de commande trouvé(s)
+            {searchQuery ? ` pour la recherche "${searchQuery}"` : ""}
+            {statusFilter !== "all" ? ` avec le statut "${statusFilter}"` : ""}
+          </div>
+
+    
+          <table
+            id="orders-table"
+            className="w-full"
+            aria-label="Liste des bons de commande"
+          >
+            <caption className="sr-only">
+              Bons de commande clients — page {currentPage} sur {totalPages || 1},
+              {filteredOrders.length} résultat(s)
+            </caption>
             <thead>
               <tr className="border-b bg-muted/40">
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order Number</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Issue Date</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Expiration Date</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Invoice</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">N° de commande</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date d'émission</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date d'expiration</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Montant</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Statut</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Facture</th>
+                <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
@@ -219,22 +303,30 @@ export default function PurchaseOrdersClient() {
                     {(currentPage - 1) * PAGE_SIZE + index + 1}
                   </td>
                   <td className="p-4">
+                  
                     <Link
                       to={`/app/purchase-orders-client/${order.id}`}
                       className="text-primary font-medium text-sm hover:underline underline-offset-4"
+                      aria-label={`Voir le bon de commande ${order.order_number}`}
                     >
                       {order.order_number}
                     </Link>
                   </td>
                   <td className="p-4 text-sm font-medium">{order.clients?.name}</td>
                   <td className="p-4 text-sm text-muted-foreground">
-                    {new Date(order.issue_date).toLocaleDateString("en-GB")}
+              
+                    <time dateTime={order.issue_date}>
+                      {new Date(order.issue_date).toLocaleDateString("fr-FR")}
+                    </time>
                   </td>
                   <td className="p-4 text-sm text-muted-foreground">
-                    {order.expiration_date
-                      ? new Date(order.expiration_date).toLocaleDateString("en-GB")
-                      : <span className="text-muted-foreground/50">—</span>
-                    }
+                    {order.expiration_date ? (
+                      <time dateTime={order.expiration_date}>
+                        {new Date(order.expiration_date).toLocaleDateString("fr-FR")}
+                      </time>
+                    ) : (
+                      <span aria-label="Pas de date d'expiration">—</span>
+                    )}
                   </td>
                   <td className="p-4">
                     <span className="text-sm font-semibold tabular-nums">
@@ -243,18 +335,19 @@ export default function PurchaseOrdersClient() {
                   </td>
                   <td className="p-4">{getStatusBadge(order.status)}</td>
 
-                  {/* Invoice number si invoiced */}
                   <td className="p-4">
                     {order.status === "invoiced" && order.invoices?.[0] ? (
                       <Link
                         to={`/app/invoices/${order.invoices[0].id}`}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-800 hover:underline underline-offset-4"
+                
+                        aria-label={`Voir la facture ${order.invoices[0].invoice_number} liée à ce bon de commande`}
                       >
-                        <FileText className="h-3.5 w-3.5" />
+                        <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                         {order.invoices[0].invoice_number}
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground/40 text-xs">-</span>
+                      <span className="text-muted-foreground/40 text-xs" aria-label="Aucune facture">-</span>
                     )}
                   </td>
 
@@ -264,8 +357,10 @@ export default function PurchaseOrdersClient() {
                         size="sm"
                         variant="outline"
                         className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted"
+                     
+                        aria-label={`Voir les détails du bon de commande ${order.order_number}`}
                       >
-                        Details
+                        Détails
                       </Button>
                     </Link>
                   </td>
@@ -273,28 +368,43 @@ export default function PurchaseOrdersClient() {
               ))}
               {paginated.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="p-12 text-center text-muted-foreground text-sm">
-                    No purchase orders found.
+                  <td
+                    colSpan={9}
+                    className="p-12 text-center text-muted-foreground text-sm"
+                   
+                  >
+                    Aucun bon de commande trouvé.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
 
+         
           {totalPages > 1 && (
-            <div className="flex justify-center gap-1.5 py-4 border-t border-border/50">
+         
+            <nav
+              aria-label="Pagination des bons de commande"
+              className="flex justify-center gap-1.5 py-4 border-t border-border/50"
+            >
+              
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <Button
                   key={p}
                   size="sm"
                   variant={p === currentPage ? "default" : "ghost"}
                   onClick={() => setCurrentPage(p)}
-                  className={`w-8 h-8 p-0 rounded-lg text-xs ${p === currentPage ? "shadow-sm" : "text-muted-foreground"}`}
+                
+                  aria-current={p === currentPage ? "page" : undefined}
+                  aria-label={`Page ${p}${p === currentPage ? " (page actuelle)" : ""}`}
+                  className={`w-8 h-8 p-0 rounded-lg text-xs ${
+                    p === currentPage ? "shadow-sm" : "text-muted-foreground"
+                  }`}
                 >
                   {p}
                 </Button>
               ))}
-            </div>
+            </nav>
           )}
         </CardContent>
       </Card>
