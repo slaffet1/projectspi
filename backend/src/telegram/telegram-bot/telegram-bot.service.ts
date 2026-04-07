@@ -45,10 +45,17 @@ export class TelegramBotService {
 
             console.debug('OCR TEXT:', text);
 
-            const normalizedText = text.replace(/\s+/g, '').toUpperCase();
 
-            const match = normalizedText.match(
+            const normalizedText = text
+                .replace(/\s+/g, '')
+                .toUpperCase() // remove all whitespace
+                .replace(/[^\x00-\x7F]/g, '');
+            /*const match = normalizedText.match(
                 /\b(?:BL[-_]?QT[-_]?\d{4}-\d{4}-\d{4}|QT[-_]?\d{4}-\d{4}|INV[-_]?\d{4}\.\d{1,3})\b/i
+            );*/
+            console.log(normalizedText)
+            const match = normalizedText.match(
+                /BL[-_]?QT[-_]?\d{4}-\d{4}-\d{4}|QT[-_]?\d{4}-\d{4}|INV[-_]?\d{4}-\d{1,3}/i
             );
 
             if (!match) {

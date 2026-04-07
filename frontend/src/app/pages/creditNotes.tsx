@@ -234,7 +234,7 @@ function CreateCreditNoteModal({
                             {step === "details" && "Step 4 — Return details"}
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                    <button onClick={onClose}  className="p-1.5 rounded-lg hover:bg-muted transition-colors">
                         <X className="w-4 h-4 text-muted-foreground" />
                     </button>
                 </div>

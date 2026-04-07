@@ -339,10 +339,6 @@ function Pagination({ current, total, onChange }: { current: number; total: numb
     );
 }
 
-// ── Convert to Invoice Modal ───────────────────────────────────────────────────
-// Backend auto-generates: invoice number, total, tax from quote_details
-// We only need to send: quote_id, issue_date, due_date
-
 interface ConvertToInvoiceState {
     quoteId: number;
     quoteRef: string;
@@ -670,8 +666,6 @@ function CreateBLModal({ quoteId, quoteRef, clientName, totalAmount, businessId,
         </div>
     );
 }
-
-// ── Main Page ──────────────────────────────────────────────────────────────────
 
 export default function DeliveryNotes() {
     const { activeBusiness } = useBusiness();
