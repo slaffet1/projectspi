@@ -17,15 +17,18 @@ export class TelegramController {
             body.message.photo.length - 1
             ];
 
-        // ignore non-image messages
         if (!photo) {
             return { ok: true };
         }
 
-        await this.deliveryProofService.processDeliveryNoteImageFromFileId(
-            photo.file_id,
-        );
         console.log('NEW FILE ID:', photo.file_id);
+
+        // ✅ DO NOT await
+        this.deliveryProofService
+            .processDeliveryNoteImageFromFileId(photo.file_id)
+            .catch(err => console.error(err));
+
+        // ✅ respond immediately
         return { ok: true };
     }
 }
