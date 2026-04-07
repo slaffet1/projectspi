@@ -6,7 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { UserPlus, Trash2, Users } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-const API_URL = "http://localhost:3000/api";
+const API_URL = "http://localhost:3001/api";
 
 const Members = () => {
   // ✅ Hook à l'intérieur du composant

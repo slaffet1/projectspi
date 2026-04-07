@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { stockService } from "@/app/services/stockService";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-// ── Types ──────────────────────────────────────────────────────────
 interface ImportError {
   row: number;
   product?: string;
@@ -33,7 +32,6 @@ interface ImportReport {
   };
 }
 
-// ── Template Excel columns ─────────────────────────────────────────
 const COLUMNS = [
   { col: "A", label: "name", required: true },
   { col: "B", label: "reference", required: false },
@@ -56,7 +54,6 @@ export default function StockImport() {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
 
-  // ── File handlers ──────────────────────────────────────────────
   const handleFile = (file: File) => {
     const isExcel =
       file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
@@ -84,7 +81,6 @@ export default function StockImport() {
     if (file) handleFile(file);
   };
 
-  // ── Import ─────────────────────────────────────────────────────
   const handleImport = async () => {
     if (!selectedFile || !activeBusiness?.id) return;
     setLoading(true);
@@ -92,9 +88,9 @@ export default function StockImport() {
       const res = await stockService.importFromExcel(activeBusiness.id, selectedFile);
       setReport(res.data);
       if (res.data.status === "success") {
-        toast({ title: "Import successful 🎉", description: `${res.data.success_rows} rows imported` });
+        toast({ title: "Import successful", description: `${res.data.success_rows} rows imported` });
       } else if (res.data.status === "partial") {
-        toast({ title: "Partial import ⚠️", description: `${res.data.success_rows} success, ${res.data.error_rows} errors`, variant: "destructive" });
+        toast({ title: "Partial import", description: `${res.data.success_rows} success, ${res.data.error_rows} errors`, variant: "destructive" });
       } else {
         toast({ title: "Import failed", description: "All rows failed", variant: "destructive" });
       }
@@ -105,14 +101,12 @@ export default function StockImport() {
     }
   };
 
-  // ── Reset ──────────────────────────────────────────────────────
   const handleReset = () => {
     setSelectedFile(null);
     setReport(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // ── Download template ──────────────────────────────────────────
   const downloadTemplate = () => {
     const header = COLUMNS.map(c => c.label).join(",");
     const example = "Produit A,REF001,100,80,19,Electronics,piece,50,Warehouse A";
@@ -126,21 +120,20 @@ export default function StockImport() {
     URL.revokeObjectURL(url);
   };
 
-  // ── Status badge ───────────────────────────────────────────────
   const StatusBadge = ({ status }: { status: ImportReport["status"] }) => {
     if (status === "success") return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-        <CheckCircle2 className="h-4 w-4" /> Success
+        <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Success
       </span>
     );
     if (status === "partial") return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200">
-        <AlertTriangle className="h-4 w-4" /> Partial
+        <AlertTriangle className="h-4 w-4" aria-hidden="true" /> Partial
       </span>
     );
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-rose-50 text-rose-700 border border-rose-200">
-        <XCircle className="h-4 w-4" /> Failed
+        <XCircle className="h-4 w-4" aria-hidden="true" /> Failed
       </span>
     );
   };
@@ -155,25 +148,25 @@ export default function StockImport() {
           <p className="text-muted-foreground mt-1">Upload an Excel file to import products and stock</p>
         </div>
         <Button variant="outline" onClick={downloadTemplate}>
-          <Download className="h-4 w-4 mr-2" /> Download Template
+          <Download className="h-4 w-4 mr-2" aria-hidden="true" /> Download Template
         </Button>
       </div>
 
       {/* Column guide */}
       <Card className="rounded-2xl shadow-sm border border-border/60">
         <CardContent className="p-5">
-          <p className="text-sm font-semibold text-foreground mb-3">📋 Excel file format</p>
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2">
+          <p className="text-sm font-semibold text-foreground mb-3">Excel file format</p>
+          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2" role="list" aria-label="Required columns">
             {COLUMNS.map((c) => (
-              <div key={c.col} className="text-center">
-                <div className="text-xs font-bold text-primary bg-primary/10 rounded-lg py-1 px-2">{c.col}</div>
+              <div key={c.col} className="text-center" role="listitem">
+                <div className="text-xs font-bold text-primary bg-primary/10 rounded-lg py-1 px-2" aria-label={`Column ${c.col}`}>{c.col}</div>
                 <div className="text-xs text-muted-foreground mt-1">{c.label}</div>
                 {c.required && <div className="text-xs text-rose-500 font-medium">required</div>}
               </div>
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            ⚠️ Row 1 = headers (ignored). Data starts from row 2. Warehouse must exist before import.
+            Row 1 = headers (ignored). Data starts from row 2. Warehouse must exist before import.
           </p>
         </CardContent>
       </Card>
@@ -187,8 +180,13 @@ export default function StockImport() {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+              role="button"
+              tabIndex={0}
+              aria-label={selectedFile ? `Selected file: ${selectedFile.name}. Press Enter to change file.` : "Drop Excel file here or press Enter to browse"}
               className={`
                 border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
                 ${dragOver
                   ? "border-primary bg-primary/5 scale-[1.01]"
                   : selectedFile
@@ -197,18 +195,21 @@ export default function StockImport() {
                 }
               `}
             >
+              <label htmlFor="file-upload" className="sr-only">Upload Excel file</label>
               <input
                 ref={fileInputRef}
+                id="file-upload"
                 type="file"
                 accept=".xlsx,.xls"
                 className="hidden"
                 onChange={handleInputChange}
+                aria-label="Upload Excel file"
               />
 
               {selectedFile ? (
                 <div className="space-y-3">
-                  <div className="h-14 w-14 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto">
-                    <FileSpreadsheet className="h-7 w-7 text-emerald-600" />
+                  <div className="h-14 w-14 rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto" aria-hidden="true">
+                    <FileSpreadsheet className="h-7 w-7 text-emerald-600" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{selectedFile.name}</p>
@@ -219,8 +220,8 @@ export default function StockImport() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                    <Upload className="h-7 w-7 text-primary" />
+                  <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto" aria-hidden="true">
+                    <Upload className="h-7 w-7 text-primary" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">Drop your Excel file here</p>
@@ -230,17 +231,23 @@ export default function StockImport() {
               )}
             </div>
 
-            {/* Actions */}
             {selectedFile && (
               <div className="flex justify-end gap-3 mt-4">
                 <Button variant="outline" onClick={handleReset}>
-                  <RotateCcw className="h-4 w-4 mr-2" /> Reset
+                  <RotateCcw className="h-4 w-4 mr-2" aria-hidden="true" /> Reset
                 </Button>
                 <Button onClick={handleImport} disabled={loading}>
-                  {loading
-                    ? <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" /> Importing...</>
-                    : <><Upload className="h-4 w-4 mr-2" /> Import</>
-                  }
+                  {loading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" aria-hidden="true" />
+                      <span>Importing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" aria-hidden="true" />
+                      Import
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -253,7 +260,7 @@ export default function StockImport() {
         <div className="space-y-5">
 
           {/* Summary KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4" role="region" aria-label="Import summary">
             <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white">
               <CardContent className="p-5">
                 <p className="text-xs text-slate-400 uppercase tracking-widest">Total Rows</p>
@@ -283,8 +290,6 @@ export default function StockImport() {
           {/* Report details */}
           <Card className="rounded-2xl shadow-sm border border-border/60">
             <CardContent className="p-5 space-y-4">
-
-              {/* Header report */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-foreground">{report.file_name}</p>
@@ -295,7 +300,6 @@ export default function StockImport() {
                 <StatusBadge status={report.status} />
               </div>
 
-              {/* Summary */}
               <div className="grid grid-cols-3 gap-3 bg-muted/30 rounded-xl p-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-emerald-600">{report.summary.products_created}</p>
@@ -311,20 +315,19 @@ export default function StockImport() {
                 </div>
               </div>
 
-              {/* Errors table */}
               {report.errors.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-destructive mb-2">
-                    ⚠️ {report.errors.length} error(s) detected
+                  <p className="text-sm font-semibold text-destructive mb-2" role="alert">
+                    {report.errors.length} error(s) detected
                   </p>
                   <div className="rounded-xl border border-rose-200 overflow-hidden">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm" aria-label="Import errors">
                       <thead>
                         <tr className="bg-rose-50 border-b border-rose-200">
-                          <th className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Row</th>
-                          <th className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Product</th>
-                          <th className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Warehouse</th>
-                          <th className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Error</th>
+                          <th scope="col" className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Row</th>
+                          <th scope="col" className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Product</th>
+                          <th scope="col" className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Warehouse</th>
+                          <th scope="col" className="p-3 text-left text-xs font-semibold text-rose-700 uppercase">Error</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-rose-100">
@@ -342,10 +345,9 @@ export default function StockImport() {
                 </div>
               )}
 
-              {/* New import button */}
               <div className="flex justify-end">
                 <Button onClick={handleReset}>
-                  <RotateCcw className="h-4 w-4 mr-2" /> New Import
+                  <RotateCcw className="h-4 w-4 mr-2" aria-hidden="true" /> New Import
                 </Button>
               </div>
             </CardContent>

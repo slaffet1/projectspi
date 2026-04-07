@@ -9,7 +9,6 @@ import { useBusiness } from "@/app/context/BusinessContext";
 import { api } from "@/app/services/api";
 import { productsService } from "@/app/services/productsService";
 
-// ─── Types ────────────────────────────────────────────────────
 interface Product {
   id: number;
   name: string;
@@ -43,7 +42,6 @@ const emptyForm: ProductForm = {
   unit_price: "", cost_price: "", tax_rate: "", category: "", unit: "piece",
 };
 
-// ─── Modal Form ───────────────────────────────────────────────
 function ProductModal({
   product, onClose, onSave, businessId,
 }: {
@@ -98,7 +96,7 @@ function ProductModal({
         unit: form.unit || "piece",
       };
       if (product) {
-       await productsService.updateProduct(businessId, product.id, payload);
+        await productsService.updateProduct(businessId, product.id, payload);
       } else {
         await productsService.createProduct(businessId, payload);
       }
@@ -112,14 +110,23 @@ function ProductModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="product-modal-title"
+    >
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-lg font-semibold">
+          <h2 id="product-modal-title" className="text-lg font-semibold">
             {product ? "Edit Product" : "New Product"}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X className="h-5 w-5" />
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+            aria-label="Close modal"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -127,60 +134,101 @@ function ProductModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div className="md:col-span-2">
-              <Label>Product Name *</Label>
-              <Input value={form.name} onChange={e => set("name", e.target.value)}
-                placeholder="e.g. Dell XPS Laptop" className={errors.name ? "border-red-500" : ""} />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              <label htmlFor="product-name" className="text-sm font-medium block mb-1">Product Name *</label>
+              <Input
+                id="product-name"
+                value={form.name}
+                onChange={e => set("name", e.target.value)}
+                placeholder="e.g. Dell XPS Laptop"
+                className={errors.name ? "border-red-500" : ""}
+                aria-describedby={errors.name ? "error-name" : undefined}
+                aria-invalid={!!errors.name}
+              />
+              {errors.name && <p id="error-name" className="text-red-500 text-xs mt-1" role="alert">{errors.name}</p>}
             </div>
 
             {/* Description */}
             <div className="md:col-span-2">
-              <Label>Description</Label>
-              <Input value={form.description} onChange={e => set("description", e.target.value)}
-                placeholder="Product description" />
+              <label htmlFor="product-description" className="text-sm font-medium block mb-1">Description</label>
+              <Input
+                id="product-description"
+                value={form.description}
+                onChange={e => set("description", e.target.value)}
+                placeholder="Product description"
+              />
             </div>
 
             {/* Reference */}
             <div>
-              <Label>Reference</Label>
-              <Input value={form.reference} onChange={e => set("reference", e.target.value)}
-                placeholder="e.g. PROD-001" />
+              <label htmlFor="product-reference" className="text-sm font-medium block mb-1">Reference</label>
+              <Input
+                id="product-reference"
+                value={form.reference}
+                onChange={e => set("reference", e.target.value)}
+                placeholder="e.g. PROD-001"
+              />
             </div>
 
             {/* Barcode */}
             <div>
-              <Label>Barcode</Label>
-              <Input value={form.barcode} onChange={e => set("barcode", e.target.value)}
-                placeholder="e.g. 123456789" />
+              <label htmlFor="product-barcode" className="text-sm font-medium block mb-1">Barcode</label>
+              <Input
+                id="product-barcode"
+                value={form.barcode}
+                onChange={e => set("barcode", e.target.value)}
+                placeholder="e.g. 123456789"
+              />
             </div>
 
             {/* Selling Price */}
             <div>
-              <Label>Selling Price excl. Tax (TND) *</Label>
-              <Input type="number" value={form.unit_price} onChange={e => set("unit_price", e.target.value)}
-                placeholder="0.00" className={errors.unit_price ? "border-red-500" : ""} />
-              {errors.unit_price && <p className="text-red-500 text-xs mt-1">{errors.unit_price}</p>}
+              <label htmlFor="product-unit-price" className="text-sm font-medium block mb-1">Selling Price excl. Tax (TND) *</label>
+              <Input
+                id="product-unit-price"
+                type="number"
+                value={form.unit_price}
+                onChange={e => set("unit_price", e.target.value)}
+                placeholder="0.00"
+                className={errors.unit_price ? "border-red-500" : ""}
+                aria-describedby={errors.unit_price ? "error-unit-price" : undefined}
+                aria-invalid={!!errors.unit_price}
+              />
+              {errors.unit_price && <p id="error-unit-price" className="text-red-500 text-xs mt-1" role="alert">{errors.unit_price}</p>}
             </div>
 
             {/* Cost Price */}
             <div>
-              <Label>Cost Price (TND)</Label>
-              <Input type="number" value={form.cost_price} onChange={e => set("cost_price", e.target.value)}
-                placeholder="0.00" />
+              <label htmlFor="product-cost-price" className="text-sm font-medium block mb-1">Cost Price (TND)</label>
+              <Input
+                id="product-cost-price"
+                type="number"
+                value={form.cost_price}
+                onChange={e => set("cost_price", e.target.value)}
+                placeholder="0.00"
+              />
             </div>
 
             {/* VAT */}
             <div>
-              <Label>VAT Rate (%)</Label>
-              <Input type="number" value={form.tax_rate} onChange={e => set("tax_rate", e.target.value)}
-                placeholder="e.g. 19" />
+              <label htmlFor="product-tax-rate" className="text-sm font-medium block mb-1">VAT Rate (%)</label>
+              <Input
+                id="product-tax-rate"
+                type="number"
+                value={form.tax_rate}
+                onChange={e => set("tax_rate", e.target.value)}
+                placeholder="e.g. 19"
+              />
             </div>
 
             {/* Unit */}
             <div>
-              <Label>Unit</Label>
-              <select value={form.unit} onChange={e => set("unit", e.target.value)}
-                className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+              <label htmlFor="product-unit" className="text-sm font-medium block mb-1">Unit</label>
+              <select
+                id="product-unit"
+                value={form.unit}
+                onChange={e => set("unit", e.target.value)}
+                className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+              >
                 <option value="piece">Piece</option>
                 <option value="kg">Kg</option>
                 <option value="liter">Liter</option>
@@ -192,20 +240,29 @@ function ProductModal({
 
             {/* Category */}
             <div className="md:col-span-2">
-              <Label>Category</Label>
-              <Input value={form.category} onChange={e => set("category", e.target.value)}
-                placeholder="e.g. IT, Electronics..." />
+              <label htmlFor="product-category" className="text-sm font-medium block mb-1">Category</label>
+              <Input
+                id="product-category"
+                value={form.category}
+                onChange={e => set("category", e.target.value)}
+                placeholder="e.g. IT, Electronics..."
+              />
             </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 p-6 border-t">
-          <button onClick={onClose}
-            className="px-4 py-2 border rounded-xl text-sm font-medium hover:bg-gray-50 transition">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border rounded-xl text-sm font-medium hover:bg-gray-50 transition"
+          >
             Cancel
           </button>
-          <button onClick={handleSubmit} disabled={loading}
-            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60">
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-sm font-semibold transition disabled:opacity-60"
+          >
             {loading ? "Saving..." : product ? "Update" : "Create"}
           </button>
         </div>
@@ -214,7 +271,6 @@ function ProductModal({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────
 export default function Products() {
   const { activeBusiness } = useBusiness();
   const businessId = activeBusiness?.id;
@@ -241,8 +297,8 @@ export default function Products() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const handleDelete = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
     try {
       await productsService.deleteProduct(businessId!, id);
       setProducts(prev => prev.filter(p => p.id !== id));
@@ -276,7 +332,7 @@ export default function Products() {
     p.category?.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6" role="status" aria-label="Loading products">Loading...</div>;
 
   return (
     <div className="space-y-6">
@@ -287,13 +343,13 @@ export default function Products() {
           <p className="text-muted-foreground mt-1">Manage your product catalog</p>
         </div>
         <Button className="bg-primary hover:bg-primary/90" onClick={() => { setEditProduct(undefined); setShowModal(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
           New Product
         </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" role="region" aria-label="Product statistics">
         <Card className="border-border shadow-sm">
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Total Products</p>
@@ -323,17 +379,28 @@ export default function Products() {
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <SearchInput placeholder="Search by name, reference, category..."
-                value={search} onChange={setSearch} />
+              <SearchInput
+                placeholder="Search by name, reference, category..."
+                value={search}
+                onChange={setSearch}
+              />
             </div>
-            <div className="flex items-center gap-1 border rounded-lg p-1">
-              <button onClick={() => setView("table")}
-                className={`p-2 rounded-md transition ${view === "table" ? "bg-primary text-white" : "hover:bg-muted"}`}>
-                <List className="h-4 w-4" />
+            <div className="flex items-center gap-1 border rounded-lg p-1" role="group" aria-label="View mode">
+              <button
+                onClick={() => setView("table")}
+                aria-label="Table view"
+                aria-pressed={view === "table"}
+                className={`p-2 rounded-md transition ${view === "table" ? "bg-primary text-white" : "hover:bg-muted"}`}
+              >
+                <List className="h-4 w-4" aria-hidden="true" />
               </button>
-              <button onClick={() => setView("grid")}
-                className={`p-2 rounded-md transition ${view === "grid" ? "bg-primary text-white" : "hover:bg-muted"}`}>
-                <LayoutGrid className="h-4 w-4" />
+              <button
+                onClick={() => setView("grid")}
+                aria-label="Grid view"
+                aria-pressed={view === "grid"}
+                className={`p-2 rounded-md transition ${view === "grid" ? "bg-primary text-white" : "hover:bg-muted"}`}
+              >
+                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -349,22 +416,22 @@ export default function Products() {
           <CardContent>
             {filtered.length === 0 ? (
               <div className="text-center py-12">
-                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" aria-hidden="true" />
                 <p className="text-muted-foreground">No products found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" aria-label="Products list">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Reference</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Price excl. Tax</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">VAT</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Unit</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Name</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Reference</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Category</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Price excl. Tax</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">VAT</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Unit</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                      <th scope="col" className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -388,7 +455,11 @@ export default function Products() {
                         <td className="py-3 px-4 text-sm">{p.tax_rate ? `${p.tax_rate}%` : "-"}</td>
                         <td className="py-3 px-4 text-sm text-muted-foreground">{p.unit ?? "-"}</td>
                         <td className="py-3 px-4">
-                          <button onClick={() => handleToggle(p.id)}>
+                          <button
+                            onClick={() => handleToggle(p.id)}
+                            aria-label={`${p.is_active ? "Deactivate" : "Activate"} ${p.name}`}
+                            aria-pressed={p.is_active}
+                          >
                             {p.is_active ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
                                 Active
@@ -402,11 +473,11 @@ export default function Products() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(p)}>
-                              <Pencil className="h-4 w-4 text-blue-600" />
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(p)} aria-label={`Edit ${p.name}`}>
+                              <Pencil className="h-4 w-4 text-blue-600" aria-hidden="true" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)} aria-label={`Delete ${p.name}`}>
+                              <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
                             </Button>
                           </div>
                         </td>
@@ -422,24 +493,28 @@ export default function Products() {
 
       {/* Grid View */}
       {view === "grid" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Products grid">
           {filtered.length === 0 ? (
             <div className="col-span-3 text-center py-12">
-              <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" aria-hidden="true" />
               <p className="text-muted-foreground">No products found</p>
             </div>
           ) : (
             filtered.map(p => (
-              <Card key={p.id} className={`border-border shadow-sm hover:shadow-md transition-shadow ${!p.is_active ? "opacity-60" : ""}`}>
+              <Card key={p.id} role="listitem" className={`border-border shadow-sm hover:shadow-md transition-shadow ${!p.is_active ? "opacity-60" : ""}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Package className="h-5 w-5 text-primary" />
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center" aria-hidden="true">
+                      <Package className="h-5 w-5 text-primary" aria-hidden="true" />
                     </div>
-                    <button onClick={() => handleToggle(p.id)}>
+                    <button
+                      onClick={() => handleToggle(p.id)}
+                      aria-label={`${p.is_active ? "Deactivate" : "Activate"} ${p.name}`}
+                      aria-pressed={p.is_active}
+                    >
                       {p.is_active
-                        ? <ToggleRight className="h-6 w-6 text-green-600" />
-                        : <ToggleLeft className="h-6 w-6 text-gray-400" />
+                        ? <ToggleRight className="h-6 w-6 text-green-600" aria-hidden="true" />
+                        : <ToggleLeft className="h-6 w-6 text-gray-400" aria-hidden="true" />
                       }
                     </button>
                   </div>
@@ -470,11 +545,11 @@ export default function Products() {
                       </span>
                     ) : <span />}
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(p)}>
-                        <Pencil className="h-4 w-4 text-blue-600" />
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(p)} aria-label={`Edit ${p.name}`}>
+                        <Pencil className="h-4 w-4 text-blue-600" aria-hidden="true" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id)}>
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(p.id, p.name)} aria-label={`Delete ${p.name}`}>
+                        <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -485,7 +560,6 @@ export default function Products() {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && businessId && (
         <ProductModal
           product={editProduct}

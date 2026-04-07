@@ -27,6 +27,8 @@ export function AppHeader() {
     ? `${user.firstname?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase()
     : "?";
 
+  const fullName = user ? `${user.firstname} ${user.lastname}` : "...";
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
       {/* Search bar */}
@@ -35,32 +37,33 @@ export function AppHeader() {
       </div>
 
       {/* Spacer mobile */}
-      <div className="md:hidden w-12"></div>
+      <div className="md:hidden w-12" aria-hidden="true"></div>
 
       {/* User actions */}
       <div className="flex items-center gap-2 md:gap-4">
         <BusinessSwitcher />
 
-
-
         {/* User profile */}
         <DropdownMenu>
-          <DropdownMenuTrigger>
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted cursor-pointer">
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label={`Menu du compte de ${fullName}`}
+            >
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-white">
+                <AvatarFallback className="bg-primary text-white" aria-hidden="true">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="text-left hidden lg:block">
-                <p className="text-sm font-medium">
-                  {user ? `${user.firstname} ${user.lastname}` : "..."}
+                <p className="text-sm font-medium" aria-hidden="true">
+                  {fullName}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground" aria-hidden="true">
                   {user?.email ?? ""}
                 </p>
               </div>
-            </div>
+            </button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
@@ -68,19 +71,19 @@ export function AppHeader() {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={() => navigate("/profile/edit")}>
-              <User className="mr-2 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" aria-hidden="true" />
               <span>Edit Profile</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => navigate("/app/settings/invoices")}>
-              <Settings className="mr-2 h-4 w-4" />
+              <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
               <span>Settings</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
               <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

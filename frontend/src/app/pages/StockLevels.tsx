@@ -45,13 +45,21 @@ export default function StockLevels() {
           <p className="text-muted-foreground mt-1">Monitor your current inventory</p>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search product..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 w-48" />
+          <label htmlFor="stock-search" className="sr-only">Search product</label>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Input
+            id="stock-search"
+            type="search"
+            placeholder="Search product..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9 w-48"
+          />
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="region" aria-label="Stock statistics">
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
@@ -60,8 +68,8 @@ export default function StockLevels() {
                 <h2 className="text-4xl font-bold mt-2">{totalProducts}</h2>
                 <p className="text-xs text-slate-400 mt-2">In inventory</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/10">
-                <Package className="h-5 w-5 text-slate-200" />
+              <div className="p-2.5 rounded-xl bg-white/10" aria-hidden="true">
+                <Package className="h-5 w-5 text-slate-200" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -75,8 +83,8 @@ export default function StockLevels() {
                 <h2 className="text-4xl font-bold mt-2">{lowStock}</h2>
                 <p className="text-xs text-amber-200 mt-2">Below minimum</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/20">
-                <AlertTriangle className="h-5 w-5 text-white" />
+              <div className="p-2.5 rounded-xl bg-white/20" aria-hidden="true">
+                <AlertTriangle className="h-5 w-5 text-white" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -90,8 +98,8 @@ export default function StockLevels() {
                 <h2 className="text-4xl font-bold mt-2">{outOfStock}</h2>
                 <p className="text-xs text-rose-200 mt-2">Zero quantity</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-white/20">
-                <BarChart3 className="h-5 w-5 text-white" />
+              <div className="p-2.5 rounded-xl bg-white/20" aria-hidden="true">
+                <BarChart3 className="h-5 w-5 text-white" aria-hidden="true" />
               </div>
             </div>
           </CardContent>
@@ -100,16 +108,16 @@ export default function StockLevels() {
 
       {/* Loading */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="flex justify-center py-16" role="status" aria-label="Loading stock levels">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true" />
         </div>
       )}
 
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <BarChart3 className="h-10 w-10 text-primary" />
+          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center" aria-hidden="true">
+            <BarChart3 className="h-10 w-10 text-primary" aria-hidden="true" />
           </div>
           <div className="text-center">
             <h2 className="text-xl font-semibold">No stock data yet</h2>
@@ -122,15 +130,15 @@ export default function StockLevels() {
       {!loading && filtered.length > 0 && (
         <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
           <CardContent className="p-0">
-            <table className="w-full">
+            <table className="w-full" aria-label="Stock levels">
               <thead>
                 <tr className="border-b bg-muted/40">
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product</th>
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Available</th>
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Minimum</th>
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Last Updated</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Available</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Minimum</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th scope="col" className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Last Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -150,15 +158,15 @@ export default function StockLevels() {
                       <td className="p-4">
                         {isOut ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Out of Stock
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" aria-hidden="true" /> Out of Stock
                           </span>
                         ) : isLow ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Low Stock
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true" /> Low Stock
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> In Stock
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" /> In Stock
                           </span>
                         )}
                       </td>

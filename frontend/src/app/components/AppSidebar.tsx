@@ -68,7 +68,6 @@ const navGroups: NavGroup[] = [
       { title: "Products", href: "/app/products", icon: Package },
       { title: "Expenses", href: "/app/expenses", icon: Receipt },
       { title: "Purchase Orders", href: "/app/purchase-orders", icon: ShoppingCart },
-
     ],
   },
   {
@@ -80,7 +79,6 @@ const navGroups: NavGroup[] = [
       { title: "Inventory", href: "/app/stock/inventory", icon: ClipboardCheck },
       { title: "Import Excel", href: "/app/stock/import", icon: FileUp },
       { title: "Suppliers", href: "/app/suppliers", icon: Unplug },
-
     ],
   },
   {
@@ -96,7 +94,6 @@ const navGroups: NavGroup[] = [
       { title: "Members", href: "/app/members", icon: UsersRound },
       { title: "Requests", href: "/app/join-requests", icon: ClipboardList },
       { title: "Employees", href: "/app/employees", icon: Briefcase },
-
     ],
   },
 ];
@@ -134,8 +131,11 @@ export function AppSidebar() {
         size="icon"
         className="md:hidden fixed top-4 left-4 z-50 bg-white border border-border"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-expanded={isOpen}
+        aria-controls="main-sidebar"
       >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
       </Button>
 
       {/* Mobile overlay */}
@@ -143,21 +143,27 @@ export function AppSidebar() {
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsOpen(false)}
+          role="button"
+          aria-label="Fermer le menu"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div
+      <nav
+        id="main-sidebar"
+        aria-label="Navigation principale"
         className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-white transition-transform duration-200 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary" aria-hidden="true">
               <span className="text-lg font-bold text-white">B</span>
             </div>
-            <Link to="/onboarding">
+            <Link to="/onboarding" aria-label="BusinessManager — Accueil">
               <span className="text-lg font-semibold text-foreground">
                 Business<span className="text-primary">Manager</span>
               </span>
@@ -168,8 +174,8 @@ export function AppSidebar() {
         {/* Scrollable nav area */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
           {navGroups.map((group) => (
-            <div key={group.label}>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div key={group.label} role="group" aria-label={group.label}>
+              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground" aria-hidden="true">
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -181,12 +187,13 @@ export function AppSidebar() {
                       key={item.href}
                       to={item.href}
                       onClick={() => setIsOpen(false)}
+                      aria-current={active ? "page" : undefined}
                       className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
                         ? "bg-primary text-white"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="text-sm font-medium">{item.title}</span>
                     </Link>
                   );
@@ -206,22 +213,24 @@ export function AppSidebar() {
                 <div key={item.href}>
                   <button
                     onClick={() => setSettingsOpen(!settingsOpen)}
+                    aria-expanded={settingsOpen}
+                    aria-controls="settings-submenu"
                     className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${parentActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="h-4 w-4 shrink-0" />
+                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                       <span className="text-sm font-medium">{item.title}</span>
                     </div>
                     {settingsOpen
-                      ? <ChevronDown className="h-3.5 w-3.5" />
-                      : <ChevronRight className="h-3.5 w-3.5" />
+                      ? <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                      : <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                     }
                   </button>
                   {settingsOpen && (
-                    <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
+                    <div id="settings-submenu" className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         const childActive = location.pathname === child.href;
@@ -230,12 +239,13 @@ export function AppSidebar() {
                             key={child.href}
                             to={child.href}
                             onClick={() => setIsOpen(false)}
+                            aria-current={childActive ? "page" : undefined}
                             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${childActive
                               ? "bg-primary text-white"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                               }`}
                           >
-                            <ChildIcon className="h-4 w-4 shrink-0" />
+                            <ChildIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="font-medium">{child.title}</span>
                           </Link>
                         );
@@ -251,18 +261,19 @@ export function AppSidebar() {
                 key={item.href}
                 to={item.href}
                 onClick={() => setIsOpen(false)}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
                   ? "bg-primary text-white"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="text-sm font-medium">{item.title}</span>
               </Link>
             );
           })}
         </div>
-      </div>
+      </nav>
     </>
   );
 }

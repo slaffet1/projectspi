@@ -99,7 +99,7 @@ export default function Banks() {
         setRibError("");
       } else {
         setForm((prev) => ({ ...prev, account_number: rib, bank_name: "" }));
-        setRibError("❌ Invalid RIB (unknown bank)");
+        setRibError("Invalid RIB (unknown bank)");
       }
     } else {
       setForm((prev) => ({ ...prev, account_number: rib, bank_name: "" }));
@@ -119,7 +119,7 @@ export default function Banks() {
     setFormLoading(true);
     try {
       await bankService.createBank(form);
-      toast({ title: "Success 🎉", description: "Bank account created" });
+      toast({ title: "Success", description: "Bank account created" });
       setIsCreateOpen(false);
       setForm(emptyForm);
       fetchBanks();
@@ -145,7 +145,7 @@ export default function Banks() {
     setFormLoading(true);
     try {
       await bankService.updateBank(selectedBank.id, form);
-      toast({ title: "Success ✨", description: "Bank account updated" });
+      toast({ title: "Success", description: "Bank account updated" });
       setIsEditOpen(false);
       setForm(emptyForm);
       setSelectedBank(null);
@@ -165,7 +165,7 @@ export default function Banks() {
   const handleDelete = async () => {
     try {
       await bankService.deleteBank(selectedBank.id);
-      toast({ title: "Deleted 🗑", description: "Bank account removed" });
+      toast({ title: "Deleted", description: "Bank account removed" });
       setIsDeleteOpen(false);
       setSelectedBank(null);
       fetchBanks();
@@ -189,8 +189,11 @@ export default function Banks() {
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <label htmlFor="bank-search" className="sr-only">Search bank accounts</label>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Input
+              id="bank-search"
+              type="search"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -198,7 +201,7 @@ export default function Banks() {
             />
           </div>
           <Button onClick={() => { setForm(emptyForm); setIsCreateOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
             New Account
           </Button>
         </div>
@@ -206,23 +209,23 @@ export default function Banks() {
 
       {/* LOADING */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="flex justify-center py-16" role="status" aria-label="Loading bank accounts">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true" />
         </div>
       )}
 
       {/* EMPTY STATE */}
       {!loading && banks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Landmark className="h-10 w-10 text-primary" />
+          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center" aria-hidden="true">
+            <Landmark className="h-10 w-10 text-primary" aria-hidden="true" />
           </div>
           <div className="text-center">
             <h2 className="text-xl font-semibold text-foreground">No bank accounts yet</h2>
             <p className="text-muted-foreground mt-1">Add your first bank account to get started</p>
           </div>
           <Button onClick={() => { setForm(emptyForm); setIsCreateOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
             Add Bank Account
           </Button>
         </div>
@@ -230,24 +233,24 @@ export default function Banks() {
 
       {/* LIST */}
       {!loading && banks.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Bank accounts">
           {banks.map((bank) => {
             const color = bankColors[bank.bank_name] ?? "bg-gray-500";
             return (
-              <Card key={bank.id} className="shadow-sm rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow">
+              <Card key={bank.id} role="listitem" className="shadow-sm rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow">
                 {/* Card top color bar */}
-                <div className={`h-2 w-full ${color}`} />
+                <div className={`h-2 w-full ${color}`} aria-hidden="true" />
 
                 <CardHeader className="flex flex-row items-center gap-3 pb-2">
-                  <div className={`h-10 w-10 rounded-xl ${color} flex items-center justify-center shrink-0`}>
-                    <Landmark className="h-5 w-5 text-white" />
+                  <div className={`h-10 w-10 rounded-xl ${color} flex items-center justify-center shrink-0`} aria-hidden="true">
+                    <Landmark className="h-5 w-5 text-white" aria-hidden="true" />
                   </div>
                   <CardTitle className="text-lg">{bank.bank_name}</CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <CreditCard className="h-4 w-4 shrink-0" />
+                    <CreditCard className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span className="font-mono">{formatRIB(bank.account_number)}</span>
                   </div>
 
@@ -265,11 +268,22 @@ export default function Banks() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="icon" onClick={() => openEdit(bank)}>
-                        <Pencil className="h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openEdit(bank)}
+                        aria-label={`Edit ${bank.bank_name}`}
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
                       </Button>
-                      <Button variant="outline" size="icon" className="text-destructive hover:text-destructive" onClick={() => openDelete(bank)}>
-                        <Trash2 className="h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => openDelete(bank)}
+                        aria-label={`Delete ${bank.bank_name}`}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -299,29 +313,45 @@ export default function Banks() {
 
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Account Number (RIB)</label>
+              <label htmlFor="account-number" className="text-sm font-medium text-foreground mb-1 block">
+                Account Number (RIB)
+              </label>
               <Input
+                id="account-number"
                 placeholder="e.g. 08001231234567"
                 value={form.account_number}
                 onChange={(e) => handleAccountNumberChange(e.target.value)}
+                aria-describedby={ribError ? "rib-error" : undefined}
+                aria-invalid={!!ribError}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Bank Name (auto-detected)</label>
+              <label htmlFor="bank-name" className="text-sm font-medium text-foreground mb-1 block">
+                Bank Name (auto-detected)
+              </label>
               <Input
+                id="bank-name"
                 placeholder="Bank name"
                 value={form.bank_name}
                 disabled
                 className="bg-muted"
+                aria-readonly="true"
               />
             </div>
 
-            {ribError && <p className="text-destructive text-sm">{ribError}</p>}
+            {ribError && (
+              <p id="rib-error" className="text-destructive text-sm" role="alert">
+                {ribError}
+              </p>
+            )}
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">IBAN (optional)</label>
+              <label htmlFor="iban" className="text-sm font-medium text-foreground mb-1 block">
+                IBAN (optional)
+              </label>
               <Input
+                id="iban"
                 placeholder="e.g. TN5908001231234567"
                 value={form.iban}
                 onChange={(e) => setForm({ ...form, iban: e.target.value })}
@@ -329,8 +359,11 @@ export default function Banks() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Balance (DT)</label>
+              <label htmlFor="balance" className="text-sm font-medium text-foreground mb-1 block">
+                Balance (DT)
+              </label>
               <Input
+                id="balance"
                 placeholder="0"
                 type="number"
                 value={form.balance}
@@ -352,11 +385,11 @@ export default function Banks() {
 
       {/* DELETE CONFIRM */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="delete-desc">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground">
+          <p id="delete-desc" className="text-muted-foreground">
             Are you sure you want to delete <strong className="text-foreground">{selectedBank?.bank_name}</strong>? This action cannot be undone.
           </p>
           <DialogFooter>

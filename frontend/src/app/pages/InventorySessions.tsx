@@ -42,7 +42,6 @@ export default function InventorySessions() {
     if (activeBusiness?.id) fetchSessions();
   }, [activeBusiness?.id]);
 
-  // ── Ouvre le modal Record Count + charge les produits ──────────
   const openCountModal = async (session: any) => {
     setSelected(session);
     setCountForm({ product_id: "", physical_quantity: "" });
@@ -60,7 +59,7 @@ export default function InventorySessions() {
     setFormLoading(true);
     try {
       await stockService.createSession(activeBusiness!.id, sessionName);
-      toast({ title: "Success 🎉", description: "Inventory session created" });
+      toast({ title: "Success", description: "Inventory session created" });
       setIsCreateOpen(false);
       setSessionName("");
       fetchSessions();
@@ -78,7 +77,7 @@ export default function InventorySessions() {
         product_id: Number(countForm.product_id),
         physical_quantity: Number(countForm.physical_quantity),
       });
-      toast({ title: "Success ✨", description: "Count recorded" });
+      toast({ title: "Success", description: "Count recorded" });
       setIsCountOpen(false);
       setCountForm({ product_id: "", physical_quantity: "" });
       fetchSessions();
@@ -92,7 +91,7 @@ export default function InventorySessions() {
   const handleAdjust = async (sessionId: number) => {
     try {
       await stockService.adjustInventory(activeBusiness!.id, sessionId);
-      toast({ title: "Success ✨", description: "Inventory adjusted and session closed" });
+      toast({ title: "Success", description: "Inventory adjusted and session closed" });
       fetchSessions();
     } catch {
       toast({ title: "Error", description: "Adjustment failed", variant: "destructive" });
@@ -127,17 +126,25 @@ export default function InventorySessions() {
         </div>
         <div className="flex gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 w-48" />
+            <label htmlFor="session-search" className="sr-only">Search inventory sessions</label>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <Input
+              id="session-search"
+              type="search"
+              placeholder="Search..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 w-48"
+            />
           </div>
           <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> New Session
+            <Plus className="h-4 w-4 mr-2" aria-hidden="true" /> New Session
           </Button>
         </div>
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="region" aria-label="Inventory statistics">
         <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-slate-800 to-slate-900 text-white overflow-hidden">
           <CardContent className="p-5">
             <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Sessions</p>
@@ -163,123 +170,145 @@ export default function InventorySessions() {
 
       {/* Loading */}
       {loading && (
-        <div className="flex justify-center py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="flex justify-center py-16" role="status" aria-label="Loading inventory sessions">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true" />
         </div>
       )}
 
       {/* Empty state */}
       {!loading && filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <ClipboardCheck className="h-10 w-10 text-primary" />
+          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center" aria-hidden="true">
+            <ClipboardCheck className="h-10 w-10 text-primary" aria-hidden="true" />
           </div>
           <div className="text-center">
             <h2 className="text-xl font-semibold">No inventory sessions yet</h2>
             <p className="text-muted-foreground mt-1">Create your first session to start counting</p>
           </div>
           <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> New Session
+            <Plus className="h-4 w-4 mr-2" aria-hidden="true" /> New Session
           </Button>
         </div>
       )}
 
       {/* Sessions List */}
       {!loading && filtered.length > 0 && (
-        <div className="space-y-4">
-          {filtered.map((session) => (
-            <Card key={session.id} className="rounded-xl shadow-sm border border-border overflow-hidden">
-              <CardHeader
-                className="flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors py-4"
-                onClick={() => setExpandedId(expandedId === session.id ? null : session.id)}
-              >
-                <div className="flex items-center gap-3">
-                  {session.status === "open"
-                    ? <Clock className="h-5 w-5 text-violet-500" />
-                    : <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  }
-                  <div>
-                    <CardTitle className="text-base">{session.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Created {new Date(session.created_at).toLocaleDateString("en-GB")}
-                      {session.closed_at && ` · Closed ${new Date(session.closed_at).toLocaleDateString("en-GB")}`}
-                    </p>
+        <div className="space-y-4" role="list" aria-label="Inventory sessions">
+          {filtered.map((session) => {
+            const isExpanded = expandedId === session.id;
+            const panelId = `session-panel-${session.id}`;
+            const headerId = `session-header-${session.id}`;
+            return (
+              <Card key={session.id} role="listitem" className="rounded-xl shadow-sm border border-border overflow-hidden">
+                <CardHeader
+                  id={headerId}
+                  className="flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors py-4"
+                  onClick={() => setExpandedId(isExpanded ? null : session.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  aria-controls={panelId}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setExpandedId(isExpanded ? null : session.id);
+                    }
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    {session.status === "open"
+                      ? <Clock className="h-5 w-5 text-violet-500" aria-hidden="true" />
+                      : <CheckCircle className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                    }
+                    <div>
+                      <CardTitle className="text-base">{session.name}</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Created {new Date(session.created_at).toLocaleDateString("en-GB")}
+                        {session.closed_at && ` · Closed ${new Date(session.closed_at).toLocaleDateString("en-GB")}`}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-                    ${session.status === "open"
-                      ? "bg-violet-50 text-violet-700 border border-violet-200"
-                      : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${session.status === "open" ? "bg-violet-500" : "bg-emerald-500"}`} />
-                    {session.status === "open" ? "Open" : "Closed"}
-                  </span>
-                  {expandedId === session.id
-                    ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    : <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  }
-                </div>
-              </CardHeader>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                        ${session.status === "open"
+                          ? "bg-violet-50 text-violet-700 border border-violet-200"
+                          : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        }`}
+                      aria-label={`Status: ${session.status}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${session.status === "open" ? "bg-violet-500" : "bg-emerald-500"}`} aria-hidden="true" />
+                      {session.status === "open" ? "Open" : "Closed"}
+                    </span>
+                    {isExpanded
+                      ? <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      : <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    }
+                  </div>
+                </CardHeader>
 
-              {expandedId === session.id && (
-                <CardContent className="pt-0 pb-4 space-y-4">
-                  {/* Counts table */}
-                  {session.counts?.length > 0 && (
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/40">
-                          <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Product</th>
-                          <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">System Qty</th>
-                          <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Physical Qty</th>
-                          <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Variance</th>
-                          <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Adjusted</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border/50">
-                        {session.counts.map((c: any) => (
-                          <tr key={c.id} className="hover:bg-muted/20">
-                            <td className="p-3 font-medium">{c.products?.name}</td>
-                            <td className="p-3 text-muted-foreground">{c.system_quantity}</td>
-                            <td className="p-3 text-muted-foreground">{c.physical_quantity}</td>
-                            <td className="p-3">
-                              <span className={`font-semibold ${c.variance > 0 ? "text-emerald-600" : c.variance < 0 ? "text-destructive" : "text-muted-foreground"}`}>
-                                {c.variance > 0 ? "+" : ""}{c.variance}
-                              </span>
-                            </td>
-                            <td className="p-3">
-                              {c.adjusted
-                                ? <span className="text-emerald-600 text-xs font-medium">✓ Yes</span>
-                                : <span className="text-muted-foreground text-xs">No</span>
-                              }
-                            </td>
+                {isExpanded && (
+                  <CardContent id={panelId} role="region" aria-labelledby={headerId} className="pt-0 pb-4 space-y-4">
+                    {/* Counts table */}
+                    {session.counts?.length > 0 && (
+                      <table className="w-full text-sm" aria-label={`Counts for ${session.name}`}>
+                        <thead>
+                          <tr className="border-b bg-muted/40">
+                            <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Product</th>
+                            <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">System Qty</th>
+                            <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Physical Qty</th>
+                            <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Variance</th>
+                            <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Adjusted</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
-                    {session.status === "open" && (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => openCountModal(session)}>
-                          <Plus className="h-3 w-3 mr-1" /> Record Count
-                        </Button>
-                        <Button size="sm" onClick={() => handleAdjust(session.id)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                          <CheckCircle className="h-3 w-3 mr-1" /> Adjust & Close
-                        </Button>
-                      </>
+                        </thead>
+                        <tbody className="divide-y divide-border/50">
+                          {session.counts.map((c: any) => (
+                            <tr key={c.id} className="hover:bg-muted/20">
+                              <td className="p-3 font-medium">{c.products?.name}</td>
+                              <td className="p-3 text-muted-foreground">{c.system_quantity}</td>
+                              <td className="p-3 text-muted-foreground">{c.physical_quantity}</td>
+                              <td className="p-3">
+                                <span className={`font-semibold ${c.variance > 0 ? "text-emerald-600" : c.variance < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                                  {c.variance > 0 ? "+" : ""}{c.variance}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                {c.adjusted
+                                  ? <span className="text-emerald-600 text-xs font-medium">Yes</span>
+                                  : <span className="text-muted-foreground text-xs">No</span>
+                                }
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     )}
-                    <Button size="sm" variant="outline" onClick={() => handleViewReport(session)}>
-                      View Report
-                    </Button>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      {session.status === "open" && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => openCountModal(session)}>
+                            <Plus className="h-3 w-3 mr-1" aria-hidden="true" /> Record Count
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAdjust(session.id)}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                          >
+                            <CheckCircle className="h-3 w-3 mr-1" aria-hidden="true" /> Adjust & Close
+                          </Button>
+                        </>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => handleViewReport(session)}>
+                        View Report
+                      </Button>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -288,8 +317,9 @@ export default function InventorySessions() {
         <DialogContent>
           <DialogHeader><DialogTitle>New Inventory Session</DialogTitle></DialogHeader>
           <div>
-            <label className="text-sm font-medium mb-1 block">Session Name</label>
+            <label htmlFor="session-name" className="text-sm font-medium mb-1 block">Session Name</label>
             <Input
+              id="session-name"
               placeholder="e.g. Q1 2026 Inventory Count"
               value={sessionName}
               onChange={e => setSessionName(e.target.value)}
@@ -312,8 +342,9 @@ export default function InventorySessions() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Product</label>
+              <label htmlFor="count-product" className="text-sm font-medium mb-1 block">Product</label>
               <select
+                id="count-product"
                 className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
                 value={countForm.product_id}
                 onChange={e => setCountForm({ ...countForm, product_id: e.target.value })}
@@ -327,8 +358,9 @@ export default function InventorySessions() {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Physical Quantity</label>
+              <label htmlFor="physical-qty" className="text-sm font-medium mb-1 block">Physical Quantity</label>
               <Input
+                id="physical-qty"
                 placeholder="0"
                 type="number"
                 min="0"
@@ -356,14 +388,14 @@ export default function InventorySessions() {
           {report.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No counts recorded yet.</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label={`Variance report for ${selected?.name}`}>
               <thead>
                 <tr className="border-b bg-muted/40">
-                  <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Product</th>
-                  <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">System</th>
-                  <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Physical</th>
-                  <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Variance</th>
-                  <th className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Adjusted</th>
+                  <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Product</th>
+                  <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">System</th>
+                  <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Physical</th>
+                  <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Variance</th>
+                  <th scope="col" className="p-3 text-left text-xs font-semibold text-muted-foreground uppercase">Adjusted</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -379,7 +411,7 @@ export default function InventorySessions() {
                     </td>
                     <td className="p-3">
                       {r.adjusted
-                        ? <span className="text-emerald-600 text-xs font-medium">✓ Yes</span>
+                        ? <span className="text-emerald-600 text-xs font-medium">Yes</span>
                         : <span className="text-muted-foreground text-xs">No</span>
                       }
                     </td>
