@@ -169,7 +169,7 @@ export function AppSidebar() {
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
           {navGroups.map((group) => (
             <div key={group.label}>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {group.label}
               </p>
               <div className="space-y-0.5">
