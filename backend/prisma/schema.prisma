@@ -54,29 +54,63 @@ model businesses {
   expenses           expenses[]
   invitations        invitations[]
   fournisseurs       fournisseurs[]
+  fournisseurs       fournisseurs[]
   products           products[]
   taxes              taxes[]
   join_requests      join_requests[]      @relation("BusinessJoinRequests")
   warehouses         warehouses[]
   inventory_sessions inventory_sessions[]
-  credit_notes       credit_notes[]
+  credit_notes            credit_notes[]
   expenseCategories  expense_categories[]
+  purchase_orders    purchase_orders[]
+  employees          Employee[]
+}
+
+model Employee {
+  id             Int        @id @default(autoincrement())
+  businessId     Int
+  businesses     businesses @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  firstName      String
+  lastName       String
+  isHeadOfFamily Boolean    @default(false)
+  childrenCount  Int        @default(0)
+  baseSalary     Float
+  salaryType     String     @default("BRUT") // "BRUT" ou "NET"
+  payslips       Payslip[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  businessesId   Int?
+}
+
+model Payslip {
+  id               Int      @id @default(autoincrement())
+  employeeId       Int
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  month            Int
+  year             Int
+  salaireBrut      Float
+  retenueCnss      Float
+  salaireImposable Float
+  retenueIrpp      Float
+  retenueCss       Float
+  salaireNet       Float
+  createdAt        DateTime @default(now())
 }
 
 model clients {
-  id          Int         @id @default(autoincrement())
-  name        String      @db.VarChar(255)
-  email       String?     @db.VarChar(255)
-  phone       String?     @db.VarChar(20)
-  address     String?     @db.VarChar(255)
-  city        String?     @db.VarChar(100)
-  country     String?     @db.VarChar(100)
-  tax_number  String?     @db.VarChar(100)
-  business_id Int?
-  created_at  DateTime?   @default(now()) @db.Timestamp(6)
-  updated_at  DateTime?   @default(now()) @db.Timestamp(6)
-  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  quotes      quotes[]
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(255)
+  email        String?        @db.VarChar(255)
+  phone        String?        @db.VarChar(20)
+  address      String?        @db.VarChar(255)
+  city         String?        @db.VarChar(100)
+  country      String?        @db.VarChar(100)
+  tax_number   String?        @db.VarChar(100)
+  business_id  Int?
+  created_at   DateTime?      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?      @default(now()) @db.Timestamp(6)
+  businesses   businesses?    @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quotes       quotes[]
   credit_notes credit_notes[]
 }
 
@@ -103,19 +137,20 @@ model commandes {
 }
 
 model fournisseurs {
-  id          Int         @id @default(autoincrement())
-  name        String      @db.VarChar(255)
-  email       String?     @db.VarChar(255)
-  phone       String?     @db.VarChar(20)
-  address     String?     @db.VarChar(255)
-  city        String?     @db.VarChar(100)
-  country     String?     @db.VarChar(100)
-  tax_number  String?     @db.VarChar(100)
-  business_id Int?
-  created_at  DateTime?   @default(now()) @db.Timestamp(6)
-  updated_at  DateTime?   @default(now()) @db.Timestamp(6)
-  businesses  businesses? @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  products    products[]
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  email           String?           @db.VarChar(255)
+  phone           String?           @db.VarChar(20)
+  address         String?           @db.VarChar(255)
+  city            String?           @db.VarChar(100)
+  country         String?           @db.VarChar(100)
+  tax_number      String?           @db.VarChar(100)
+  business_id     Int?
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  businesses      businesses?       @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products        products[]
+  purchase_orders purchase_orders[]
 }
 
 model delivery_notes {
@@ -125,6 +160,7 @@ model delivery_notes {
   quote_id        Int?
   status          DeliveryStatus @default(PENDING)
   quotes          quotes?        @relation(fields: [quote_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  credit_notes    credit_notes[]
   credit_notes    credit_notes[]
 }
 
@@ -150,6 +186,8 @@ model expenses {
   businessesId    Int?
   factureItems    facture_items? @relation(fields: [facture_itemsId], references: [id])
   facture_itemsId Int?
+  purchase_order_id Int?
+  purchase_orders   purchase_orders? @relation(fields: [purchase_order_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model facture_items {
@@ -173,18 +211,18 @@ model inventaires {
 }
 
 model invoices {
-  id             Int       @id @default(autoincrement())
-  invoice_number String    @unique @db.VarChar(50)
-  issue_date     DateTime  @db.Date
-  due_date       DateTime  @db.Date
-  total_amount   Decimal   @db.Decimal(15, 2)
+  id             Int            @id @default(autoincrement())
+  invoice_number String         @unique @db.VarChar(50)
+  issue_date     DateTime       @db.Date
+  due_date       DateTime       @db.Date
+  total_amount   Decimal        @db.Decimal(15, 2)
   bank_id        Int?
-  bank           banks?    @relation(fields: [bank_id], references: [id])
-  tax_amount     Decimal?  @default(0) @db.Decimal(15, 2)
-  status         String?   @default("draft") @db.VarChar(20)
+  bank           banks?         @relation(fields: [bank_id], references: [id])
+  tax_amount     Decimal?       @default(0) @db.Decimal(15, 2)
+  status         String?        @default("draft") @db.VarChar(20)
   quote_id       Int?
-  created_at     DateTime? @default(now()) @db.Timestamp(6)
-  quotes         quotes?   @relation(fields: [quote_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at     DateTime?      @default(now()) @db.Timestamp(6)
+  quotes         quotes?        @relation(fields: [quote_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   credit_notes   credit_notes[]
 }
 
@@ -206,30 +244,32 @@ model permissions {
 }
 
 model products {
-  id                 Int                  @id @default(autoincrement())
-  name               String               @db.VarChar(255)
-  description        String?
-  reference          String?              @db.VarChar(100)
-  barcode            String?              @db.VarChar(100)
-  unit_price         Decimal              @db.Decimal(15, 2)
-  cost_price         Decimal?             @db.Decimal(15, 2)
-  tax_rate           Decimal?             @default(0) @db.Decimal(5, 2)
-  category           String?              @db.VarChar(100)
-  unit               String?              @default("pièce") @db.VarChar(50)
-  is_active          Boolean              @default(true)
-  business_id        Int?
-  fournisseur_id     Int?
-  created_at         DateTime?            @default(now()) @db.Timestamp(6)
-  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
-  commandes          commandes[]
-  inventaires        inventaires[]
-  mouvements         mouvements[]
-  businesses         businesses?          @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  fournisseurs       fournisseurs?        @relation(fields: [fournisseur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  quote_details      quote_details[]
-  warehouse_products warehouse_products[]
-  inventory_counts   inventory_counts[]
-  credit_note_items  credit_note_items[]
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @db.VarChar(255)
+  description          String?
+  reference            String?                @db.VarChar(100)
+  barcode              String?                @db.VarChar(100)
+  unit_price           Decimal                @db.Decimal(15, 2)
+  cost_price           Decimal?               @db.Decimal(15, 2)
+  tax_rate             Decimal?               @default(0) @db.Decimal(5, 2)
+  category             String?                @db.VarChar(100)
+  unit                 String?                @default("pièce") @db.VarChar(50)
+  is_active            Boolean                @default(true)
+  business_id          Int?
+  fournisseur_id       Int?
+  created_at           DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamp(6)
+  commandes            commandes[]
+  inventaires          inventaires[]
+  mouvements           mouvements[]
+  businesses           businesses?            @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fournisseurs         fournisseurs?          @relation(fields: [fournisseur_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  quote_details        quote_details[]
+  warehouse_products   warehouse_products[]
+  inventory_counts     inventory_counts[]
+  credit_note_items    credit_note_items[]
+  purchase_orders      purchase_orders[]
+  purchase_order_items purchase_order_items[]
 }
 
 model quote_details {
@@ -388,6 +428,7 @@ model inventory_counts {
   products           products           @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
+
 enum CreditNoteStatus {
   DRAFT
   CONFIRMED
@@ -415,14 +456,51 @@ model credit_notes {
 }
 
 model credit_note_items {
-  id             Int          @id @default(autoincrement())
+  id             Int     @id @default(autoincrement())
   credit_note_id Int
   product_id     Int
   quantity       Int
-  unit_price     Decimal      @db.Decimal(15, 2)
-  total          Decimal      @db.Decimal(15, 2)
-  credit_notes   credit_notes @relation(fields: [credit_note_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  products       products     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  unit_price     Decimal @db.Decimal(15, 2)
+  total          Decimal @db.Decimal(15, 2)
+
+  credit_notes credit_notes @relation(fields: [credit_note_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products     products     @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model purchase_orders {
+  id            Int       @id @default(autoincrement())
+  order_number  String    @unique @db.VarChar(50)
+  order_date    DateTime  @db.Date
+  expected_date DateTime? @db.Date
+  status        String    @default("DRAFT") @db.VarChar(20) // DRAFT, VALIDATED, CANCELLED
+  total_amount  Decimal   @db.Decimal(15, 2)
+  notes         String?
+
+  business_id Int?
+  supplier_id Int?
+
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+
+  businesses   businesses?   @relation(fields: [business_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fournisseurs fournisseurs? @relation(fields: [supplier_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  items      purchase_order_items[]
+  expenses   expenses[]
+  products   products?              @relation(fields: [productsId], references: [id])
+  productsId Int?
+}
+
+model purchase_order_items {
+  id                Int     @id @default(autoincrement())
+  purchase_order_id Int
+  product_id        Int?
+  quantity          Int
+  unit_price        Decimal @db.Decimal(15, 2)
+  total             Decimal @db.Decimal(15, 2)
+
+  purchase_orders purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  products        products?       @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model expense_categories {
