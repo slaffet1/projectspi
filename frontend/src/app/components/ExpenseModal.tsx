@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ type Props = {
   businessId: number;
   categories: any[];
   onSuccess: () => void;
+  expense?: any; // ✅ EDIT
 };
 
 export default function ExpenseModal({
@@ -42,8 +43,9 @@ export default function ExpenseModal({
   businessId,
   categories,
   onSuccess,
+  expense,
 }: Props) {
-  // ✅ STATE TYPO
+  // ✅ STATE
   const [form, setForm] = useState<ExpenseForm>({
     label: "",
     amount: "",
@@ -54,7 +56,29 @@ export default function ExpenseModal({
 
   const [errors, setErrors] = useState<ExpenseErrors>({});
 
-  // ✅ VALIDATION
+  // ✅ PREFILL (EDIT)
+  useEffect(() => {
+    if (expense) {
+      setForm({
+        label: expense.label || "",
+        amount: String(expense.amount || ""),
+        expense_date: expense.expense_date?.split("T")[0] || "",
+        category_id: String(expense.category_id || ""),
+        payment_method: expense.payment_method || "",
+      });
+    } else {
+      // reset si create
+      setForm({
+        label: "",
+        amount: "",
+        expense_date: "",
+        category_id: "",
+        payment_method: "",
+      });
+    }
+  }, [expense, open]);
+
+  // ✅ VALIDATION (inchangée)
   const validate = () => {
     let newErrors: ExpenseErrors = {};
 
@@ -82,34 +106,39 @@ export default function ExpenseModal({
     }
   };
 
-  // ✅ SUBMIT
+  // ✅ SUBMIT (CREATE + UPDATE)
   const handleSubmit = async () => {
     if (!validate()) return;
 
     try {
-      await expenseService.create(businessId, {
-        label: form.label,
-        amount: Number(form.amount),
-        expense_date: form.expense_date,
-        category_id: Number(form.category_id),
-        payment_method: form.payment_method,
-      });
+      if (expense) {
+        // ✏️ UPDATE
+        await expenseService.update(businessId, expense.id, {
+          label: form.label,
+          amount: Number(form.amount),
+          expense_date: form.expense_date,
+          category_id: Number(form.category_id),
+          payment_method: form.payment_method,
+        });
 
-      toast.success("Dépense ajoutée");
+        toast.success("Dépense modifiée");
+      } else {
+        // ➕ CREATE
+        await expenseService.create(businessId, {
+          label: form.label,
+          amount: Number(form.amount),
+          expense_date: form.expense_date,
+          category_id: Number(form.category_id),
+          payment_method: form.payment_method,
+        });
+
+        toast.success("Dépense ajoutée");
+      }
 
       setOpen(false);
-
-      setForm({
-        label: "",
-        amount: "",
-        expense_date: "",
-        category_id: "",
-        payment_method: "",
-      });
-
       onSuccess();
     } catch (err) {
-      toast.error("Erreur création");
+      toast.error("Erreur");
     }
   };
 
@@ -117,7 +146,9 @@ export default function ExpenseModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nouvelle dépense</DialogTitle>
+          <DialogTitle>
+            {expense ? "Modifier dépense" : "Nouvelle dépense"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -212,7 +243,7 @@ export default function ExpenseModal({
 
           {/* BUTTON */}
           <Button className="w-full" onClick={handleSubmit}>
-            Ajouter
+            {expense ? "Modifier" : "Ajouter"}
           </Button>
         </div>
       </DialogContent>

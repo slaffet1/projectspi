@@ -38,6 +38,8 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
   const [formLoading, setFormLoading] = useState(false);
+  const [errors, setErrors] = useState<any>({});
+  
 
   const fetchClients = async () => {
     try {
@@ -64,8 +66,32 @@ export default function Clients() {
     }, 300);
     return () => clearTimeout(delay);
   }, [searchQuery]);
+const validateForm = (data: typeof form) => {
+  const newErrors: any = {};
 
+  if (!data.name.trim()) {
+    newErrors.name = "Name is required";
+  } else if (data.name.length < 3) {
+    newErrors.name = "Min 3 characters";
+  }
+
+  if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    newErrors.email = "Invalid email";
+  }
+
+  if (data.phone && !/^[0-9+\s]{8,15}$/.test(data.phone)) {
+    newErrors.phone = "Invalid phone";
+  }
+
+  if (data.address && data.address.length < 3) {
+    newErrors.address = "Min 3 characters";
+  }
+
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
   const handleCreate = async () => {
+if (!validateForm(form)) return;
     setFormLoading(true);
     try {
       await clientService.createClient(form);
@@ -92,6 +118,7 @@ export default function Clients() {
   };
 
   const handleUpdate = async () => {
+if (!validateForm(form)) return;
     setFormLoading(true);
     try {
       await clientService.updateClient(selectedClient.id, form);
@@ -139,7 +166,14 @@ export default function Clients() {
   ];
 
   const getColor = (id: number) => avatarColors[id % avatarColors.length];
+const handleFieldChange = (field: string, value: string) => {
+  setForm({ ...form, [field]: value });
 
+  setErrors((prev: any) => ({
+    ...prev,
+    [field]: "",
+  }));
+};
   return (
     <div className="space-y-8">
       {/* HEADER */}
@@ -158,8 +192,14 @@ export default function Clients() {
               className="pl-9 w-48"
             />
           </div>
-          <Button onClick={() => { setForm(emptyForm); setSelectedClient(null); setIsCreateOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
+<Button
+  onClick={() => {
+    setForm(emptyForm);
+    setSelectedClient(null);
+    setErrors({}); // ✅ AJOUT IMPORTANT
+    setIsCreateOpen(true);
+  }}
+>            <Plus className="h-4 w-4 mr-2" />
             New Client
           </Button>
         </div>
@@ -245,13 +285,14 @@ export default function Clients() {
       <Dialog
         open={isCreateOpen || isEditOpen}
         onOpenChange={(open) => {
-          if (!open) {
-            setIsCreateOpen(false);
-            setIsEditOpen(false);
-            setForm(emptyForm);
-            setSelectedClient(null);
-          }
-        }}
+  if (!open) {
+    setIsCreateOpen(false);
+    setIsEditOpen(false);
+    setForm(emptyForm);
+    setSelectedClient(null);
+    setErrors({}); // ✅ AJOUT IMPORTANT
+  }
+}}
       >
         <DialogContent>
           <DialogHeader>
@@ -261,20 +302,40 @@ export default function Clients() {
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium mb-1 block">Full Name</label>
-              <Input placeholder="e.g. John Doe" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-            </div>
+<Input
+  placeholder="e.g. John Doe"
+  value={form.name}
+onChange={e => handleFieldChange("name", e.target.value)}/>
+{errors.name && (
+  <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+)}            </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Email</label>
-              <Input placeholder="e.g. john@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-            </div>
+<Input
+  placeholder="e.g. john@example.com"
+  value={form.email}
+onChange={e => handleFieldChange("email", e.target.value)}/>
+{errors.email && (
+  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+)}            </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Phone</label>
-              <Input placeholder="e.g. +216 12 345 678" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-            </div>
+<Input
+  placeholder="e.g. +216 12 345 678"
+  value={form.phone}
+onChange={e => handleFieldChange("phone", e.target.value)}/>
+{errors.phone && (
+  <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
+)}            </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Address</label>
-              <Input placeholder="e.g. Tunis, Tunisia" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
-            </div>
+<Input
+  placeholder="e.g. Tunis, Tunisia"
+  value={form.address}
+onChange={e => handleFieldChange("address", e.target.value)}/>
+{errors.address && (
+  <p className="text-xs text-red-500 mt-1">{errors.address}</p>
+)}            </div>
           </div>
 
           <DialogFooter>
