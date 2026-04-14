@@ -69,16 +69,48 @@ model Employee {
   id             Int        @id @default(autoincrement())
   businessId     Int
   businesses     businesses @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   firstName      String
   lastName       String
+
+  // Existing payroll data
   isHeadOfFamily Boolean    @default(false)
   childrenCount  Int        @default(0)
   baseSalary     Float
   salaryType     String     @default("BRUT")
+
+  // ───── HR ATTRITION FEATURES ─────
+  age                     Int?
+  gender                  String?
+  maritalStatus           String?
+  department              String?
+  jobRole                 String?
+  jobLevel                Int?
+
+  yearsAtCompany          Int?
+  yearsInCurrentRole      Int?
+  yearsSinceLastPromotion Int?
+
+  jobSatisfaction         Int?
+  workLifeBalance         Int?
+  performanceRating       Int?
+  jobInvolvement          Int?
+
+  overtime                String?
+  projectCount            Int?
+  averageHoursPerWeek     Float?
+  absenteeism             Int?
+
+  distanceFromHome        Float?
+
+  // Prediction result (VERY IMPORTANT)
+  attritionProbability    Float?
+  attritionRisk           String?
+
   payslips       Payslip[]
+
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
-  businessesId   Int?
 }
 
 model Payslip {

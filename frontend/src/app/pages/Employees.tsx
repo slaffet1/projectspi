@@ -23,19 +23,43 @@ export default function Employees() {
     const [showAddModal, setShowAddModal] = useState(false);
     const [employeeForPayslip, setEmployeeForPayslip] = useState<any | null>(null);
     const [employeeForHistory, setEmployeeForHistory] = useState<any | null>(null);
-    
+
     // Données des modals
     const [payslipsHistory, setPayslipsHistory] = useState<any[]>([]);
     const [simulation, setSimulation] = useState<PayrollResult | null>(null);
     const [isSavingPayslip, setIsSavingPayslip] = useState(false);
 
-    // Formulaire Nouvel Employé
     const [formData, setFormData] = useState({
-        firstName: "", lastName: "",
-        isHeadOfFamily: false, childrenCount: 0,
-        baseSalary: "", salaryType: "BRUT"
-    });
+        firstName: "",
+        lastName: "",
 
+        isHeadOfFamily: false,
+        childrenCount: 0,
+        baseSalary: 0,
+        salaryType: "BRUT",
+
+        age: 0,
+        gender: "Male",
+        maritalStatus: "Single",
+        department: "",
+        jobRole: "",
+        jobLevel: 1,
+
+        yearsAtCompany: 0,
+        yearsInCurrentRole: 0,
+        yearsSinceLastPromotion: 0,
+
+        jobSatisfaction: 3,
+        workLifeBalance: 3,
+        performanceRating: 3,
+        jobInvolvement: 3,
+
+        overtime: "No",   // 🔥 FIXED
+        projectCount: 0,
+        averageHoursPerWeek: 40,
+        absenteeism: 0,
+        distanceFromHome: 5,
+    });
     useEffect(() => {
         if (businessId) fetchEmployees();
     }, [businessId]);
@@ -55,14 +79,45 @@ export default function Employees() {
 
     const handleCreateEmployee = async () => {
         if (!formData.firstName || !formData.lastName || !formData.baseSalary) return;
+
         try {
             await employeeService.createEmployee({
                 ...formData,
                 businessId,
-                baseSalary: Number(formData.baseSalary)
+                baseSalary: Number(formData.baseSalary),
+                age: Number(formData.age),
             });
+
             setShowAddModal(false);
-            setFormData({ firstName: "", lastName: "", isHeadOfFamily: false, childrenCount: 0, baseSalary: "", salaryType: "BRUT" });
+
+            setFormData({
+                firstName: "",
+                lastName: "",
+                isHeadOfFamily: false,
+                childrenCount: 0,
+                baseSalary: 0,
+                salaryType: "BRUT",
+
+                age: 0,
+                gender: "Male",
+                maritalStatus: "Single",
+                department: "",
+                jobRole: "",
+                jobLevel: 1,
+                yearsAtCompany: 0,
+                yearsInCurrentRole: 0,
+                yearsSinceLastPromotion: 0,
+                jobSatisfaction: 3,
+                workLifeBalance: 3,
+                performanceRating: 3,
+                jobInvolvement: 3,
+                overtime: "No",
+                projectCount: 0,
+                averageHoursPerWeek: 40,
+                absenteeism: 0,
+                distanceFromHome: 5,
+            });
+
             fetchEmployees();
         } catch (err) {
             console.error(err);
@@ -119,10 +174,10 @@ export default function Employees() {
     const handleDownloadPDF = (data: PayrollResult, employee: any, monthStr: string) => {
         const doc = new jsPDF();
         const nomComplet = `${employee.firstName} ${employee.lastName}`;
-        
+
         doc.setFontSize(20);
         doc.text("Fiche de Paie", 14, 22);
-        
+
         doc.setFontSize(12);
         doc.text(`Employé : ${nomComplet}`, 14, 35);
         doc.text(`Période : ${monthStr}`, 14, 42);
@@ -180,6 +235,7 @@ export default function Employees() {
                                         <th className="py-3 px-4 font-medium">Situation</th>
                                         <th className="py-3 px-4 font-medium">Enfants</th>
                                         <th className="py-3 px-4 font-medium">Base contractuelle</th>
+                                        <th className="py-3 px-4 font-medium">Attrition</th>
                                         <th className="py-3 px-4 font-medium">Historique</th>
                                         <th className="py-3 px-4 font-medium text-right">Actions</th>
                                     </tr>
@@ -194,10 +250,33 @@ export default function Employees() {
                                                 {Number(emp.baseSalary).toFixed(3)} TND <span className="text-xs text-gray-500 font-normal">({emp.salaryType})</span>
                                             </td>
                                             <td className="py-3 px-4">
+                                                {emp.attritionRisk ? (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span
+                                                            className={`px-2 py-1 rounded-md text-xs font-semibold w-fit ${emp.attritionRisk === "HIGH_RISK"
+                                                                ? "bg-red-100 text-red-600"
+                                                                : "bg-green-100 text-green-600"
+                                                                }`}
+                                                        >
+                                                            {emp.attritionRisk}
+                                                        </span>
+
+                                                        {emp.attritionProbability !== null && emp.attritionProbability !== undefined && (
+                                                            <span className="text-xs text-gray-500">
+                                                                {(emp.attritionProbability * 100).toFixed(1)}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">Not predicted</span>
+                                                )}
+                                            </td>
+                                            <td className="py-3 px-4">
                                                 <span className="bg-gray-100 px-2 py-1 rounded-md text-xs font-medium">
                                                     {emp._count?.payslips || 0} fiches
                                                 </span>
                                             </td>
+
                                             <td className="py-3 px-4 flex justify-end gap-2">
                                                 <Button size="sm" variant="outline" onClick={() => openGeneratePayslip(emp)} className="text-blue-600 border-blue-200 hover:bg-blue-50">
                                                     <Calculator className="h-4 w-4 mr-1" /> Générer Paie
@@ -218,86 +297,234 @@ export default function Employees() {
             {/* MODAL 1 : AJOUTER UN EMPLOYÉ */}
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-xl">
-                        <h2 className="text-xl font-bold mb-4 border-b pb-3">Nouvel Employé</h2>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><Label>Prénom *</Label><Input autoFocus value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} /></div>
-                                <div><Label>Nom *</Label><Input value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} /></div>
-                            </div>
-                            
-                            <div className="flex gap-4 items-end">
-                                <div className="flex-1 flex items-center gap-2 mb-2">
-                                    <input type="checkbox" id="chef" checked={formData.isHeadOfFamily} onChange={e => setFormData({...formData, isHeadOfFamily: e.target.checked})} className="w-4 h-4" />
-                                    <Label htmlFor="chef" className="cursor-pointer">Chef de famille</Label>
-                                </div>
-                                <div className="flex-1">
-                                    <Label>Nombre d'enfants</Label>
-                                    <Input type="number" min="0" value={formData.childrenCount} onChange={e => setFormData({...formData, childrenCount: Number(e.target.value)})} />
-                                </div>
-                            </div>
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
 
-                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg mt-2">
-                                <div>
-                                    <Label>Type de contrat</Label>
-                                    <select className="w-full mt-1 border rounded-md px-3 py-2" value={formData.salaryType} onChange={e => setFormData({...formData, salaryType: e.target.value})}>
-                                        <option value="BRUT">Salaire Brut</option>
-                                        <option value="NET">Salaire Net</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <Label>Montant convenu (TND) *</Label>
-                                    <Input type="number" min="0" value={formData.baseSalary} onChange={e => setFormData({...formData, baseSalary: e.target.value})} />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6 border-t pt-4">
-                            <Button variant="ghost" onClick={() => setShowAddModal(false)}>Annuler</Button>
-                            <Button onClick={handleCreateEmployee} disabled={!formData.firstName || !formData.lastName || !formData.baseSalary}>
-                                Enregistrer
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL 2 : GÉNÉRER FICHE DE PAIE */}
-            {employeeForPayslip && simulation && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col">
-                        <div className="bg-primary p-4 text-white flex justify-between items-center">
+                        {/* HEADER */}
+                        <div className="px-6 py-4 border-b bg-gray-50 flex items-start justify-between">
                             <div>
-                                <h2 className="font-bold text-lg">Simulation Paie : {employeeForPayslip.firstName} {employeeForPayslip.lastName}</h2>
-                                <p className="text-primary-foreground/80 text-sm">Mois actuel : {new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}</p>
+                                <h2 className="text-xl font-bold">Nouvel Employé</h2>
+                                <p className="text-sm text-gray-500">Ajoutez un nouvel employé et ses données RH</p>
                             </div>
-                            <button onClick={() => setEmployeeForPayslip(null)} className="text-white hover:text-gray-200">✕</button>
-                        </div>
-                        
-                        <div className="p-6 space-y-3 flex-1 bg-gray-50">
-                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Salaire Brut</span><span className="font-medium">{simulation.salaireBrut.toFixed(3)} TND</span></div>
-                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Retenue CNSS (9.68%)</span><span className="text-red-500 font-medium">-{simulation.retenueCnss.toFixed(3)} TND</span></div>
-                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Salaire Brut Imposable</span><span className="font-medium">{simulation.salaireBrutImposable.toFixed(3)} TND</span></div>
-                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">IRPP (Barème 2026)</span><span className="text-red-500 font-medium">-{simulation.retenueIrpp.toFixed(3)} TND</span></div>
-                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">CSS (0.5%)</span><span className="text-red-500 font-medium">-{simulation.retenueCss.toFixed(3)} TND</span></div>
-                            
-                            <div className="flex justify-between py-4 mt-4 bg-green-100 border border-green-200 px-4 rounded-lg">
-                                <span className="font-bold text-green-800">SALAIRE NET À PAYER</span>
-                                <span className="font-bold text-green-800 text-xl">{simulation.salaireNet.toFixed(3)} TND</span>
+                            <div className="flex gap-2 flex-wrap justify-end">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">* Requis</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">● Modèle ML</span>
                             </div>
                         </div>
 
-                        <div className="p-4 border-t bg-white flex justify-between items-center gap-2">
-                            <Button variant="outline" onClick={() => handleDownloadPDF(simulation, employeeForPayslip, new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' }))}>
-                                <Download className="h-4 w-4 mr-2" /> Télécharger PDF
-                            </Button>
-                            <Button onClick={handleSavePayslip} disabled={isSavingPayslip} className="bg-green-600 hover:bg-green-700 text-white">
-                                {isSavingPayslip ? "Sauvegarde..." : "Enregistrer ce mois-ci"}
+                        {/* BODY */}
+                        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+
+                            {/* ── 1. IDENTITÉ ────────────────────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Identité</p>
+                                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Prénom *</Label>
+                                        <Input autoFocus value={formData.firstName}
+                                            onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <Label>Nom *</Label>
+                                        <Input value={formData.lastName}
+                                            onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <Label>Âge ●</Label>
+                                        <Input type="number" value={formData.age}
+                                            onChange={e => setFormData({ ...formData, age: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Genre ●</Label>
+                                        <select className="w-full mt-1 border rounded-md px-3 py-2"
+                                            value={formData.gender}
+                                            onChange={e => setFormData({ ...formData, gender: e.target.value })}>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <Label>Statut marital ●</Label>
+                                        <select className="w-full mt-1 border rounded-md px-3 py-2"
+                                            value={formData.maritalStatus}
+                                            onChange={e => setFormData({ ...formData, maritalStatus: e.target.value })}>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Divorced">Divorced</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <Label>Nombre d'enfants ●</Label>
+                                            <Input type="number" min="0" value={formData.childrenCount}
+                                                onChange={e => setFormData({ ...formData, childrenCount: Number(e.target.value) })} />
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <input type="checkbox" className="w-4 h-4"
+                                                checked={formData.isHeadOfFamily}
+                                                onChange={e => setFormData({ ...formData, isHeadOfFamily: e.target.checked })} />
+                                            <Label>Chef de famille</Label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* ── 2. POSTE & CONTRAT ──────────────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Poste & Contrat</p>
+                                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Département ●</Label>
+                                        <Input value={formData.department}
+                                            onChange={e => setFormData({ ...formData, department: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <Label>Poste ●</Label>
+                                        <Input value={formData.jobRole}
+                                            onChange={e => setFormData({ ...formData, jobRole: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <Label>Niveau de poste ●</Label>
+                                        <Input type="number" value={formData.jobLevel}
+                                            onChange={e => setFormData({ ...formData, jobLevel: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Heures sup. ●</Label>
+                                        <select className="w-full mt-1 border rounded-md px-3 py-2"
+                                            value={formData.overtime}
+                                            onChange={e => setFormData({ ...formData, overtime: e.target.value })}>
+                                            <option value="No">No</option>
+                                            <option value="Yes">Yes</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <Label>Heures / semaine ●</Label>
+                                        <Input type="number" value={formData.averageHoursPerWeek}
+                                            onChange={e => setFormData({ ...formData, averageHoursPerWeek: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Distance domicile (km) ●</Label>
+                                        <Input type="number" value={formData.distanceFromHome}
+                                            onChange={e => setFormData({ ...formData, distanceFromHome: Number(e.target.value) })} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* ── 3. RÉMUNÉRATION ─────────────────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Rémunération</p>
+                                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Type de contrat *</Label>
+                                        <select className="w-full mt-1 border rounded-md px-3 py-2"
+                                            value={formData.salaryType}
+                                            onChange={e => setFormData({ ...formData, salaryType: e.target.value })}>
+                                            <option value="BRUT">Salaire Brut</option>
+                                            <option value="NET">Salaire Net</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <Label>Salaire (TND) *</Label>
+                                        <Input type="number" value={formData.baseSalary}
+                                            onChange={e => setFormData({ ...formData, baseSalary: Number(e.target.value) })} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* ── 4. ANCIENNETÉ ───────────────────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Ancienneté ●</p>
+                                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-3 gap-4">
+                                    <div>
+                                        <Label>Années dans l'entreprise</Label>
+                                        <Input type="number" value={formData.yearsAtCompany}
+                                            onChange={e => setFormData({ ...formData, yearsAtCompany: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Années dans le rôle actuel</Label>
+                                        <Input type="number" value={formData.yearsInCurrentRole}
+                                            onChange={e => setFormData({ ...formData, yearsInCurrentRole: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Années depuis promotion</Label>
+                                        <Input type="number" value={formData.yearsSinceLastPromotion}
+                                            onChange={e => setFormData({ ...formData, yearsSinceLastPromotion: Number(e.target.value) })} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* ── 5. PERFORMANCE & ENGAGEMENT ─────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Performance & Engagement ●</p>
+                                <div className="bg-gray-50 rounded-xl p-4 space-y-5">
+                                    {[
+                                        {
+                                            key: "jobSatisfaction", label: "Satisfaction au travail",
+                                            descriptions: ["", "Faible", "Moyen", "Satisfait", "Très satisfait"],
+                                        },
+                                        {
+                                            key: "workLifeBalance", label: "Équilibre vie pro/perso",
+                                            descriptions: ["", "Mauvais", "Correct", "Bon", "Excellent"],
+                                        },
+                                        {
+                                            key: "performanceRating", label: "Performance",
+                                            descriptions: ["", "Faible", "Correct", "Excellent", "Exceptionnel"],
+                                        },
+                                        {
+                                            key: "jobInvolvement", label: "Implication dans le travail",
+                                            descriptions: ["", "Faible", "Modérée", "Élevée", "Très élevée"],
+                                        },
+                                    ].map(({ key, label, descriptions }, idx) => (
+                                        <div key={key}>
+                                            {idx > 0 && <div className="border-t border-gray-200 mb-5" />}
+                                            <div className="flex items-center justify-between mb-2">
+                                                <Label>{label}</Label>
+                                                <span className="text-xs text-gray-500">
+                                                    {formData[key as keyof typeof formData]} — {descriptions[formData[key as keyof typeof formData] as number]}
+                                                </span>
+                                            </div>
+                                            <input type="range" min={1} max={4} step={1}
+                                                className="w-full"
+                                                value={formData[key as keyof typeof formData] as number}
+                                                onChange={e => setFormData({ ...formData, [key]: Number(e.target.value) })} />
+                                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                                <span>1</span><span>2</span><span>3</span><span>4</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* ── 6. ACTIVITÉ ─────────────────────────────────────── */}
+                            <section>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Activité ●</p>
+                                <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Projets en cours</Label>
+                                        <Input type="number" value={formData.projectCount}
+                                            onChange={e => setFormData({ ...formData, projectCount: Number(e.target.value) })} />
+                                    </div>
+                                    <div>
+                                        <Label>Absentéisme (jours)</Label>
+                                        <Input type="number" value={formData.absenteeism}
+                                            onChange={e => setFormData({ ...formData, absenteeism: Number(e.target.value) })} />
+                                    </div>
+                                </div>
+                            </section>
+
+                        </div>
+
+                        {/* FOOTER */}
+                        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setShowAddModal(false)}>Annuler</Button>
+                            <Button onClick={handleCreateEmployee}
+                                disabled={!formData.firstName || !formData.lastName || !formData.baseSalary}>
+                                Créer l'employé
                             </Button>
                         </div>
+
                     </div>
                 </div>
             )}
-
             {/* MODAL 3 : HISTORIQUE DES PAIES */}
             {employeeForHistory && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -306,7 +533,7 @@ export default function Employees() {
                             <h2 className="text-xl font-bold">Historique - {employeeForHistory.firstName} {employeeForHistory.lastName}</h2>
                             <button onClick={() => setEmployeeForHistory(null)} className="text-gray-500 hover:bg-gray-100 p-2 rounded-lg">✕</button>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto pr-2">
                             {payslipsHistory.length === 0 ? (
                                 <p className="text-center text-muted-foreground py-8">Aucune fiche de paie enregistrée.</p>
