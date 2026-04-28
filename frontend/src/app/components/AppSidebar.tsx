@@ -134,7 +134,7 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden fixed top-4 left-4 z-50 bg-white border border-border"
+        className="md:hidden fixed top-4 left-4 z-50 bg-background border border-border"
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={isOpen}
@@ -159,7 +159,7 @@ export function AppSidebar() {
       <nav
         id="main-sidebar"
         aria-label="Navigation principale"
-        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-white transition-transform duration-200 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar transition-transform duration-200 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
           }`}
       >
         {/* Logo */}

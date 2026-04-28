@@ -16,9 +16,12 @@ import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import BusinessSwitcher from './BusinessSwitcher';
 import { useAuth } from "@/app/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -34,7 +37,7 @@ const { speechEnabled, toggleSpeech } = useAccessibility();
   const fullName = user ? `${user.firstname} ${user.lastname}` : "...";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 md:px-8">
       {/* Search bar */}
       <div className="flex-1 max-w-md hidden md:block">
         <SearchInput placeholder="Search invoice, client..." />
@@ -67,6 +70,9 @@ const { speechEnabled, toggleSpeech } = useAccessibility();
     <VolumeX className="h-4 w-4" />
   )}
 </Button>
+        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle dark mode">
+          {theme === "dark" ? <Sun className="h-4 w-4 text-yellow-400" /> : <Moon className="h-4 w-4" />}
+        </Button>
         <BusinessSwitcher />
 
         {/* User profile */}
