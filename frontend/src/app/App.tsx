@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify'
 import SpeechHandler from "@/app/components/SpeechHandler";
 import HandTracking from "@/app/components/HandTracking";
 import { useAccessibility } from "@/app/context/AccessibilityContext";
+import { AiAdvisor } from "@/app/components/AiAdvisor";
 export default function App() {
   const { gestureEnabled } = useAccessibility();
 
@@ -21,6 +22,7 @@ export default function App() {
 
       {/* 👉 HAND TRACKING (IMPORTANT) */}
       {gestureEnabled && <HandTracking />}
+      <AiAdvisor />
     </>
   );
 }

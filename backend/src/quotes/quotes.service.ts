@@ -25,12 +25,18 @@ export class QuotesService {
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
   private async generateQuoteId(businessId: number): Promise<string> {
-    const year  = new Date().getFullYear();
-    const count = await this.prisma.quotes.count({
-      where: { clients: { business_id: businessId } },
+    const year = new Date().getFullYear();
+    const last = await this.prisma.quotes.findFirst({
+      where: { clients: { business_id: businessId }, quote_id: { startsWith: `QT-${year}-` } },
+      orderBy: { quote_id: 'desc' },
     });
-    const pad = String(count + 1).padStart(4, '0');
-    return `QT-${year}-${pad}`;
+    let next = 1;
+    if (last?.quote_id) {
+      const parts = last.quote_id.split('-');
+      const lastNum = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastNum)) next = lastNum + 1;
+    }
+    return `QT-${year}-${String(next).padStart(4, '0')}`;
   }
 
   private async assertBelongsToBusiness(id: number, businessId: number) {
