@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import BusinessSwitcher from './BusinessSwitcher';
 import { useAuth } from "@/app/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Camera } from "lucide-react";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
@@ -32,7 +33,7 @@ const { speechEnabled, toggleSpeech } = useAccessibility();
     : "?";
 
   const fullName = user ? `${user.firstname} ${user.lastname}` : "...";
-
+const { gestureEnabled, toggleGesture } = useAccessibility();
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
       {/* Search bar */}
@@ -66,6 +67,9 @@ const { speechEnabled, toggleSpeech } = useAccessibility();
   ) : (
     <VolumeX className="h-4 w-4" />
   )}
+</Button>
+<Button variant="ghost" size="icon" onClick={toggleGesture}>
+  <Camera className={`h-4 w-4 ${gestureEnabled ? "text-green-600" : ""}`} />
 </Button>
         <BusinessSwitcher />
 
