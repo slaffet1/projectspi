@@ -2,17 +2,23 @@
 import {
   Controller, Get, Post, Put, Delete, Patch,
   Body, Param, UseGuards, ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PurchaseServiceService } from '../purchase-service/purchase-service.service';
 import { CreatePurchaseOrderDto } from '../dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from '../dto/update-purchase-order.dto';
 import { PurchaseOrderEmailService } from '../PurchaseOrderEmailService.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { WhisperService } from '../Whisper.service';
 
 @Controller('api/businesses/:businessId/purchase-orders-client')
 @UseGuards(AuthGuard('jwt'))
 export class PurchaseControllerController {
-    constructor(private readonly purchaseOrdersService: PurchaseServiceService,private readonly emailService: PurchaseOrderEmailService) {}
+    constructor(private readonly purchaseOrdersService: PurchaseServiceService,
+      private readonly emailService: PurchaseOrderEmailService,
+    private readonly whisperService: WhisperService,) {}
 
   @Post()
   create(
@@ -89,4 +95,12 @@ async sendByEmail(
  
   return { message: 'Email sent successfully' };
 }
+  @Post('transcribe')
+  @UseInterceptors(FileInterceptor('audio'))
+  async transcribe(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ text: string }> {
+    const text = await this.whisperService.transcribe(file);
+    return { text };
+  }
 }
