@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         NODE_ENV = 'test'
+        PUPPETEER_SKIP_DOWNLOAD = 'true'
     }
 
     triggers {
@@ -19,7 +20,7 @@ pipeline {
         stage('Install Backend') {
             steps {
                 dir('backend') {
-                    sh 'npm ci'
+                    sh 'PUPPETEER_SKIP_DOWNLOAD=true npm ci'
                 }
             }
         }
