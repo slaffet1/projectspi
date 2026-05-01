@@ -18,6 +18,7 @@ pipeline {
             }
         }
 
+        // ── BACKEND ──────────────────────────────────────────────────────────
         stage('Install Backend') {
             steps {
                 dir('backend') {
@@ -49,14 +50,31 @@ pipeline {
                 }
             }
         }
+
+        // ── FRONTEND ─────────────────────────────────────────────────────────
+        stage('Install Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run build'
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'CI Backend réussi ✅'
+            echo 'CI Backend + Frontend réussi ✅'
         }
         failure {
-            echo 'CI Backend échoué ❌'
+            echo 'CI échoué ❌'
         }
     }
 }
