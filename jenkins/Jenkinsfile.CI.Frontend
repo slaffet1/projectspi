@@ -27,7 +27,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npx vite build'
+                    sh './node_modules/.bin/vite build'
                 }
             }
         }
