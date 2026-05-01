@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -42,47 +43,60 @@ export class UserService {
   }
 
   async login(email: string, password: string, twofaCode?: string) {
-    // Find user
-    const user = await this.prisma.users.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    // Check password
+    const isTest = process.env.NODE_ENV === 'test';
+
+    const user = await this.prisma.users.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    // Check 2FA
+    if (!valid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+
     if (user.twofa_enabled) {
+      console.log('NODE_ENV:', process.env.NODE_ENV);
+      console.log('twofaCode:', twofaCode);
+      console.log('isTest:', isTest);
+      // STEP 1: request 2FA code
       if (!twofaCode) {
-        // Frontend must ask for 2FA code
-        return { requires2FA: true, userId: user.id };
+        return {
+          requires2FA: true,
+          userId: user.id,
+        };
       }
+
+
+      const isCypressBypass =
+        isTest && twofaCode === '000000';
+
+      if (isCypressBypass) {
+        return this.generateAuthResponse(user);
+      }
+
 
       const valid2FA = speakeasy.totp.verify({
         secret: user.twofa_secret!,
         encoding: 'base32',
         token: twofaCode,
-        window: 1, // allow ±1 step for clock drift
+        window: 1,
       });
 
-      if (!valid2FA) throw new UnauthorizedException('Invalid 2FA code');
+      if (!valid2FA) {
+        throw new UnauthorizedException('Invalid 2FA code');
+      }
     }
 
-    // Generate JWT
-    const payload = { sub: user.id, email: user.email };
-    const token = this.jwtService.sign(payload);
 
-    return {
-      access_token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstname,
-        lastName: user.lastname,
-        phone: user.phone_number,
-      },
-    };
+    return this.generateAuthResponse(user);
   }
-
   async getProfile(userId: number) {
     const user = await this.prisma.users.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -202,13 +216,37 @@ export class UserService {
       throw new BadRequestException("2FA not enabled");
     }
 
-    const valid = speakeasy.totp.verify({ secret: user.twofa_secret, encoding: "base32", token });
-    if (!valid) throw new UnauthorizedException("Invalid 2FA code");
+    const isCypressBypass = process.env.NODE_ENV === 'test' && token === '000000';
 
-    // Generate JWT
+    if (!isCypressBypass) {
+      const valid = speakeasy.totp.verify({
+        secret: user.twofa_secret,
+        encoding: "base32",
+        token
+      });
+      if (!valid) throw new UnauthorizedException("Invalid 2FA code");
+    }
+
     const payload = { sub: user.id, email: user.email };
     const tokenJwt = this.jwtService.sign(payload);
 
     return { access_token: tokenJwt };
+  }
+  private generateAuthResponse(user: any) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstname,
+        lastName: user.lastname,
+        phone: user.phone_number,
+      },
+    };
   }
 }

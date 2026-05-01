@@ -83,6 +83,7 @@ export default function Landing() {
                 <>
                   <Link to="/login">
                     <Button
+                      data-cy="navbar-login"
                       variant="outline"
                       className="border-primary text-primary hover:bg-primary hover:text-white"
                     >

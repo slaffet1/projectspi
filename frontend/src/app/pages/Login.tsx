@@ -77,7 +77,7 @@ export default function Login() {
       <main className="max-w-md w-full">
         {/* Card avec effet glassmorphisme et animation */}
         <div className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 border border-white/20 transition-all duration-300 hover:shadow-3xl">
-          
+
           {/* Logo ou icône */}
           <div className="flex justify-center mb-6">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-2xl shadow-lg">
@@ -130,6 +130,7 @@ export default function Login() {
                   </label>
                   <div className="relative">
                     <input
+                      data-cy="email-input"
                       id="email"
                       type="email"
                       placeholder="exemple@domaine.com"
@@ -138,11 +139,10 @@ export default function Login() {
                       aria-invalid={!!errors.email}
                       aria-describedby={errors.email ? "email-error" : undefined}
                       autoComplete="email"
-                      className={`w-full px-4 py-3 pl-11 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.email
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
+                      className={`w-full px-4 py-3 pl-11 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.email
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 hover:border-gray-400"
+                        }`}
                     />
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   </div>
@@ -168,6 +168,7 @@ export default function Login() {
                   </label>
                   <div className="relative">
                     <input
+                      data-cy="password-input"
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Votre mot de passe"
@@ -176,11 +177,10 @@ export default function Login() {
                       aria-invalid={!!errors.password}
                       aria-describedby={errors.password ? "password-error" : undefined}
                       autoComplete="current-password"
-                      className={`w-full px-4 py-3 pl-11 pr-12 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.password
-                          ? "border-red-500 bg-red-50"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
+                      className={`w-full px-4 py-3 pl-11 pr-12 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.password
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 hover:border-gray-400"
+                        }`}
                     />
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <button
@@ -212,6 +212,7 @@ export default function Login() {
 
                 {/* Bouton de connexion */}
                 <button
+                  data-cy="login-submit"
                   type="button"
                   onClick={submitCredentials}
                   disabled={loading}
@@ -244,6 +245,7 @@ export default function Login() {
                   </label>
                   <div className="relative">
                     <input
+                      data-cy="otp-input"
                       id="twofa-code"
                       type="text"
                       inputMode="numeric"
@@ -270,6 +272,7 @@ export default function Login() {
 
                 {/* Bouton de vérification 2FA */}
                 <button
+                  data-cy="otp-submit"
                   type="button"
                   onClick={submit2FA}
                   disabled={loading}

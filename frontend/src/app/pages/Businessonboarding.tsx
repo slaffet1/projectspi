@@ -38,6 +38,7 @@ function BusinessesSection() {
               </div>
             </div>
             <button
+              data-cy="business-enter"
               onClick={async () => { await switchBusiness(b.id); navigate("/app"); }}
               className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition"
             >
