@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
+        NODE_ENV = 'development'
     }
 
     triggers {
@@ -19,7 +19,7 @@ pipeline {
         stage('Install Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm ci'
+                    sh 'npm ci --include=dev'
                 }
             }
         }
@@ -27,7 +27,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh './node_modules/.bin/vite build'
+                    sh 'npm run build'
                 }
             }
         }
