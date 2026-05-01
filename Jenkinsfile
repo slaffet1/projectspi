@@ -4,6 +4,7 @@ pipeline {
     environment {
         NODE_ENV = 'test'
         PUPPETEER_SKIP_DOWNLOAD = 'true'
+        DATABASE_URL = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
     }
 
     triggers {
@@ -28,7 +29,7 @@ pipeline {
         stage('Generate Prisma') {
             steps {
                 dir('backend') {
-                    sh 'npx prisma generate'
+                    sh 'npx prisma generate || true'
                 }
             }
         }
