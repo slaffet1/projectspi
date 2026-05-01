@@ -54,7 +54,6 @@ pipeline {
     post {
         success {
             echo 'CI Backend réussi ✅'
-            build job: 'projectspi-CD-Backend', wait: false
         }
         failure {
             echo 'CI Backend échoué ❌'

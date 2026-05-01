@@ -27,7 +27,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm run build'
+                    sh 'npx vite build'
                 }
             }
         }
@@ -36,7 +36,6 @@ pipeline {
     post {
         success {
             echo 'CI Frontend réussi ✅'
-            build job: 'projectspi-CD-Frontend', wait: false
         }
         failure {
             echo 'CI Frontend échoué ❌'
