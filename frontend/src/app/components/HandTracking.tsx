@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Hands } from "@mediapipe/hands";
-import { Camera } from "@mediapipe/camera_utils";
+// @mediapipe/hands loaded dynamically
+// @mediapipe/camera_utils loaded dynamically
 import { useAccessibility } from "@/app/context/AccessibilityContext";
 
 // =========================
@@ -77,8 +77,8 @@ export default function HandTracking() {
   useEffect(() => {
     if (!videoRef.current) return;
 
-    let hands: Hands;
-    let camera: Camera;
+    let hands: any;
+    let camera: any;
 
     const resetPageState = () => {
       document.querySelectorAll("*").forEach((el) => {
@@ -92,7 +92,16 @@ export default function HandTracking() {
       if (inertiaFrameRef.current) cancelAnimationFrame(inertiaFrameRef.current);
     };
 
+    const loadScript = (src: string) => new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
     const init = async () => {
+      await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js");
       hands = new Hands({
         locateFile: (file) =>
           `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
