@@ -30,11 +30,13 @@ export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-
+const [openEditModal, setOpenEditModal] = useState(false);
+const [selectedExpense, setSelectedExpense] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 const [openModal, setOpenModal] = useState(false);
 const [openCategoryModal, setOpenCategoryModal] = useState(false);
+
   // FETCH DATA
   useEffect(() => {
     if (!businessId) return;
@@ -57,6 +59,10 @@ const [openCategoryModal, setOpenCategoryModal] = useState(false);
       setLoading(false);
     }
   };
+  const handleEdit = (expense) => {
+  setSelectedExpense(expense);
+  setOpenEditModal(true);
+};
   const handleChangeStatus = async (expense) => {
   const next =
     expense.status === "pending"
@@ -315,15 +321,25 @@ const handleDeleteCategory = async (id: number, e: any) => {
                       {Number(exp.amount).toFixed(2)} TND
                     </td>
 
-                    <td className="p-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => handleDelete(exp.id, e)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </td>
+                    <td className="p-4 flex gap-2">
+  {/* 📝 UPDATE */}
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={() => handleEdit(exp)}
+  >
+    ✏️
+  </Button>
+
+  {/* 🗑️ DELETE */}
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={(e) => handleDelete(exp.id, e)}
+  >
+    <Trash2 className="h-4 w-4 text-red-500" />
+  </Button>
+</td>
                     <td className="p-4">
   <button
     onClick={() => handleChangeStatus(exp)}
@@ -402,6 +418,14 @@ const handleDeleteCategory = async (id: number, e: any) => {
   businessId={businessId}
   categories={categories}
   onSuccess={fetchAll}
+/>
+<ExpenseModal
+  open={openEditModal}
+  setOpen={setOpenEditModal}
+  businessId={businessId}
+  categories={categories}
+  onSuccess={fetchAll}
+  expense={selectedExpense} // 👈 IMPORTANT
 />
 <CategoryModal
   open={openCategoryModal}

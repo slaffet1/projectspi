@@ -69,16 +69,48 @@ model Employee {
   id             Int        @id @default(autoincrement())
   businessId     Int
   businesses     businesses @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   firstName      String
   lastName       String
+
+  // Existing payroll data
   isHeadOfFamily Boolean    @default(false)
   childrenCount  Int        @default(0)
   baseSalary     Float
   salaryType     String     @default("BRUT")
+
+  // ───── HR ATTRITION FEATURES ─────
+  age                     Int?
+  gender                  String?
+  maritalStatus           String?
+  department              String?
+  jobRole                 String?
+  jobLevel                Int?
+
+  yearsAtCompany          Int?
+  yearsInCurrentRole      Int?
+  yearsSinceLastPromotion Int?
+
+  jobSatisfaction         Int?
+  workLifeBalance         Int?
+  performanceRating       Int?
+  jobInvolvement          Int?
+
+  overtime                String?
+  projectCount            Int?
+  averageHoursPerWeek     Float?
+  absenteeism             Int?
+
+  distanceFromHome        Float?
+
+  // Prediction result (VERY IMPORTANT)
+  attritionProbability    Float?
+  attritionRisk           String?
+
   payslips       Payslip[]
+
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
-  businessesId   Int?
 }
 
 model Payslip {
@@ -226,6 +258,7 @@ model invoices {
   purchase_order_id      Int?
   purchase_orders_client purchase_orders_client? @relation(fields: [purchase_order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   credit_notes           credit_notes[]
+  payment_trace   payment_traces?
 }
 
 model mouvements {
@@ -522,6 +555,21 @@ model purchase_order_client_details {
   quantity               Int
   products               products?               @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   purchase_orders_client purchase_orders_client? @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+model payment_traces {
+  id              Int       @id @default(autoincrement())
+  invoice_id      Int       @unique
+  payment_method  String    @db.VarChar(50)
+  payment_date    DateTime  @db.Timestamp(6)
+  amount          Decimal   @db.Decimal(15, 2)
+  reference       String?   @db.VarChar(255)
+  cheque_number   String?   @db.VarChar(100)
+  bank_name       String?   @db.VarChar(255)
+  notes           String?
+  proof_image_url String?   @db.VarChar(500)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+  invoices        invoices  @relation(fields: [invoice_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model expense_categories {

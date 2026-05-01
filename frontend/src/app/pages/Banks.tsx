@@ -62,7 +62,10 @@ export default function Banks() {
   const [form, setForm] = useState(emptyForm);
   const [formLoading, setFormLoading] = useState(false);
   const [ribError, setRibError] = useState("");
+  const [ibanError, setIbanError] = useState("");
+  const [balanceError, setBalanceError] = useState("");
 
+  // FETCH BANKS
   const fetchBanks = async () => {
     try {
       const res = await bankService.getBanks();
@@ -76,6 +79,7 @@ export default function Banks() {
 
   useEffect(() => { fetchBanks(); }, []);
 
+  // SEARCH BANKS
   useEffect(() => {
     const delay = setTimeout(async () => {
       if (!searchQuery) return fetchBanks();
@@ -89,17 +93,21 @@ export default function Banks() {
     return () => clearTimeout(delay);
   }, [searchQuery]);
 
+  // VALIDATION RIB
   const handleAccountNumberChange = (value: string) => {
-    const rib = value.replace(/\D/g, "");
+    const rib = value.replace(/\D/g, ""); // chiffres uniquement
+    if (rib.length > 14) return;
+
     const code = rib.slice(0, 2);
+
     if (rib.length >= 2) {
       const bank = ribBankMapping[code];
       if (bank) {
         setForm((prev) => ({ ...prev, account_number: rib, bank_name: bank }));
-        setRibError("");
+        setRibError(rib.length === 14 ? "" : "RIB must contain 14 digits");
       } else {
         setForm((prev) => ({ ...prev, account_number: rib, bank_name: "" }));
-        setRibError("Invalid RIB (unknown bank)");
+        setRibError("Invalid RIB (unknown bank code)");
       }
     } else {
       setForm((prev) => ({ ...prev, account_number: rib, bank_name: "" }));
@@ -107,15 +115,30 @@ export default function Banks() {
     }
   };
 
+  // VALIDATION IBAN
+  const handleIBANChange = (value: string) => {
+    setForm((prev) => ({ ...prev, iban: value }));
+    if (value && !/^TN\d{22}$/.test(value)) {
+      setIbanError("Invalid IBAN format (TN + 22 digits)");
+    } else {
+      setIbanError("");
+    }
+  };
+
+  // VALIDATION BALANCE
+  const handleBalanceChange = (value: string) => {
+    setForm((prev) => ({ ...prev, balance: value }));
+    if (value && Number(value) < 0) {
+      setBalanceError("Balance must be positive");
+    } else {
+      setBalanceError("");
+    }
+  };
+
+  // CREATE BANK
   const handleCreate = async () => {
-    if (!form.bank_name) {
-      toast({ title: "Error", description: "Invalid RIB, cannot add account", variant: "destructive" });
-      return;
-    }
-    if (form.account_number.length < 6) {
-      toast({ title: "Error", description: "RIB too short", variant: "destructive" });
-      return;
-    }
+    if (ribError || ibanError || balanceError) return;
+
     setFormLoading(true);
     try {
       await bankService.createBank(form);
@@ -130,6 +153,7 @@ export default function Banks() {
     }
   };
 
+  // EDIT BANK
   const openEdit = (bank: any) => {
     setSelectedBank(bank);
     setForm({
@@ -138,10 +162,15 @@ export default function Banks() {
       iban: bank.iban,
       balance: bank.balance,
     });
+    setRibError("");
+    setIbanError("");
+    setBalanceError("");
     setIsEditOpen(true);
   };
 
   const handleUpdate = async () => {
+    if (ribError || ibanError || balanceError) return;
+
     setFormLoading(true);
     try {
       await bankService.updateBank(selectedBank.id, form);
@@ -157,11 +186,8 @@ export default function Banks() {
     }
   };
 
-  const openDelete = (bank: any) => {
-    setSelectedBank(bank);
-    setIsDeleteOpen(true);
-  };
-
+  // DELETE BANK
+  const openDelete = (bank: any) => { setSelectedBank(bank); setIsDeleteOpen(true); };
   const handleDelete = async () => {
     try {
       await bankService.deleteBank(selectedBank.id);
@@ -174,6 +200,7 @@ export default function Banks() {
     }
   };
 
+  // FORMAT RIB
   const formatRIB = (rib: string) => {
     if (!rib) return "-";
     return rib.replace(/(\d{2})(\d{3})(\d{7})(\d{2})/, "$1 $2 $3 $4");
@@ -214,52 +241,30 @@ export default function Banks() {
         </div>
       )}
 
-      {/* EMPTY STATE */}
-      {!loading && banks.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center" aria-hidden="true">
-            <Landmark className="h-10 w-10 text-primary" aria-hidden="true" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-foreground">No bank accounts yet</h2>
-            <p className="text-muted-foreground mt-1">Add your first bank account to get started</p>
-          </div>
-          <Button onClick={() => { setForm(emptyForm); setIsCreateOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" aria-hidden="true" />
-            Add Bank Account
-          </Button>
-        </div>
-      )}
-
-      {/* LIST */}
+      {/* BANK LIST */}
       {!loading && banks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Bank accounts">
           {banks.map((bank) => {
             const color = bankColors[bank.bank_name] ?? "bg-gray-500";
             return (
               <Card key={bank.id} role="listitem" className="shadow-sm rounded-xl overflow-hidden border border-border hover:shadow-md transition-shadow">
-                {/* Card top color bar */}
                 <div className={`h-2 w-full ${color}`} aria-hidden="true" />
-
                 <CardHeader className="flex flex-row items-center gap-3 pb-2">
                   <div className={`h-10 w-10 rounded-xl ${color} flex items-center justify-center shrink-0`} aria-hidden="true">
                     <Landmark className="h-5 w-5 text-white" aria-hidden="true" />
                   </div>
                   <CardTitle className="text-lg">{bank.bank_name}</CardTitle>
                 </CardHeader>
-
                 <CardContent className="space-y-3 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <CreditCard className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span className="font-mono">{formatRIB(bank.account_number)}</span>
                   </div>
-
                   {bank.iban && (
                     <div className="text-muted-foreground text-xs font-mono truncate">
                       IBAN: {bank.iban}
                     </div>
                   )}
-
                   <div className="flex items-center justify-between pt-2 border-t border-border">
                     <div>
                       <p className="text-xs text-muted-foreground">Balance</p>
@@ -303,6 +308,8 @@ export default function Banks() {
             setIsEditOpen(false);
             setForm(emptyForm);
             setRibError("");
+            setIbanError("");
+            setBalanceError("");
           }
         }}
       >
@@ -318,12 +325,13 @@ export default function Banks() {
               </label>
               <Input
                 id="account-number"
-                placeholder="e.g. 08001231234567"
+                placeholder="e.g. 01001234567890"
                 value={form.account_number}
                 onChange={(e) => handleAccountNumberChange(e.target.value)}
                 aria-describedby={ribError ? "rib-error" : undefined}
                 aria-invalid={!!ribError}
               />
+              {ribError && <p id="rib-error" className="text-destructive text-sm">{ribError}</p>}
             </div>
 
             <div>
@@ -340,22 +348,19 @@ export default function Banks() {
               />
             </div>
 
-            {ribError && (
-              <p id="rib-error" className="text-destructive text-sm" role="alert">
-                {ribError}
-              </p>
-            )}
-
             <div>
               <label htmlFor="iban" className="text-sm font-medium text-foreground mb-1 block">
                 IBAN (optional)
               </label>
               <Input
                 id="iban"
-                placeholder="e.g. TN5908001231234567"
+                placeholder="e.g. TN5901001234567890123456"
                 value={form.iban}
-                onChange={(e) => setForm({ ...form, iban: e.target.value })}
+                onChange={(e) => handleIBANChange(e.target.value)}
+                aria-describedby={ibanError ? "iban-error" : undefined}
+                aria-invalid={!!ibanError}
               />
+              {ibanError && <p id="iban-error" className="text-destructive text-sm">{ibanError}</p>}
             </div>
 
             <div>
@@ -366,9 +371,14 @@ export default function Banks() {
                 id="balance"
                 placeholder="0"
                 type="number"
+                min="0"
+                step="0.01"
                 value={form.balance}
-                onChange={(e) => setForm({ ...form, balance: e.target.value })}
+                onChange={(e) => handleBalanceChange(e.target.value)}
+                aria-describedby={balanceError ? "balance-error" : undefined}
+                aria-invalid={!!balanceError}
               />
+              {balanceError && <p id="balance-error" className="text-destructive text-sm">{balanceError}</p>}
             </div>
           </div>
 
@@ -376,7 +386,10 @@ export default function Banks() {
             <Button variant="outline" onClick={() => { setIsCreateOpen(false); setIsEditOpen(false); }}>
               Cancel
             </Button>
-            <Button onClick={isEditOpen ? handleUpdate : handleCreate} disabled={formLoading}>
+            <Button
+              onClick={isEditOpen ? handleUpdate : handleCreate}
+              disabled={formLoading || !!ribError || !!ibanError || !!balanceError || !form.account_number}
+            >
               {formLoading ? "Saving..." : isEditOpen ? "Update" : "Create"}
             </Button>
           </DialogFooter>

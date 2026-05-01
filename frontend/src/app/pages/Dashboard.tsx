@@ -13,7 +13,6 @@ import {
 } from "recharts";
 import { Link, useNavigate } from "react-router";
 import { useBusiness } from "@/app/context/BusinessContext";
-import { useTheme } from "@/app/context/ThemeContext";
 import { invoiceService } from "@/app/services/invoiceService";
 import { expenseService } from "@/app/services/expenseService";
 import { stockService } from "@/app/services/stockService";
@@ -32,6 +31,7 @@ interface Invoice {
   status: string;
   created_at?: string;
 }
+
 interface Expense {
   id: number;
   amount: number;
@@ -39,6 +39,7 @@ interface Expense {
   date?: string;
   created_at?: string;
 }
+
 interface StockLevel {
   product_name: string;
   quantity: number;
@@ -48,6 +49,7 @@ interface StockLevel {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const PIE_COLORS = ["#2563EB", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4"];
 
 function buildRevenueExpenseData(invoices: Invoice[], expenses: Expense[]) {
@@ -56,6 +58,7 @@ function buildRevenueExpenseData(invoices: Invoice[], expenses: Expense[]) {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     return { monthIndex: d.getMonth(), year: d.getFullYear(), label: MONTH_LABELS[d.getMonth()] };
   });
+
   return months.map(({ monthIndex, year, label }) => {
     const Revenue = invoices
       .filter(inv => inv.status === "paid" || inv.status === "payée")
@@ -64,12 +67,14 @@ function buildRevenueExpenseData(invoices: Invoice[], expenses: Expense[]) {
         return d.getMonth() === monthIndex && d.getFullYear() === year;
       })
       .reduce((s, inv) => s + Number(inv.total_amount ?? inv.amount ?? 0), 0);
+
     const Expenses = expenses
       .filter(exp => {
         const d = new Date(exp.date ?? exp.created_at ?? "");
         return d.getMonth() === monthIndex && d.getFullYear() === year;
       })
       .reduce((s, exp) => s + Number(exp.amount ?? 0), 0);
+
     return { month: label, Revenue, Expenses };
   });
 }
@@ -78,6 +83,7 @@ function buildExpenseCategoryData(expenses: Expense[]) {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+
   const map: Record<string, number> = {};
   expenses
     .filter(exp => {
@@ -88,6 +94,7 @@ function buildExpenseCategoryData(expenses: Expense[]) {
       const cat = exp.category ?? "Other";
       map[cat] = (map[cat] ?? 0) + Number(exp.amount ?? 0);
     });
+
   return Object.entries(map).map(([name, value], i) => ({
     name, value, fill: PIE_COLORS[i % PIE_COLORS.length],
   }));
@@ -97,7 +104,7 @@ function buildExpenseCategoryData(expenses: Expense[]) {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-card border border-border rounded-xl shadow-lg px-4 py-3 text-sm">
+      <div className="bg-white border border-border rounded-xl shadow-lg px-4 py-3 text-sm">
         <p className="font-semibold text-foreground mb-2">{label}</p>
         {payload.map((p: any, i: number) => (
           <div key={i} className="flex items-center gap-2">
@@ -118,10 +125,6 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const navigate = useNavigate();
   const businessId = activeBusiness?.id;
-
-  const isDark = theme === "dark";
-  const chartGridColor  = isDark ? "#374151" : "#F3F4F6";
-  const chartAxisColor  = isDark ? "#6B7280" : "#9CA3AF";
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -171,19 +174,21 @@ export default function Dashboard() {
   const pendingInvoices = invoices.filter(inv => inv.status === "pending" || inv.status === "en_attente");
 
   const totalRevenue = paidInvoices.reduce((s, inv) => s + Number(inv.total_amount ?? inv.amount ?? 0), 0);
+
   const monthlyExpenses = expenses
     .filter(exp => {
       const d = new Date(exp.date ?? exp.created_at ?? "");
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     })
     .reduce((s, exp) => s + Number(exp.amount ?? 0), 0);
+
   const profit = totalRevenue - monthlyExpenses;
 
   const lowStockItems = stockLevels.filter(s =>
     s.min_quantity !== undefined ? s.quantity <= s.min_quantity : s.quantity <= 5
   );
 
-  const revenueExpenseData  = buildRevenueExpenseData(invoices, expenses);
+  const revenueExpenseData = buildRevenueExpenseData(invoices, expenses);
   const expenseCategoryData = buildExpenseCategoryData(expenses);
 
   // ── No active business ─────────────────────────────────────────────────────
@@ -194,7 +199,7 @@ export default function Dashboard() {
           <Building2 className="h-10 w-10 text-blue-500" />
         </div>
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground">Welcome!</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Welcome!</h2>
           <p className="text-muted-foreground mt-2 max-w-sm">
             Start by creating or selecting a business to access your dashboard.
           </p>
@@ -230,6 +235,7 @@ export default function Dashboard() {
   // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -251,17 +257,17 @@ export default function Dashboard() {
           </Button>
           <div
             onClick={() => navigate('/app/businesses')}
-            className="flex items-center gap-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+            className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2 cursor-pointer hover:bg-blue-100 transition"
           >
             <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
               <span className="text-white text-xs font-bold">{activeBusiness.name?.charAt(0)}</span>
             </div>
             <div>
               <p className="text-xs text-blue-500 font-medium leading-none">Active workspace</p>
-              <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">{activeBusiness.name}</p>
+              <p className="text-sm font-semibold text-blue-900">{activeBusiness.name}</p>
             </div>
             {activeRole && (
-              <span className="text-xs bg-white dark:bg-blue-900 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-full px-2 py-0.5 font-medium">
+              <span className="text-xs bg-white border border-blue-200 text-blue-700 rounded-full px-2 py-0.5 font-medium">
                 {activeRole}
               </span>
             )}
@@ -271,15 +277,15 @@ export default function Dashboard() {
 
       {/* Low stock alert */}
       {lowStockItems.length > 0 && (
-        <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-5 py-3">
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
           <Package className="h-5 w-5 text-amber-500 shrink-0" />
-          <p className="text-sm text-amber-800 dark:text-amber-300">
+          <p className="text-sm text-amber-800">
             <span className="font-semibold">{lowStockItems.length} product(s)</span> running low:{" "}
             {lowStockItems.slice(0, 3).map(s => s.product_name).join(", ")}
             {lowStockItems.length > 3 && ` +${lowStockItems.length - 3} more`}
           </p>
           <Link to="/app/stock/levels" className="ml-auto shrink-0">
-            <Button variant="outline" size="sm" className="text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900 rounded-lg text-xs">
+            <Button variant="outline" size="sm" className="text-amber-700 border-amber-300 hover:bg-amber-100 rounded-lg text-xs">
               View stock
             </Button>
           </Link>
@@ -291,40 +297,40 @@ export default function Dashboard() {
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-blue-600" />
               </div>
-              <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 dark:bg-green-950 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
                 <ArrowUpRight className="h-3 w-3" />{paidInvoices.length} paid
               </span>
             </div>
             <p className="text-sm text-muted-foreground">Total Revenue</p>
-            <p className="text-2xl font-bold mt-1 text-foreground">{totalRevenue.toLocaleString("fr-TN")} <span className="text-sm font-normal text-muted-foreground">DT</span></p>
+            <p className="text-2xl font-bold mt-1">{totalRevenue.toLocaleString("fr-TN")} <span className="text-sm font-normal text-muted-foreground">DT</span></p>
           </CardContent>
         </Card>
 
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-3">
-              <div className="h-10 w-10 rounded-xl bg-red-50 dark:bg-red-950 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-red-50 flex items-center justify-center">
                 <TrendingDown className="h-5 w-5 text-red-500" />
               </div>
-              <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
                 <ArrowDownRight className="h-3 w-3" />{expenses.length} entries
               </span>
             </div>
             <p className="text-sm text-muted-foreground">Monthly Expenses</p>
-            <p className="text-2xl font-bold mt-1 text-foreground">{monthlyExpenses.toLocaleString("fr-TN")} <span className="text-sm font-normal text-muted-foreground">DT</span></p>
+            <p className="text-2xl font-bold mt-1">{monthlyExpenses.toLocaleString("fr-TN")} <span className="text-sm font-normal text-muted-foreground">DT</span></p>
           </CardContent>
         </Card>
 
         <Card className={`border-border shadow-sm hover:shadow-md transition-shadow ${profit < 0 ? "border-l-4 border-l-red-400" : "border-l-4 border-l-green-400"}`}>
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-3">
-              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${profit >= 0 ? "bg-green-50 dark:bg-green-950" : "bg-red-50 dark:bg-red-950"}`}>
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${profit >= 0 ? "bg-green-50" : "bg-red-50"}`}>
                 <TrendingUp className={`h-5 w-5 ${profit >= 0 ? "text-green-600" : "text-red-500"}`} />
               </div>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${profit >= 0 ? "text-green-600 bg-green-50 dark:bg-green-950" : "text-red-600 bg-red-50 dark:bg-red-950"}`}>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${profit >= 0 ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"}`}>
                 {profit >= 0 ? "Profit" : "Deficit"}
               </span>
             </div>
@@ -338,17 +344,17 @@ export default function Dashboard() {
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-3">
-              <div className="h-10 w-10 rounded-xl bg-orange-50 dark:bg-orange-950 flex items-center justify-center">
+              <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center">
                 <FileText className="h-5 w-5 text-orange-500" />
               </div>
               {overdueInvoices.length > 0 && (
-                <span className="text-xs font-medium text-red-600 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
                   {overdueInvoices.length} overdue
                 </span>
               )}
             </div>
             <p className="text-sm text-muted-foreground">Pending Invoices</p>
-            <p className="text-2xl font-bold mt-1 text-foreground">{pendingInvoices.length}</p>
+            <p className="text-2xl font-bold mt-1">{pendingInvoices.length}</p>
           </CardContent>
         </Card>
       </div>
@@ -368,7 +374,7 @@ export default function Dashboard() {
           <CardContent>
             {revenueExpenseData.every(d => d.Revenue === 0 && d.Expenses === 0) ? (
               <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground gap-2">
-                <BarChart3 className="h-10 w-10 text-muted" />
+                <BarChart3 className="h-10 w-10 text-gray-200" />
                 <span className="text-sm">No data available yet</span>
               </div>
             ) : (
@@ -384,9 +390,9 @@ export default function Dashboard() {
                       <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridColor} />
-                  <XAxis dataKey="month" stroke={chartAxisColor} style={{ fontSize: "12px" }} tickLine={false} axisLine={false} />
-                  <YAxis stroke={chartAxisColor} style={{ fontSize: "12px" }} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                  <XAxis dataKey="month" stroke="#9CA3AF" style={{ fontSize: "12px" }} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9CA3AF" style={{ fontSize: "12px" }} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }} />
                   <Area type="monotone" dataKey="Revenue" stroke="#2563EB" strokeWidth={2} fill="url(#colorRevenue)" dot={{ fill: "#2563EB", r: 3 }} activeDot={{ r: 5 }} />
@@ -405,7 +411,7 @@ export default function Dashboard() {
           <CardContent>
             {expenseCategoryData.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground gap-2">
-                <Package className="h-10 w-10 text-muted" />
+                <Package className="h-10 w-10 text-gray-200" />
                 <span className="text-sm">No expenses this month</span>
               </div>
             ) : (
@@ -427,7 +433,7 @@ export default function Dashboard() {
                         <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.fill }} />
                         <span className="text-muted-foreground truncate max-w-[100px]">{entry.name}</span>
                       </div>
-                      <span className="font-medium text-foreground">{Number(entry.value).toLocaleString("fr-TN")} DT</span>
+                      <span className="font-medium">{Number(entry.value).toLocaleString("fr-TN")} DT</span>
                     </div>
                   ))}
                 </div>
@@ -458,7 +464,7 @@ export default function Dashboard() {
         <CardContent>
           {overdueInvoices.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
-              <div className="h-12 w-12 rounded-2xl bg-green-50 dark:bg-green-950 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-2xl bg-green-50 flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-green-500" />
               </div>
               <span className="text-sm font-medium text-green-600">All clear — no overdue invoices</span>
@@ -479,14 +485,14 @@ export default function Dashboard() {
                 <tbody>
                   {overdueInvoices.map((invoice) => (
                     <tr key={invoice.id} className="border-b border-border hover:bg-muted/40 transition-colors">
-                      <td className="py-3 px-4 text-sm font-medium text-foreground">{invoice.invoice_number ?? invoice.number ?? `#${invoice.id}`}</td>
+                      <td className="py-3 px-4 text-sm font-medium">{invoice.invoice_number ?? invoice.number ?? `#${invoice.id}`}</td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">{invoice.client_name ?? invoice.clientName ?? "—"}</td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">
                         {(invoice.due_date ?? invoice.dueDate)
                           ? new Date(invoice.due_date ?? invoice.dueDate!).toLocaleDateString("en-GB")
                           : "—"}
                       </td>
-                      <td className="py-3 px-4 text-sm font-semibold text-foreground">
+                      <td className="py-3 px-4 text-sm font-semibold">
                         {Number(invoice.total_amount ?? invoice.amount ?? 0).toLocaleString("fr-TN")} DT
                       </td>
                       <td className="py-3 px-4">
@@ -510,12 +516,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="h-11 w-11 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center shrink-0">
+            <div className="h-11 w-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Invoices</p>
-              <p className="text-2xl font-bold text-foreground">{invoices.length}</p>
+              <p className="text-2xl font-bold">{invoices.length}</p>
             </div>
             <Link to="/app/invoices" className="ml-auto">
               <ArrowUpRight className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
@@ -525,12 +531,12 @@ export default function Dashboard() {
 
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="h-11 w-11 rounded-xl bg-green-50 dark:bg-green-950 flex items-center justify-center shrink-0">
+            <div className="h-11 w-11 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
               <DollarSign className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Expenses</p>
-              <p className="text-2xl font-bold text-foreground">{expenses.length}</p>
+              <p className="text-2xl font-bold">{expenses.length}</p>
             </div>
             <Link to="/app/expenses" className="ml-auto">
               <ArrowUpRight className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
@@ -540,12 +546,12 @@ export default function Dashboard() {
 
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6 flex items-center gap-4">
-            <div className="h-11 w-11 rounded-xl bg-amber-50 dark:bg-amber-950 flex items-center justify-center shrink-0">
+            <div className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
               <Package className="h-5 w-5 text-amber-600" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Low Stock Items</p>
-              <p className={`text-2xl font-bold ${lowStockItems.length > 0 ? "text-amber-600" : "text-foreground"}`}>
+              <p className={`text-2xl font-bold ${lowStockItems.length > 0 ? "text-amber-600" : ""}`}>
                 {lowStockItems.length}
               </p>
             </div>

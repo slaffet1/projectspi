@@ -54,7 +54,7 @@ describe('PurchaseServiceService', () => {
   });
 
   // ─── create ───────────────────────────────────────────────────────────────
-/*
+
   describe('create', () => {
     const dto = {
       client_id: 1,
@@ -89,7 +89,7 @@ describe('PurchaseServiceService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
-*/
+
   // ─── findAll ──────────────────────────────────────────────────────────────
 
   describe('findAll', () => {
@@ -161,7 +161,7 @@ describe('PurchaseServiceService', () => {
   });
 
   // ─── convertToInvoice ─────────────────────────────────────────────────────
-/*
+
   describe('convertToInvoice', () => {
     const dto = { issue_date: '2024-01-01', due_date: '2024-02-01' };
 
@@ -184,7 +184,7 @@ describe('PurchaseServiceService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
-*/
+
   // ─── remove ───────────────────────────────────────────────────────────────
 
   describe('remove', () => {

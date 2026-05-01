@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
-import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, Mic } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
@@ -37,8 +37,6 @@ export default function CreatePurchaseOrder() {
     d.setDate(d.getDate() + 30);
     return d.toISOString().split("T")[0];
   });
-  const [deliveryDate, setDeliveryDate] = useState("");
-  const [autoInvoice, setAutoInvoice]   = useState(false);
   const [items, setItems] = useState<OrderItem[]>([
     { product_id: "", quantity: 1, unit_price: 0, tax_rate: 0 },
   ]);
@@ -91,23 +89,20 @@ export default function CreatePurchaseOrder() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!clientId) return toast.warning("Please select a client");
     if (items.some((i) => !i.product_id || i.quantity <= 0))
       return toast.warning("Please fill in all line items correctly");
-  const today = new Date().toISOString().split("T")[0];
 
-if (expirationDate < today) {
-  return toast.error("Expiration date must be after today");
-}
+    const today = new Date().toISOString().split("T")[0];
+    if (expirationDate < today)
+      return toast.error("Expiration date must be after today");
+
     setLoading(true);
     try {
       await purchaseOrderclientService.create(businessId!, {
         client_id:       Number(clientId),
         issue_date:      issueDate,
         expiration_date: expirationDate,
-    
-        
         total_amount:    totalAmount,
         status:          "draft",
         details: items.map((i) => ({
@@ -126,21 +121,41 @@ if (expirationDate < today) {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-10">
-     
-      <div className="flex items-center gap-4">
-        <Link to="/app/purchase-orders">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link to="/app/purchase-orders-client">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground">New Purchase Order</h1>
+            <p className="text-muted-foreground mt-1">Create a client purchase order</p>
+          </div>
+        </div>
+
+        {/* ── Voice button ── */}
+        <Link to="/app/purchase-orders-client/voice">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex items-center gap-2 border-dashed hover:border-solid transition-all group"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+            </span>
+            <Mic className="h-4 w-4 text-rose-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Create by Voice</span>
           </Button>
         </Link>
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">New Purchase Order</h1>
-          <p className="text-muted-foreground mt-1">Create a client purchase order</p>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-      
+
+        {/* ── General info ── */}
         <Card className="border-border shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg">General Information</CardTitle>
@@ -163,18 +178,18 @@ if (expirationDate < today) {
             </div>
             <div className="space-y-2">
               <Label>Expiration Date *</Label>
-              <Input 
-              type="date"
-               value={expirationDate}
-                min={new Date().toLocaleDateString("fr-CA", {
-                timeZone: "Africa/Tunis",
-              })}
-               onChange={(e) => setExpirationDate(e.target.value)} required />
+              <Input
+                type="date"
+                value={expirationDate}
+                min={new Date().toLocaleDateString("fr-CA", { timeZone: "Africa/Tunis" })}
+                onChange={(e) => setExpirationDate(e.target.value)}
+                required
+              />
             </div>
           </CardContent>
         </Card>
 
-       
+        {/* ── Line items ── */}
         <Card className="border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg">Order Line Items</CardTitle>
@@ -237,7 +252,6 @@ if (expirationDate < today) {
               ))}
             </div>
 
-      
             <div className="mt-8 flex justify-end">
               <div className="w-72 bg-muted/50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between items-center text-sm text-muted-foreground">
@@ -257,7 +271,7 @@ if (expirationDate < today) {
           </CardContent>
         </Card>
 
-       
+        {/* ── Actions ── */}
         <div className="flex justify-end gap-4">
           <Link to="/app/purchase-orders-client">
             <Button type="button" variant="outline">Cancel</Button>

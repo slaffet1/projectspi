@@ -120,6 +120,7 @@ export default function PurchaseOrdersClient() {
             Nouveau bon de commande
           </Button>
         </Link>
+        
       </header>
 
       <section aria-label="Statistiques des bons de commande">
