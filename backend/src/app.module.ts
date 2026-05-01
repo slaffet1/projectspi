@@ -27,6 +27,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { PurchaseOrdersClientModule } from './purchase-orders-client/purchase-orders-client.module';
 import { SearchModule } from './search/search.module';
+import { AiAdvisorModule } from './ai-advisor/ai-advisor.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { SearchModule } from './search/search.module';
     TelegramModule,
     PurchaseOrdersClientModule,
     SearchModule,
+    AiAdvisorModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],

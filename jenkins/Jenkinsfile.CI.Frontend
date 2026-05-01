@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    environment {
+        NODE_ENV = 'development'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm ci --include=dev'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    sh 'npm run build'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI Frontend réussi ✅'
+        }
+        failure {
+            echo 'CI Frontend échoué ❌'
+        }
+    }
+}

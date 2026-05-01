@@ -17,26 +17,68 @@ export const invoiceService = {
 
   /**
    * Send invoice by email.
-   * The backend (NestJS) calls GeminiService to translate labels, then sends via Nodemailer.
-   * @param language  ISO language code ("fr", "en", "ar", …). Defaults to "fr" (no translation).
    */
   sendInvoice: (businessId: number, invoiceId: number, language: string = "fr") =>
     api.post(`${base(businessId)}/${invoiceId}/send`, { language }),
 
   /**
    * Translate invoice labels via backend (NestJS → Gemini).
-   * Avoids calling Anthropic/Gemini directly from the browser (CORS issue).
-   * @param language  ISO language code ("en", "ar", "it", …)
    */
   translateLabels: (businessId: number, language: string) =>
     api.get(`${base(businessId)}/translate-labels?language=${encodeURIComponent(language)}`),
 
-   markAsPaid: (invoiceId: number, businessId?: number) => {
-    api.patch(`/api/businesses/${businessId}/invoices/${invoiceId}/mark-paid`)
-  },
+  /**
+   * Mark as paid (legacy — kept for backward compat).
+   */
+  markAsPaid: (invoiceId: number, businessId?: number) =>
+    api.patch(`/api/businesses/${businessId}/invoices/${invoiceId}/mark-paid`),
 
   markLatePaid: (invoiceId: number, businessId: number) =>
     api.patch(`${base(businessId)}/${invoiceId}/mark-late-paid`),
+
+  /**
+   * Mark as paid WITH a payment trace (new endpoint).
+   * @param status  "paid" | "late_paid"
+   * @param trace   Payment trace data (method, date, amount, reference, etc.)
+   */
+  markAsPaidWithTrace: (
+    invoiceId: number,
+    businessId: number,
+    status: "paid" | "late_paid",
+    trace: {
+      payment_method: string;
+      payment_date: string;
+      amount: number;
+      reference?: string | null;
+      cheque_number?: string | null;
+      bank_name?: string | null;
+      notes?: string | null;
+      proof_image_url?: string | null;
+    }
+  ) =>
+    api.post(`${base(businessId)}/${invoiceId}/mark-paid-with-trace`, {
+      status,
+      ...trace,
+    }),
+
+  /**
+   * Get payment trace for a specific invoice.
+   */
+  getPaymentTrace: (businessId: number, invoiceId: number) =>
+    api.get(`${base(businessId)}/${invoiceId}/payment-trace`),
+
+  /**
+   * Upload proof of payment image for an invoice.
+   */
+  uploadPaymentProof: (businessId: number, invoiceId: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(
+      `${base(businessId)}/${invoiceId}/payment-proof`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+  },
 
   updateDueDate: (businessId: number, invoiceId: number, dueDate: string) =>
     api.patch(`${base(businessId)}/${invoiceId}/due-date`, { due_date: dueDate }),
@@ -46,5 +88,4 @@ export const invoiceService = {
 
   getBanksByBusiness: (businessId: number) =>
     api.get(`${base(businessId)}/banks`),
-  
 };

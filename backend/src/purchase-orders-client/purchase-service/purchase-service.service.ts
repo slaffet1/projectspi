@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePurchaseOrderDto } from '../dto/create-purchase-order.dto';
@@ -15,9 +16,17 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 };
 
+// ─── Helper : parse et valide une date string ─────────────────────────────────
+function parseSafeDate(value: string | undefined | null, fieldName: string): Date {
+  if (!value) throw new BadRequestException(`${fieldName} est requis`);
+  const d = new Date(value);
+  if (isNaN(d.getTime())) throw new BadRequestException(`${fieldName} est invalide : "${value}"`);
+  return d;
+}
+
 @Injectable()
 export class PurchaseServiceService {
-constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -33,7 +42,7 @@ constructor(private prisma: PrismaService) {}
     const order = await this.prisma.purchase_orders_client.findFirst({
       where: { id, clients: { business_id: businessId } },
       include: {
-        clients:      true,
+        clients:       true,
         order_details: { include: { products: true } },
       },
     });
@@ -51,11 +60,15 @@ constructor(private prisma: PrismaService) {}
     });
     if (!client) throw new NotFoundException('Client introuvable');
 
+    // ✅ Validation des dates avant d'envoyer à Prisma
+    const issueDate      = parseSafeDate(dto.issue_date,      'issue_date');
+    const expirationDate = parseSafeDate(dto.expiration_date, 'expiration_date');
+
     return this.prisma.purchase_orders_client.create({
       data: {
         order_number:    orderNumber,
-        issue_date:      new Date(dto.issue_date),
-        expiration_date: new Date(dto.expiration_date),
+        issue_date:      issueDate,
+        expiration_date: expirationDate,
         total_amount:    dto.total_amount,
         status:          dto.status ?? 'draft',
         client_id:       dto.client_id,
@@ -67,31 +80,33 @@ constructor(private prisma: PrismaService) {}
         },
       },
       include: {
-        clients:      true,
+        clients:       true,
         order_details: { include: { products: true } },
       },
     });
   }
 
+  // ─── Find All ─────────────────────────────────────────────────────────────
 
   async findAll(businessId: number) {
     return this.prisma.purchase_orders_client.findMany({
       where: { clients: { business_id: businessId } },
       include: {
-        clients:      { select: { id: true, name: true, email: true } },
+        clients:       { select: { id: true, name: true, email: true } },
         order_details: { include: { products: true } },
-        invoices:     { select: { id: true, invoice_number: true, status: true } },
+        invoices:      { select: { id: true, invoice_number: true, status: true } },
       },
       orderBy: { created_at: 'desc' },
     });
   }
 
-  
+  // ─── Find One ─────────────────────────────────────────────────────────────
 
   async findOne(businessId: number, id: number) {
     return this.assertBelongsToBusiness(id, businessId);
   }
 
+  // ─── Update ───────────────────────────────────────────────────────────────
 
   async update(businessId: number, id: number, dto: UpdatePurchaseOrderDto) {
     const order = await this.assertBelongsToBusiness(id, businessId);
@@ -104,11 +119,15 @@ constructor(private prisma: PrismaService) {}
 
     await this.prisma.purchase_order_client_details.deleteMany({ where: { order_id: id } });
 
+    // ✅ Validation des dates si fournies
+    const issueDate      = dto.issue_date      ? parseSafeDate(dto.issue_date,      'issue_date')      : undefined;
+    const expirationDate = dto.expiration_date ? parseSafeDate(dto.expiration_date, 'expiration_date') : undefined;
+
     return this.prisma.purchase_orders_client.update({
       where: { id },
       data: {
-        issue_date:      dto.issue_date      ? new Date(dto.issue_date)      : undefined,
-        expiration_date: dto.expiration_date ? new Date(dto.expiration_date) : undefined,
+        issue_date:      issueDate,
+        expiration_date: expirationDate,
         total_amount:    dto.total_amount,
         client_id:       dto.client_id,
         order_details: dto.details
@@ -116,13 +135,13 @@ constructor(private prisma: PrismaService) {}
           : undefined,
       },
       include: {
-        clients:      true,
+        clients:       true,
         order_details: { include: { products: true } },
       },
     });
   }
 
-  
+  // ─── Update Status ────────────────────────────────────────────────────────
 
   async updateStatus(businessId: number, id: number, newStatus: string) {
     const order = await this.assertBelongsToBusiness(id, businessId);
@@ -143,18 +162,19 @@ constructor(private prisma: PrismaService) {}
     });
   }
 
-  
+  // ─── Convert to Invoice ───────────────────────────────────────────────────
 
-  async convertToInvoice(businessId: number, id: number, dto: { issue_date: string; due_date: string; bank_id?: number }) {
+  async convertToInvoice(
+    businessId: number,
+    id: number,
+    dto: { issue_date: string; due_date: string; bank_id?: number },
+  ) {
     const order = await this.assertBelongsToBusiness(id, businessId);
-/*
-    if (order.status !== 'confirmed') {
-      throw new ForbiddenException(
-        'Seuls les bons de commande confirmés peuvent être convertis en facture',
-      );
-    }
-*/
-    
+
+    // ✅ Validation des dates de la facture
+    const invoiceIssueDate = parseSafeDate(dto.issue_date, 'issue_date');
+    const invoiceDueDate   = parseSafeDate(dto.due_date,   'due_date');
+
     let tax = 0;
     order.order_details.forEach((item) => {
       const price = Number((item.products as any)?.unit_price || 0);
@@ -168,7 +188,7 @@ constructor(private prisma: PrismaService) {}
       select: { invoice_prefix: true },
     });
 
-    const prefix = business?.invoice_prefix ;
+    const prefix = business?.invoice_prefix;
     const year   = String(new Date().getFullYear());
 
     const count = await this.prisma.invoices.count({
@@ -181,8 +201,8 @@ constructor(private prisma: PrismaService) {}
       this.prisma.invoices.create({
         data: {
           invoice_number:    invoiceNumber,
-          issue_date:        new Date(dto.issue_date),
-          due_date:          new Date(dto.due_date),
+          issue_date:        invoiceIssueDate,
+          due_date:          invoiceDueDate,
           total_amount:      order.total_amount,
           tax_amount:        tax,
           status:            'draft',
@@ -216,6 +236,3 @@ constructor(private prisma: PrismaService) {}
     return { message: 'Bon de commande supprimé avec succès' };
   }
 }
-
-
-

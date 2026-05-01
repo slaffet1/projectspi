@@ -39,6 +39,7 @@ import Employees from "./pages/Employees";
 import PurchaseOrdersClient from "./pages/PurchaseOrdersClient";
 import CreatePurchaseOrder from "./pages/Createpurchaseorder";
 import PurchaseOrderDetail from "./pages/Purchaseorderdetail";
+import VoicePurchaseOrder from "./pages/Voicepurchaseorder";
 
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
@@ -90,6 +91,7 @@ export const router = createBrowserRouter([
       { path: "purchase-orders-client", Component: PurchaseOrdersClient },
       { path: "purchase-orders-client/create", Component: CreatePurchaseOrder },
       { path: "purchase-orders-client/:id", Component: PurchaseOrderDetail },
+      { path: "purchase-orders-client/voice", Component: VoicePurchaseOrder }
     ],
   },
 ]);

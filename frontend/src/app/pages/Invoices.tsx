@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { Plus, Filter, Check, TrendingUp, Clock, AlertTriangle, FileText } from "lucide-react";
+import {
+  Plus,
+  Filter,
+  Check,
+  TrendingUp,
+  Clock,
+  AlertTriangle,
+  FileText,
+  Info,
+} from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { SearchInput } from "@/app/components/SearchInput";
@@ -14,6 +23,8 @@ import {
 import { invoiceService } from "@/app/services/invoiceService";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { toast } from "sonner";
+import PaymentTraceModal from "./Paymenttracemodal"; 
+import PaymentDetailsModal from "./Paymentdetailsmodal";
 
 const PAGE_SIZE = 3;
 
@@ -26,18 +37,31 @@ export default function Invoices() {
   const [loadingIds, setLoadingIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Payment trace modal state
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalInvoice, setPaymentModalInvoice] = useState<any>(null);
+  const [paymentModalMode, setPaymentModalMode] = useState<"paid" | "late_paid">("paid");
+
+  // Payment details modal state
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsModalInvoice, setDetailsModalInvoice] = useState<any>(null);
+  const [detailsPaymentTrace, setDetailsPaymentTrace] = useState<any>(null);
+
   useEffect(() => {
     if (businessId) fetchInvoices();
   }, [businessId]);
-useEffect(() => {
-  setCurrentPage(1);
-}, [searchQuery, statusFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
   const fetchInvoices = async () => {
     try {
       const res = await invoiceService.getAll(businessId!);
       const data = res.data || [];
       data.sort(
-        (a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
+        (a: any, b: any) =>
+          new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
       );
       setInvoices(data);
     } catch (err) {
@@ -45,40 +69,36 @@ useEffect(() => {
       toast.error("Failed to load invoices");
     }
   };
-  
-const markAsLatePaid = async (id: number) => {
-  try {
-    setLoadingIds((prev) => [...prev, id]);
-    await invoiceService.markLatePaid(id, businessId);
 
+  // Open Mark as Paid modal
+  const openPaymentModal = (invoice: any, mode: "paid" | "late_paid") => {
+    setPaymentModalInvoice(invoice);
+    setPaymentModalMode(mode);
+    setPaymentModalOpen(true);
+  };
+
+  // Open Payment Details popup
+  const openDetailsModal = async (invoice: any) => {
+    setDetailsModalInvoice(invoice);
+    setDetailsPaymentTrace(null);
+    setDetailsModalOpen(true);
+    try {
+      const res = await invoiceService.getPaymentTrace(businessId!, invoice.id);
+      setDetailsPaymentTrace(res?.data || null);
+    } catch {
+      // May not have a trace
+    }
+  };
+
+  // Called when payment trace form is submitted successfully
+  const handlePaymentSuccess = (invoiceId: number, status: string, paymentData: any) => {
     setInvoices((prev) =>
       prev.map((inv) =>
-        inv.id === id ? { ...inv, status: "paid" } : inv
+        inv.id === invoiceId
+          ? { ...inv, status, payment_trace: paymentData }
+          : inv
       )
     );
-
-    toast.success("Invoice marked as late paid!");
-
-    window.location.reload(); 
-  } catch (err) {
-    toast.error("Failed to mark as late paid");
-  } finally {
-    setLoadingIds((prev) => prev.filter((i) => i !== id));
-  }
-};
-  const markAsPaid = async (id: number) => {
-    try {
-      setLoadingIds((prev) => [...prev, id]);
-      await invoiceService.markAsPaid(id);
-      setInvoices((prev) =>
-        prev.map((inv) => (inv.id === id ? { ...inv, status: "paid" } : inv))
-      );
-      toast.success("Invoice marked as paid!");
-    } catch (err) {
-      toast.error("Failed to mark as paid");
-    } finally {
-      setLoadingIds((prev) => prev.filter((i) => i !== id));
-    }
   };
 
   const getStatusBadge = (status?: string) => {
@@ -87,7 +107,8 @@ const markAsLatePaid = async (id: number) => {
       draft: "bg-slate-50 text-slate-600 border border-slate-200 ring-1 ring-slate-100",
       sent: "bg-sky-50 text-sky-700 border border-sky-200 ring-1 ring-sky-100",
       unpaid: "bg-rose-50 text-rose-700 border border-rose-200 ring-1 ring-rose-100",
-      late_paid: "bg-orange-50 text-orange-700 border border-orange-200 ring-1 ring-orange-100",
+      late_paid:
+        "bg-orange-50 text-orange-700 border border-orange-200 ring-1 ring-orange-100",
     };
     const labels: Record<string, string> = {
       paid: "✓ Paid",
@@ -106,20 +127,28 @@ const markAsLatePaid = async (id: number) => {
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-          styles[status ?? ""] || "bg-slate-50 text-slate-600 border border-slate-200"
+          styles[status ?? ""] ||
+          "bg-slate-50 text-slate-600 border border-slate-200"
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${dots[status ?? ""] || "bg-slate-400"}`} />
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${
+            dots[status ?? ""] || "bg-slate-400"
+          }`}
+        />
         {labels[status ?? ""] || "Unknown"}
       </span>
     );
   };
 
   const filteredInvoices = invoices.filter((inv) => {
-    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || inv.status === statusFilter;
     const matchesSearch =
       inv.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      inv.quotes?.clients?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      inv.quotes?.clients?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -141,7 +170,7 @@ const markAsLatePaid = async (id: number) => {
   const paidThisMonth = invoices.filter((i) => {
     const d = new Date(i.issue_date);
     return (
-      i.status === "paid" || i.status === "late_paid" &&
+      (i.status === "paid" || i.status === "late_paid") &&
       d.getMonth() === now.getMonth() &&
       d.getFullYear() === now.getFullYear()
     );
@@ -169,8 +198,12 @@ const markAsLatePaid = async (id: number) => {
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Total Invoices</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalInvoicesCount}</h2>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">
+                  Total Invoices
+                </p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">
+                  {totalInvoicesCount}
+                </h2>
                 <p className="text-xs text-slate-400 mt-2">All periods</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-sm">
@@ -185,9 +218,16 @@ const markAsLatePaid = async (id: number) => {
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">Revenue</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{totalPaidAmount.toFixed(0)}<span className="text-lg font-normal ml-1">DT</span></h2>
-                <p className="text-xs text-emerald-200 mt-2">Collected invoices</p>
+                <p className="text-xs font-medium text-emerald-100 uppercase tracking-widest">
+                  Revenue
+                </p>
+                <h2 className="text-3xl font-bold mt-2 tabular-nums">
+                  {totalPaidAmount.toLocaleString("fr-TN")}
+                  <span className="text-lg ml-1 font-normal">DT</span>
+                </h2>
+                <p className="text-xs text-emerald-100 mt-2">
+                  {paidThisMonth} paid this month
+                </p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
                 <TrendingUp className="h-5 w-5 text-white" />
@@ -197,29 +237,38 @@ const markAsLatePaid = async (id: number) => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-violet-500 to-purple-700 text-white overflow-hidden relative">
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-amber-500 to-orange-500 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-violet-200 uppercase tracking-widest">Paid This Month</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{paidThisMonth}</h2>
-                <p className="text-xs text-violet-200 mt-2">Invoices collected this month</p>
+                <p className="text-xs font-medium text-amber-100 uppercase tracking-widest">
+                  Pending
+                </p>
+                <h2 className="text-3xl font-bold mt-2 tabular-nums">
+                  {pendingAmount.toLocaleString("fr-TN")}
+                  <span className="text-lg ml-1 font-normal">DT</span>
+                </h2>
+                <p className="text-xs text-amber-100 mt-2">Awaiting payment</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-                <Check className="h-5 w-5 text-white" />
+                <Clock className="h-5 w-5 text-white" />
               </div>
             </div>
             <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-rose-700 text-white overflow-hidden relative">
+        <Card className="rounded-2xl border-0 shadow-md bg-gradient-to-br from-rose-500 to-red-600 text-white overflow-hidden relative">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">Overdue</p>
-                <h2 className="text-4xl font-bold mt-2 tabular-nums">{overdueInvoices}</h2>
-                <p className="text-xs text-rose-200 mt-2">Past due date</p>
+                <p className="text-xs font-medium text-rose-100 uppercase tracking-widest">
+                  Overdue
+                </p>
+                <h2 className="text-4xl font-bold mt-2 tabular-nums">
+                  {overdueInvoices}
+                </h2>
+                <p className="text-xs text-rose-100 mt-2">Past due date</p>
               </div>
               <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
                 <AlertTriangle className="h-5 w-5 text-white" />
@@ -247,14 +296,13 @@ const markAsLatePaid = async (id: number) => {
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="unpaid">Unpaid</SelectItem>
               <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="late_paid">Paid Late</SelectItem>
+              <SelectItem value="late_paid">Paid Late</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="sent">Sent</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
       </Card>
-      
 
       {/* TABLE */}
       <Card className="rounded-2xl shadow-sm border border-border/60 overflow-hidden">
@@ -262,25 +310,47 @@ const markAsLatePaid = async (id: number) => {
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/40">
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Number</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Due Date</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  #
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Number
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Due Date
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="p-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {paginatedInvoices.map((inv, index) => {
                 const isLoading = loadingIds.includes(inv.id);
-                  const clientName =
-    inv.quotes?.clients?.name ||
-    inv.purchase_orders_client?.clients?.name ||
-    "—";
+                const clientName =
+                  inv.quotes?.clients?.name ||
+                  inv.purchase_orders_client?.clients?.name ||
+                  "—";
+                const isPaid =
+                  inv.status === "paid" || inv.status === "late_paid";
+
                 return (
-                  <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={inv.id}
+                    className="hover:bg-muted/20 transition-colors"
+                  >
                     <td className="p-4 text-sm text-muted-foreground font-mono">
                       {(currentPage - 1) * PAGE_SIZE + index + 1}
                     </td>
@@ -292,7 +362,6 @@ const markAsLatePaid = async (id: number) => {
                         {inv.invoice_number}
                       </Link>
                     </td>
-                    
                     <td className="p-4 text-sm font-medium">{clientName}</td>
                     <td className="p-4 text-sm text-muted-foreground">
                       {new Date(inv.issue_date).toLocaleDateString("en-GB")}
@@ -307,33 +376,65 @@ const markAsLatePaid = async (id: number) => {
                     </td>
                     <td className="p-4">{getStatusBadge(inv.status)}</td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Details link */}
                         <Link to={`/app/invoices/${inv.id}`}>
                           <Button
                             size="sm"
                             variant="outline"
                             className="rounded-lg text-xs px-3 h-8 border-border/70 hover:bg-muted"
                           >
-                            Details
+                            Détails
                           </Button>
                         </Link>
+
+                        {/* Payment details button (for paid invoices) */}
+                        {isPaid && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openDetailsModal(inv)}
+                            className="rounded-lg text-xs px-3 h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 flex items-center gap-1.5"
+                          >
+                            <Info className="w-3.5 h-3.5" />
+                            Détails paiement
+                          </Button>
+                        )}
+
+                        {/* Mark as Paid button */}
                         {(inv.status === "draft" || inv.status === "sent") && (
                           <Button
                             size="sm"
                             disabled={isLoading}
-                            onClick={() => markAsPaid(inv.id)}
+                            onClick={() => openPaymentModal(inv, "paid")}
                             className={`inline-flex items-center gap-1.5 text-xs font-semibold
                               rounded-lg px-3 h-8 transition-all duration-200
-                              ${isLoading
-                                ? "bg-emerald-300 text-white cursor-wait"
-                                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200 hover:shadow-emerald-300"
+                              ${
+                                isLoading
+                                  ? "bg-emerald-300 text-white cursor-wait"
+                                  : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-200 hover:shadow-emerald-300"
                               }`}
                           >
                             {isLoading ? (
                               <>
-                                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                <svg
+                                  className="animate-spin h-3.5 w-3.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v8z"
+                                  />
                                 </svg>
                                 Processing...
                               </>
@@ -345,34 +446,52 @@ const markAsLatePaid = async (id: number) => {
                             )}
                           </Button>
                         )}
+
+                        {/* Mark as Late Paid */}
                         {inv.status === "unpaid" && (
-  <Button
-    size="sm"
-    disabled={isLoading}
-    onClick={() => markAsLatePaid(inv.id)}
-    className={`inline-flex items-center gap-1.5 text-xs font-semibold
-      rounded-lg px-3 h-8 transition-all duration-200
-      ${isLoading
-        ? "bg-orange-300 text-white cursor-wait"
-        : "bg-orange-500 hover:bg-orange-600 text-white shadow-sm shadow-orange-200 hover:shadow-orange-300"
-      }`}
-  >
-    {isLoading ? (
-      <>
-        <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-        </svg>
-        Processing...
-      </>
-    ) : (
-      <>
-        <Clock className="w-3.5 h-3.5" />
-        Mark Late Paid
-      </>
-    )}
-  </Button>
-)}
+                          <Button
+                            size="sm"
+                            disabled={isLoading}
+                            onClick={() => openPaymentModal(inv, "late_paid")}
+                            className={`inline-flex items-center gap-1.5 text-xs font-semibold
+                              rounded-lg px-3 h-8 transition-all duration-200
+                              ${
+                                isLoading
+                                  ? "bg-orange-300 text-white cursor-wait"
+                                  : "bg-orange-500 hover:bg-orange-600 text-white shadow-sm shadow-orange-200 hover:shadow-orange-300"
+                              }`}
+                          >
+                            {isLoading ? (
+                              <>
+                                <svg
+                                  className="animate-spin h-3.5 w-3.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v8z"
+                                  />
+                                </svg>
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Clock className="w-3.5 h-3.5" />
+                                Mark Late Paid
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -380,7 +499,10 @@ const markAsLatePaid = async (id: number) => {
               })}
               {paginatedInvoices.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-muted-foreground text-sm">
+                  <td
+                    colSpan={8}
+                    className="p-12 text-center text-muted-foreground text-sm"
+                  >
                     No invoices found.
                   </td>
                 </tr>
@@ -396,7 +518,11 @@ const markAsLatePaid = async (id: number) => {
                   size="sm"
                   variant={p === currentPage ? "default" : "ghost"}
                   onClick={() => setCurrentPage(p)}
-                  className={`w-8 h-8 p-0 rounded-lg text-xs ${p === currentPage ? "shadow-sm" : "text-muted-foreground"}`}
+                  className={`w-8 h-8 p-0 rounded-lg text-xs ${
+                    p === currentPage
+                      ? "shadow-sm"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   {p}
                 </Button>
@@ -405,6 +531,33 @@ const markAsLatePaid = async (id: number) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Payment Trace Modal */}
+      {paymentModalInvoice && (
+        <PaymentTraceModal
+          open={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setPaymentModalInvoice(null);
+          }}
+          invoice={paymentModalInvoice}
+          businessId={businessId!}
+          mode={paymentModalMode}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Payment Details Modal */}
+      <PaymentDetailsModal
+        open={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setDetailsModalInvoice(null);
+          setDetailsPaymentTrace(null);
+        }}
+        invoice={detailsModalInvoice}
+        paymentTrace={detailsPaymentTrace}
+      />
     </div>
   );
 }
