@@ -5,6 +5,8 @@ pipeline {
         NODE_ENV = 'test'
         PUPPETEER_SKIP_DOWNLOAD = 'true'
         DATABASE_URL = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
+        SONAR_TOKEN = credentials('sonarqube-token')
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     triggers {
@@ -37,7 +39,7 @@ pipeline {
         stage('Test Backend') {
             steps {
                 dir('backend') {
-                    sh 'npm run test -- --passWithNoTests --forceExit || true'
+                    sh 'npm run test -- --passWithNoTests --forceExit --coverage || true'
                 }
             }
         }
@@ -46,6 +48,22 @@ pipeline {
             steps {
                 dir('backend') {
                     sh 'npm run build'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('backend') {
+                    sh '''
+                        npx sonar-scanner \
+                          -Dsonar.projectKey=projectspi-backend \
+                          -Dsonar.sources=src \
+                          -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.token=${SONAR_TOKEN} \
+                          -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info
+                    '''
                 }
             }
         }

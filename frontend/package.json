@@ -46,7 +46,6 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
-    "cypress": "^15.14.2",
     "date-fns": "3.6.0",
     "embla-carousel-react": "8.6.0",
     "html2canvas": "^1.4.1",
@@ -79,6 +78,8 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "cypress": "^15.14.2",
+    "sonar-scanner": "^3.1.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },

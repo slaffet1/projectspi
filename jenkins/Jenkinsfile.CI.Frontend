@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         NODE_ENV = 'development'
+        SONAR_TOKEN = credentials('sonarqube-token')
+        SONAR_HOST_URL = 'http://localhost:9000'
     }
 
     triggers {
@@ -28,6 +30,21 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'npm run build'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        npx sonar-scanner \
+                          -Dsonar.projectKey=projectspi-frontend \
+                          -Dsonar.sources=src \
+                          -Dsonar.exclusions=node_modules/**,dist/**,coverage/**,**/*.spec.ts,**/*.test.ts,cypress/** \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.token=${SONAR_TOKEN}
+                    '''
                 }
             }
         }
