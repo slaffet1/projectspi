@@ -122,7 +122,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // ── Component ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { activeBusiness, activeRole } = useBusiness();
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const businessId = activeBusiness?.id;
 
@@ -195,7 +194,7 @@ export default function Dashboard() {
   if (!activeBusiness) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-6">
-        <div className="h-20 w-20 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
+        <div className="h-20 w-20 rounded-2xl bg-blue-50 flex items-center justify-center">
           <Building2 className="h-10 w-10 text-blue-500" />
         </div>
         <div className="text-center">
@@ -213,7 +212,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => navigate('/app/businesses')}
-            className="px-5 py-2.5 border border-border rounded-lg font-medium hover:bg-muted transition text-foreground"
+            className="px-5 py-2.5 border rounded-lg font-medium hover:bg-gray-50 transition"
           >
             My businesses
           </button>
