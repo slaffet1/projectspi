@@ -18,3 +18,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();
+
+// Log pour vérifier l'environnement
+console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔧 DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 30) + '...');

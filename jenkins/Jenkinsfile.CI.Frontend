@@ -35,6 +35,8 @@ pipeline {
                 dir('backend') {
                     sh 'nohup npm run start:test > backend.log 2>&1 & echo $! > backend.pid'
                     sh 'sleep 10'
+                    sh 'curl -f http://localhost:3001/health || echo "Backend not ready"'
+                    sh 'cat backend.log | head -20'
                 }
             }
         }
@@ -52,6 +54,7 @@ pipeline {
                 dir('frontend') {
                     sh 'nohup npm run dev -- --host 0.0.0.0 > frontend.log 2>&1 & echo $! > frontend.pid'
                     sh 'sleep 15'
+                    sh 'curl -f http://localhost:5173 || echo "Frontend not ready"'
                 }
             }
         }
