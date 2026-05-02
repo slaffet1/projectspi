@@ -29,7 +29,7 @@ pipeline {
                 }
             }
         }
-
+/*
         stage('Start Backend Test Mode') {
             steps {
                 dir('backend') {
@@ -39,7 +39,7 @@ pipeline {
                     sh 'cat backend.log | head -20'
                 }
             }
-        }
+        }*/
 
         stage('Build Frontend') {
             steps {
