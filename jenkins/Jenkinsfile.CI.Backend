@@ -88,7 +88,7 @@ pipeline {
             steps {
                 withEnv(['DATABASE_URL=postgresql://saasadmin:saaspassword@localhost:5432/saasplatform']) {
                     dir('backend') {
-                         sh 'npm run test -- --passWithNoTests --forceExit --coverage || true'
+                        sh 'npm run test -- --passWithNoTests --forceExit --coverage || true'
                     }
                 }
             }
