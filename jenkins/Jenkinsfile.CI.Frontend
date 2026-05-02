@@ -63,10 +63,10 @@ pipeline {
             steps {
                 sh '''
                     echo "=== Restoring test database with seed data ==="
-                    docker exec -i ${DB_CONTAINER} psql -U saasadmin -d saasplatform < /home/saidlaffet/saasplatform_backup.sql
+                    docker exec -i ${DB_CONTAINER} psql -U saasadmin -d saasplatform < /var/lib/jenkins/saasplatform_backup.sql
                     echo "✅ Database restored"
-                '''
-            }
+                ''' 
+    }
         }
 
         stage('Install Frontend') {
