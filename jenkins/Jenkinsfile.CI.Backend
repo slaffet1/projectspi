@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'test'
+        NODE_ENV                = 'test'
         PUPPETEER_SKIP_DOWNLOAD = 'true'
-        DATABASE_URL = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
-        SONAR_TOKEN = credentials('sonarqube-token')
-        SONAR_HOST_URL = 'http://localhost:9000'
+        SONAR_TOKEN             = credentials('sonarqube-token')
+        SONAR_HOST_URL          = 'http://localhost:9000'
+        DB_CONTAINER            = "test-postgres-${env.BUILD_NUMBER}"
     }
 
     triggers {
@@ -14,32 +14,82 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
+        stage('Start Docker Database') {
+            steps {
+                sh '''
+                    echo "=== Starting PostgreSQL container ==="
+
+                    docker rm -f ${DB_CONTAINER} || true
+
+                    sudo systemctl stop postgresql || true
+
+                    docker run -d \
+                      --name ${DB_CONTAINER} \
+                      -e POSTGRES_USER=saasadmin \
+                      -e POSTGRES_PASSWORD=saaspassword \
+                      -e POSTGRES_DB=saasplatform \
+                      -p 5432:5432 \
+                      postgres:16
+                '''
+            }
+        }
+
+        stage('Wait for Database') {
+            steps {
+                sh '''
+                    echo "=== Waiting for PostgreSQL to be ready ==="
+                    RETRIES=30
+                    COUNT=0
+                    until docker exec ${DB_CONTAINER} pg_isready -U saasadmin -d saasplatform; do
+                        COUNT=$((COUNT + 1))
+                        if [ $COUNT -ge $RETRIES ]; then
+                            echo "❌ PostgreSQL did not become ready in time"
+                            docker logs ${DB_CONTAINER}
+                            exit 1
+                        fi
+                        echo "Attempt $COUNT/$RETRIES — waiting 2s..."
+                        sleep 2
+                    done
+                    echo "✅ PostgreSQL is ready"
+                '''
+            }
+        }
+
         stage('Install Backend') {
             steps {
-                dir('backend') {
-                    sh 'PUPPETEER_SKIP_DOWNLOAD=true npm ci'
+                // ✅ DATABASE_URL défini ici via withEnv, après que Docker est prêt
+                withEnv(['DATABASE_URL=postgresql://saasadmin:saaspassword@localhost:5432/saasplatform']) {
+                    dir('backend') {
+                        sh 'npm ci'
+                        sh 'npx prisma generate'
+                    }
                 }
             }
         }
 
-        stage('Generate Prisma') {
+        stage('Run Migrations') {
             steps {
-                dir('backend') {
-                    sh 'npx prisma generate || true'
+                withEnv(['DATABASE_URL=postgresql://saasadmin:saaspassword@localhost:5432/saasplatform']) {
+                    dir('backend') {
+                        sh 'npx prisma migrate deploy'
+                    }
                 }
             }
         }
 
         stage('Test Backend') {
             steps {
-                dir('backend') {
-                    sh 'npm run test -- --passWithNoTests --forceExit --coverage || true'
+                withEnv(['DATABASE_URL=postgresql://saasadmin:saaspassword@localhost:5432/saasplatform']) {
+                    dir('backend') {
+                        sh 'npm run test -- --passWithNoTests --forceExit --coverage'
+                    }
                 }
             }
         }
@@ -70,11 +120,19 @@ pipeline {
     }
 
     post {
+        always {
+            sh '''
+                echo "=== Cleaning up ==="
+                docker rm -f ${DB_CONTAINER} || true
+                sudo systemctl start postgresql || true
+            '''
+        }
         success {
-            echo 'CI Backend réussi ✅'
+            echo '✅ CI Backend réussi'
         }
         failure {
-            echo 'CI Backend échoué ❌'
+            echo '❌ CI Backend échoué'
+            sh 'docker logs ${DB_CONTAINER} || true'
         }
     }
 }
