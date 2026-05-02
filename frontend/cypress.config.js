@@ -1,11 +1,14 @@
-import { defineConfig } from "cypress";
+const { defineConfig } = require('cypress')
 
-export default defineConfig({
-  allowCypressEnv: false,
-
+module.exports = defineConfig({
   e2e: {
+    baseUrl: 'http://localhost',
     setupNodeEvents(on, config) {
       // implement node event listeners here
     },
   },
-});
+  // Configuration pour Jenkins
+  video: false,
+  screenshotOnRunFailure: false,
+  trashAssetsBeforeRuns: false
+})
