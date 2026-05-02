@@ -84,12 +84,7 @@ pipeline {
     }
 
     post {
-        always {
-            script {
-                sh 'pkill -f "npm run start:test" || true'
-                sh 'pkill -f "npm run dev" || true'
-            }
-        }
+        
         success {
             echo 'CI Frontend réussi ✅'
         }
