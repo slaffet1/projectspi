@@ -30,17 +30,33 @@ pipeline {
             }
         }
 
-        stage('Start Backend Test Mode') {
-            steps {
-                dir('backend') {
-                    sh 'nohup  npm run start:dev > backend.log 2>&1 & echo $! > backend.pid'
-                    sh 'sleep 10'
-                    sh 'curl -f http://localhost:3001/health || echo "Backend not ready"'
-                    sh 'cat backend.log | head -20'
-                }
+       stage('Start Backend Test Mode') {
+    steps {
+        dir('backend') {
+            withCredentials([
+                
+                string(credentialsId: 'api-trans', variable: 'API_TRANS'),
+                string(credentialsId: 'hf-token', variable: 'HF_TOKEN')
+            ]) {
+                sh '''
+                    echo "Starting backend with all secrets..."
+
+                    export DATABASE_URL=$DATABASE_URL
+                    export API_TRANS=$API_TRANS
+                    export HF_TOKEN=$HF_TOKEN
+
+                    nohup npm run start:test > backend.log 2>&1 & echo $! > backend.pid
+
+                    sleep 10
+
+                    curl -f http://localhost:3001/health || echo "Backend not ready"
+
+                    head -20 backend.log
+                '''
             }
         }
-
+    }
+}
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
