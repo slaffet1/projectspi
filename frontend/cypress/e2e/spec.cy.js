@@ -2,7 +2,7 @@ describe('Authentication flow', () => {
 
   it('login + 2FA success flow', () => {
 
-    cy.visit('http://localhost:5173/');
+    cy.visit('http://localhost');
     cy.wait(1000);
 
     cy.get('[data-cy=navbar-login]').click();
@@ -13,10 +13,10 @@ describe('Authentication flow', () => {
 
     cy.intercept('POST', '**/users/login').as('loginRequest');
 
-    cy.get('[data-cy=email-input]').type('rbenomrane15@gmail.com', { delay: 80 });
+    cy.get('[data-cy=email-input]').type('leffat@email.com', { delay: 80 });
     cy.wait(400);
 
-    cy.get('[data-cy=password-input]').type('Rayen1920', { delay: 80 });
+    cy.get('[data-cy=password-input]').type('123456789', { delay: 80 });
     cy.wait(600);
 
     cy.get('[data-cy=login-submit]').click();

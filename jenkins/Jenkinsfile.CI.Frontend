@@ -5,6 +5,7 @@ pipeline {
         NODE_ENV = 'development'
         SONAR_TOKEN = credentials('sonarqube-token')
         SONAR_HOST_URL = 'http://localhost:9000'
+        DATABASE_URL = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
     }
 
     triggers {
@@ -26,10 +27,45 @@ pipeline {
             }
         }
 
+        stage('Install Backend for Tests') {
+            steps {
+                dir('backend') {
+                    sh 'PUPPETEER_SKIP_DOWNLOAD=true npm ci'
+                    sh 'npx prisma generate'
+                }
+            }
+        }
+
+        stage('Start Backend Test Mode') {
+            steps {
+                dir('backend') {
+                    sh 'nohup npm run start:test > backend.log 2>&1 & echo $! > backend.pid'
+                    sh 'sleep 10'  // Attendre que le backend démarre
+                }
+            }
+        }
+
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
                     sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Start Frontend Dev Server') {
+            steps {
+                dir('frontend') {
+                    sh 'nohup npm run dev -- --host 0.0.0.0 > frontend.log 2>&1 & echo $! > frontend.pid'
+                    sh 'sleep 15'  // Attendre que Vite démarre
+                }
+            }
+        }
+
+        stage('Run Cypress Tests') {
+            steps {
+                dir('frontend') {
+                    sh 'npx cypress run --browser chrome --headless'
                 }
             }
         }
@@ -51,6 +87,13 @@ pipeline {
     }
 
     post {
+        always {
+            script {
+                // Arrêter les serveurs
+                sh 'pkill -f "npm run start:test" || true'
+                sh 'pkill -f "npm run dev" || true'
+            }
+        }
         success {
             echo 'CI Frontend réussi ✅'
         }
