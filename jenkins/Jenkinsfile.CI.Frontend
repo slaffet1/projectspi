@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV        = 'test'
+        NODE_ENV                = 'test'
         PUPPETEER_SKIP_DOWNLOAD = 'true'
-        SONAR_TOKEN     = credentials('sonarqube-token')
-        SONAR_HOST_URL  = 'http://localhost:9000'
-        DATABASE_URL    = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
-        DB_CONTAINER    = "test-postgres-front-${env.BUILD_NUMBER}"
+        SONAR_TOKEN             = credentials('sonarqube-token')
+        SONAR_HOST_URL          = 'http://localhost:9000'
+        DATABASE_URL            = 'postgresql://saasadmin:saaspassword@localhost:5432/saasplatform'
+        DB_CONTAINER            = "test-postgres-front-${env.BUILD_NUMBER}"
     }
 
     triggers {
@@ -59,6 +59,16 @@ pipeline {
             }
         }
 
+        stage('Restore Test Database') {
+            steps {
+                sh '''
+                    echo "=== Restoring test database with seed data ==="
+                    docker exec -i ${DB_CONTAINER} psql -U saasadmin -d saasplatform < /home/saidlaffet/saasplatform_backup.sql
+                    echo "✅ Database restored"
+                '''
+            }
+        }
+
         stage('Install Frontend') {
             steps {
                 dir('frontend') {
@@ -72,7 +82,6 @@ pipeline {
                 dir('backend') {
                     sh 'PUPPETEER_SKIP_DOWNLOAD=true npm ci'
                     sh 'npx prisma generate'
-                    sh 'npx prisma migrate deploy'
                 }
             }
         }
