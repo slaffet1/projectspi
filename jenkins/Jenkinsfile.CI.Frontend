@@ -13,12 +13,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Frontend') {
             steps {
                 dir('frontend') {
@@ -40,7 +34,7 @@ pipeline {
             steps {
                 dir('backend') {
                     sh 'nohup npm run start:test > backend.log 2>&1 & echo $! > backend.pid'
-                    sh 'sleep 10'  // Attendre que le backend démarre
+                    sh 'sleep 10'
                 }
             }
         }
@@ -57,7 +51,7 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh 'nohup npm run dev -- --host 0.0.0.0 > frontend.log 2>&1 & echo $! > frontend.pid'
-                    sh 'sleep 15'  // Attendre que Vite démarre
+                    sh 'sleep 15'
                 }
             }
         }
@@ -89,7 +83,6 @@ pipeline {
     post {
         always {
             script {
-                // Arrêter les serveurs
                 sh 'pkill -f "npm run start:test" || true'
                 sh 'pkill -f "npm run dev" || true'
             }
