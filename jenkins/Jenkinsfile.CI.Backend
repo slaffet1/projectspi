@@ -120,13 +120,7 @@ pipeline {
     }
 
     post {
-        always {
-            sh '''
-                echo "=== Cleaning up ==="
-                docker rm -f ${DB_CONTAINER} || true
-                sudo systemctl start postgresql || true
-            '''
-        }
+        
         success {
             echo '✅ CI Backend réussi'
         }
