@@ -120,13 +120,17 @@ pipeline {
     }
 
     post {
-        
-        success {
-            echo '✅ CI Backend réussi'
-        }
-        failure {
-            echo '❌ CI Backend échoué'
-            sh 'docker logs ${DB_CONTAINER} || true'
-        }
+    always {
+        sh 'docker rm -f ${DB_CONTAINER} || true'
     }
+    success {
+        echo '✅ CI Backend réussi'
+    }
+    failure {
+        echo '❌ CI Backend échoué'
+        sh 'docker logs ${DB_CONTAINER} || true'
+        sh 'docker rm -f ${DB_CONTAINER} || true'
+    }
+}
+
 }
