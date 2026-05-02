@@ -59,7 +59,7 @@ pipeline {
         stage('Run Cypress Tests') {
             steps {
                 dir('frontend') {
-                    sh 'xvfb-run -a npx cypress run --browser electron --headless'
+                    sh 'npx cypress run'
                 }
             }
         }
