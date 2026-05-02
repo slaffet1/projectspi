@@ -10,5 +10,8 @@ module.exports = defineConfig({
   // Configuration pour Jenkins
   video: false,
   screenshotOnRunFailure: false,
-  trashAssetsBeforeRuns: false
+  trashAssetsBeforeRuns: false,
+  // Désactiver cy-prompt
+  experimentalStudio: false,
+  experimentalRunAllSpecs: false
 })
