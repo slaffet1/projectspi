@@ -33,7 +33,7 @@ pipeline {
         stage('Start Backend Test Mode') {
             steps {
                 dir('backend') {
-                    sh 'nohup PORT=3001 npm run start:test > backend.log 2>&1 & echo $! > backend.pid'
+                    sh 'nohup  npm run start:test > backend.log 2>&1 & echo $! > backend.pid'
                     sh 'sleep 10'
                     sh 'curl -f http://localhost:3001/health || echo "Backend not ready"'
                     sh 'cat backend.log | head -20'
