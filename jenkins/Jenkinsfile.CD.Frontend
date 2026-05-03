@@ -49,61 +49,29 @@ pipeline {
             }
         }
 
-       /* stage('Deploy to Azure AKS') {
+       stage('Deploy to Azure AKS') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_CLIENT_ID',     variable: 'CLIENT_ID'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'AZURE_TENANT_ID',     variable: 'TENANT_ID')
-                ]) {
-                    sh '''
-                        echo "=== Authenticating with Azure ==="
-                        az login --service-principal \
-                          -u $CLIENT_ID \
-                          -p $CLIENT_SECRET \
-                          --tenant $TENANT_ID
+                // Call the Secret File we created in Jenkins and assign it to KUBE_CONFIG
+                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBE_CONFIG')]) {
+                    script {
+                        // We use triple double-quotes (""") here so Jenkins can read its own variables inside the shell script
+                        sh """
+                            # 1. Tell kubectl to use the secure file Jenkins just injected
+                            export KUBECONFIG=\$KUBE_CONFIG
+                            
+                            # 2. Apply the base infrastructure (ensures your Deployment & Service exist)
+                            kubectl apply -f k8s/
 
-                        echo "=== Getting AKS credentials ==="
-                        az aks get-credentials \
-                          --resource-group ${RESOURCE_GROUP} \
-                          --name ${CLUSTER_NAME} \
-                          --overwrite-existing
-
-                        echo "=== Deploying Frontend ==="
-                        kubectl apply -f k8s/frontend.yaml
-
-                        echo "=== Updating Frontend Image ==="
-                        kubectl set image deployment/frontend-deployment \
-                          frontend=${DOCKER_IMAGE}:${DOCKER_TAG}
-
-                        echo "=== Waiting for rollout ==="
-                        kubectl rollout status deployment/frontend-deployment --timeout=120s
-
-                        echo "=== Getting Public IP ==="
-                        kubectl get service frontend-service
-
-                        echo "✅ Frontend deployed successfully"
-                    '''
+                            # 3. Force Kubernetes to pull and run the exact image tag the CI just built
+                            kubectl set image deployment/backend-deployment backend=${DOCKER_IMAGE}:${params.IMAGE_TAG}
+                            
+                            # 4. Wait to confirm the deployment was successful and didn't crash
+                            kubectl rollout status deployment/backend-deployment
+                        """
+                    }
                 }
             }
         }
-
-        stage('Health Check') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_CLIENT_ID',     variable: 'CLIENT_ID'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'AZURE_TENANT_ID',     variable: 'TENANT_ID')
-                ]) {
-                    sh '''
-                        echo "=== Checking pods status ==="
-                        kubectl get pods -l app=frontend
-                        kubectl get service frontend-service
-                        echo "✅ Health check done"
-                    '''
-                }
-            }
-        }*/
     }
 
     post {

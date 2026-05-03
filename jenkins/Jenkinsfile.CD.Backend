@@ -4,8 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE   = "leffatsaid/projectspi-backend"
         DOCKER_TAG     = "latest"
-        RESOURCE_GROUP = "projectspi-rg"
-        CLUSTER_NAME   = "projectspi-aks"
+        RESOURCE_GROUP = 'PI-AKS-RG-Final'                
+        CLUSTER_NAME = 'myAKSCluster'
     }
 
     triggers {
@@ -49,70 +49,7 @@ pipeline {
             }
         }
 
-        /*stage('Deploy to Azure AKS') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_CLIENT_ID',     variable: 'CLIENT_ID'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'AZURE_TENANT_ID',     variable: 'TENANT_ID'),
-                    string(credentialsId: 'api-trans',           variable: 'API_TRANS'),
-                    string(credentialsId: 'hf-token',            variable: 'HF_TOKEN')
-                ]) {
-                    sh '''
-                        echo "=== Authenticating with Azure ==="
-                        az login --service-principal \
-                          -u $CLIENT_ID \
-                          -p $CLIENT_SECRET \
-                          --tenant $TENANT_ID
-
-                        echo "=== Getting AKS credentials ==="
-                        az aks get-credentials \
-                          --resource-group ${RESOURCE_GROUP} \
-                          --name ${CLUSTER_NAME} \
-                          --overwrite-existing
-
-                        echo "=== Updating K8s Secret ==="
-                        kubectl create secret generic projectspi-secrets \
-                          --from-literal=DATABASE_URL=postgresql://saasadmin:saaspassword@postgres-service:5432/saasplatform \
-                          --from-literal=API_TRANS=$API_TRANS \
-                          --from-literal=HF_TOKEN=$HF_TOKEN \
-                          --dry-run=client -o yaml | kubectl apply -f -
-
-                        echo "=== Deploying PostgreSQL ==="
-                        kubectl apply -f k8s/postgres.yaml
-
-                        echo "=== Deploying Backend ==="
-                        kubectl apply -f k8s/backend.yaml
-
-                        echo "=== Updating Backend Image ==="
-                        kubectl set image deployment/backend-deployment \
-                          backend=${DOCKER_IMAGE}:${DOCKER_TAG}
-
-                        echo "=== Waiting for rollout ==="
-                        kubectl rollout status deployment/backend-deployment --timeout=120s
-
-                        echo "✅ Backend deployed successfully"
-                    '''
-                }
-            }
-        }*/
-
-        /*stage('Health Check') {
-            steps {
-                withCredentials([
-                    string(credentialsId: 'AZURE_CLIENT_ID',     variable: 'CLIENT_ID'),
-                    string(credentialsId: 'AZURE_CLIENT_SECRET', variable: 'CLIENT_SECRET'),
-                    string(credentialsId: 'AZURE_TENANT_ID',     variable: 'TENANT_ID')
-                ]) {
-                    sh '''
-                        echo "=== Checking pods status ==="
-                        kubectl get pods -l app=backend
-                        kubectl get service backend-service
-                        echo "✅ Health check done"
-                    '''
-                }
-            }
-        }*/
+        
     }
 
     post {
