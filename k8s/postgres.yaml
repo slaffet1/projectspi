@@ -35,6 +35,8 @@ spec:
               value: "saaspassword"
             - name: POSTGRES_DB
               value: "saasplatform"
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
