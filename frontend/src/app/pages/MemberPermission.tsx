@@ -8,7 +8,7 @@ import { Users, ChevronRight, X, Shield, Save, Loader2 } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { toast } from "sonner";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com";
 
 // ── Types ──────────────────────────────────────────────────────
 interface Member {
@@ -64,7 +64,7 @@ const MembersPermissions = () => {
   const [loadingPanel, setLoadingPanel] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Charger membres + toutes les permissions au montage
+
   useEffect(() => {
     if (!businessId) return;
     fetchMembers();
@@ -78,13 +78,12 @@ const MembersPermissions = () => {
       return next;
     });
   };
-  // Remplace les deux fonctions fetch par ceci :
+
 
 const getAuthHeaders = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${localStorage.getItem('token')}`,
-  // ou selon comment tu stockes le token dans ton app :
-  // 'Authorization': `Bearer ${sessionStorage.getItem('token')}`,
+ 
 });
 
 const fetchMembers = async () => {

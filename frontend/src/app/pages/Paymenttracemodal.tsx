@@ -115,13 +115,16 @@ export default function PaymentTraceModal({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:3001/ocr/extract", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+  const response = await fetch(
+  "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com/ocr/extract",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  }
+);
 
       if (response.status === 401) {
         toast.error("Non autorisé. Veuillez vous reconnecter.");

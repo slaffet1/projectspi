@@ -15,32 +15,20 @@ export const invoiceService = {
   getUnpaid: (businessId: number) =>
     api.get(`${base(businessId)}/unpaid`),
 
-  /**
-   * Send invoice by email.
-   */
+ 
   sendInvoice: (businessId: number, invoiceId: number, language: string = "fr") =>
     api.post(`${base(businessId)}/${invoiceId}/send`, { language }),
 
-  /**
-   * Translate invoice labels via backend (NestJS → Gemini).
-   */
+ 
   translateLabels: (businessId: number, language: string) =>
     api.get(`${base(businessId)}/translate-labels?language=${encodeURIComponent(language)}`),
 
-  /**
-   * Mark as paid (legacy — kept for backward compat).
-   */
   markAsPaid: (invoiceId: number, businessId?: number) =>
     api.patch(`/api/businesses/${businessId}/invoices/${invoiceId}/mark-paid`),
 
   markLatePaid: (invoiceId: number, businessId: number) =>
     api.patch(`${base(businessId)}/${invoiceId}/mark-late-paid`),
 
-  /**
-   * Mark as paid WITH a payment trace (new endpoint).
-   * @param status  "paid" | "late_paid"
-   * @param trace   Payment trace data (method, date, amount, reference, etc.)
-   */
   markAsPaidWithTrace: (
     invoiceId: number,
     businessId: number,
