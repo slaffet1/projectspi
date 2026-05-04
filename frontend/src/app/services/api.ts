@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com',
-   //baseURL: 'http://localhost:3001'
+  baseURL: '/api',
 });
 
 api.interceptors.request.use((config) => {

@@ -6,7 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { Pencil, Trash2, Plus, X, Settings } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-const API_URL = "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com/api";
+const API_URL = "/api";
 
 const AdminTaxSettings = ({ businessId }: { businessId: number | undefined }) => {
   const [taxes, setTaxes] = useState([]);
