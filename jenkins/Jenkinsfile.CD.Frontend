@@ -64,8 +64,8 @@ pipeline {
                             kubectl apply -f k8s/
 
                             # 3. Force Kubernetes to pull and run the exact image tag the CI just built
-                            kubectl set image deployment/backend-deployment backend=${DOCKER_IMAGE_BACKEND}:${params.IMAGE_TAG}
-                            kubectl set image deployment/frontend-deployment frontend=${DOCKER_IMAGE}:${params.IMAGE_TAG}
+                            kubectl set image deployment/backend-deployment backend=${DOCKER_IMAGE_BACKEND}:${DOCKER_TAG}
+                            kubectl set image deployment/frontend-deployment frontend=${DOCKER_IMAGE}:${DOCKER_TAG}
                             
                             # 4. Wait to confirm the deployment was successful and didn't crash
                             kubectl rollout status deployment/backend-deployment
