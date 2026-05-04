@@ -6,7 +6,7 @@ import axios from 'axios';
 export class EmployeeService {
   constructor(private prisma: PrismaService) { }
 
-  private readonly pythonUrl = 'http://127.0.0.1:8000/predict';
+  private readonly pythonUrl = 'https://predicitonapi.onrender.com/predict';
 
 
 
