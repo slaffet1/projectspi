@@ -1,18 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-// MembersPermissions.tsx  (React)
-//
-// Flow :
-//  1. Affiche la liste des membres (comme Members.tsx existant)
-//  2. Owner clique sur un membre → slide-in panel à droite
-//  3. Panel affiche le rôle du membre + toutes les permissions
-//     avec toggle ON/OFF par rôle
-//  4. Save → PUT /roles/:roleId/permissions
-//
-// ⚠️  Les permissions sont sur le RÔLE, pas sur la personne.
-//     Tous les membres du même rôle partagent les mêmes permissions.
-//     (adapté à ton schéma actuel sans migration)
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
