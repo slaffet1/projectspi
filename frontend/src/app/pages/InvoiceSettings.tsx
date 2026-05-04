@@ -6,16 +6,16 @@ import { Label } from "@/app/components/ui/label";
 import { Save, FileText } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "/api";
 
 const InvoiceSettings = () => {
   const [invoicePrefix, setInvoicePrefix] = useState("");
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
- const { activeBusiness, isAdmin } = useBusiness();
-const businessId = activeBusiness?.id;
-const CURRENT_ROLE: "admin" | "owner" = isAdmin() ? "admin" : "owner";
+  const { activeBusiness, isAdmin } = useBusiness();
+  const businessId = activeBusiness?.id;
+  const CURRENT_ROLE: "admin" | "owner" = isAdmin() ? "admin" : "owner";
 
   useEffect(() => {
     fetchSettings();
