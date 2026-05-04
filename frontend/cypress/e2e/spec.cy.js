@@ -11,7 +11,7 @@ describe('Authentication flow', () => {
     cy.url().should('include', '/login');
     cy.wait(500);
 
-    cy.intercept('POST', '/api/users/login').as('loginRequest')
+    cy.intercept('POST', 'http://localhost:3001/users/login').as('loginRequest');
 
     cy.get('[data-cy=email-input]').type('leffat@email.com', { delay: 80 });
     cy.wait(400);
@@ -30,7 +30,7 @@ describe('Authentication flow', () => {
     cy.get('[data-cy=otp-input]').should('be.visible');
     cy.wait(800);
 
-    cy.intercept('POST', '/api/users/verify-2fa').as('otpRequest')
+    cy.intercept('POST', 'http://localhost:3001/users/verify-2fa').as('otpRequest');
 
     cy.get('[data-cy=otp-input]').type('000000', { delay: 150 });
     cy.wait(800);
