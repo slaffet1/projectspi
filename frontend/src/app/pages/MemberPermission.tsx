@@ -8,7 +8,7 @@ import { Users, ChevronRight, X, Shield, Save, Loader2 } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { toast } from "sonner";
 
-const API_URL = "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com";
+const API_URL = "/api";
 
 // ── Types ──────────────────────────────────────────────────────
 interface Member {

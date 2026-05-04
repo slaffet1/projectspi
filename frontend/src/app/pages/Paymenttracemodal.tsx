@@ -116,7 +116,7 @@ export default function PaymentTraceModal({
       formData.append("file", file);
 
   const response = await fetch(
-  "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com/ocr/extract",
+  "/api/ocr/extract",
   {
     method: "POST",
     headers: {

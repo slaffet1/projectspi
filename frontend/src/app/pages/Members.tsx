@@ -7,7 +7,7 @@ import { UserPlus, Trash2, Users } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
 
-const API_URL = "http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com/api";
+const API_URL = "/api";
 
 const Members = () => {
   // ✅ Hook à l'intérieur du composant
