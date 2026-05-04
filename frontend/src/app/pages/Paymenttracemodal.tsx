@@ -136,7 +136,7 @@ export default function PaymentTraceModal({
       const formData = new FormData();
       formData.append("file", file); // ✅ field name MUST be "file" — matches FileInterceptor("file")
 
-      const response = await fetch("http://localhost:3001/ocr/extract", {
+      const response = await fetch("/api/ocr/extract", {
         method: "POST",
         headers: {
          

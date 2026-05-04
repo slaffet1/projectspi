@@ -6,7 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { Save, FileText } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "/api";
 
 const InvoiceSettings = () => {
   const [invoicePrefix, setInvoicePrefix] = useState("");
