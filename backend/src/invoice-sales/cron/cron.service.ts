@@ -16,7 +16,7 @@ export class InvoiceCron {
         due_date: {
           lt: now,
         },
-        status: { notIn: ['paid', 'unpaid'] },
+        status: { notIn: ['paid', 'unpaid','late_paid'] },
       },
       data: {
         status: 'unpaid',

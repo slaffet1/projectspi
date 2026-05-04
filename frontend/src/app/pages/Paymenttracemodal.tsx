@@ -55,24 +55,9 @@ const PAYMENT_METHODS = [
   { value: "other", label: "Autre", icon: PenLine },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: get the JWT token from wherever your app stores it.
-// Adjust this to match your auth implementation (localStorage, cookie, zustand, etc.)
-// ─────────────────────────────────────────────────────────────────────────────
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
-  // ✅ Common patterns — uncomment the one that matches your app:
-
-  // Pattern 1: stored directly in localStorage
   return localStorage.getItem("token");
-
-  // Pattern 2: stored under a nested key
-  // const raw = localStorage.getItem("auth");
-  // return raw ? JSON.parse(raw)?.token : null;
-
-  // Pattern 3: from a cookie (if httpOnly=false)
-  // const match = document.cookie.match(/access_token=([^;]+)/);
-  // return match ? match[1] : null;
 }
 
 export default function PaymentTraceModal({
@@ -115,12 +100,6 @@ export default function PaymentTraceModal({
     onClose();
   };
 
-  /**
-   * POST image to NestJS OCR endpoint with JWT token in Authorization header.
-   *
-   * ✅ FIX: The route `/ocr/extract` is proxied by next.config.ts to the NestJS backend.
-   * ✅ FIX: JWT token is added to the Authorization header so the AuthGuard passes.
-   */
   const runOCR = async (file: File) => {
     setOcrLoading(true);
     setOcrDone(false);
@@ -134,12 +113,11 @@ export default function PaymentTraceModal({
       }
 
       const formData = new FormData();
-      formData.append("file", file); // ✅ field name MUST be "file" — matches FileInterceptor("file")
+      formData.append("file", file);
 
       const response = await fetch("http://localhost:3001/ocr/extract", {
         method: "POST",
         headers: {
-         
           Authorization: `Bearer ${token}`,
         },
         body: formData,
@@ -160,7 +138,7 @@ export default function PaymentTraceModal({
 
       const parsed = await response.json();
 
-      // ✅ Merge OCR result into form — never overwrite the locked bank name
+      
       setForm((prev) => ({
         ...prev,
         payment_method:
@@ -174,7 +152,7 @@ export default function PaymentTraceModal({
       }));
 
       setOcrDone(true);
-      toast.success("Données extraites automatiquement !");
+      toast.success("Données extraites — image enregistrée comme justificatif ✓");
     } catch (err: any) {
       console.error("[OCR] Error:", err);
       toast.error(
@@ -182,7 +160,7 @@ export default function PaymentTraceModal({
           ? "Impossible de joindre le serveur OCR. Vérifiez que le backend tourne."
           : "Erreur OCR. Vous pouvez corriger manuellement."
       );
-      // ✅ Show the form anyway so user can fill manually
+  
       setOcrDone(true);
     } finally {
       setOcrLoading(false);
@@ -195,8 +173,11 @@ export default function PaymentTraceModal({
         toast.error("Veuillez uploader une image (JPG, PNG, WEBP)");
         return;
       }
+
+
       setProofFile(file);
       setProofImage(URL.createObjectURL(file));
+
       await runOCR(file);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -237,7 +218,7 @@ export default function PaymentTraceModal({
         proof_image_url: null as string | null,
       };
 
-      // Upload proof image if present
+      // ✅ Upload the proof image (whether it came from OCR or manual upload)
       if (proofFile) {
         try {
           const uploadRes = await invoiceService.uploadPaymentProof(
@@ -306,7 +287,8 @@ export default function PaymentTraceModal({
         </div>
 
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-          {/* Step 1: Choose entry mode */}
+
+          {/* ── Step 1: Choose entry mode ── */}
           {entryMode === "choose" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground font-medium">
@@ -355,7 +337,7 @@ export default function PaymentTraceModal({
             </div>
           )}
 
-          {/* Step 2a: OCR upload zone */}
+          {/* ── Step 2a: OCR upload zone (before scan completes) ── */}
           {entryMode === "ocr" && !ocrDone && (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -384,9 +366,26 @@ export default function PaymentTraceModal({
               >
                 {ocrLoading ? (
                   <div className="flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl bg-violet-100 flex items-center justify-center">
-                      <Loader2 className="w-7 h-7 text-violet-600 animate-spin" />
-                    </div>
+                    {/* ✅ Show the uploaded image behind the loading spinner */}
+                    {proofImage && (
+                      <div className="relative w-full mb-2">
+                        <img
+                          src={proofImage}
+                          alt="Preuve en cours d'analyse"
+                          className="max-h-28 w-full object-contain rounded-lg border opacity-50"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-14 h-14 rounded-xl bg-violet-100/90 flex items-center justify-center">
+                            <Loader2 className="w-7 h-7 text-violet-600 animate-spin" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {!proofImage && (
+                      <div className="w-14 h-14 rounded-xl bg-violet-100 flex items-center justify-center">
+                        <Loader2 className="w-7 h-7 text-violet-600 animate-spin" />
+                      </div>
+                    )}
                     <p className="text-sm font-medium text-violet-700">
                       Analyse en cours...
                     </p>
@@ -443,7 +442,6 @@ export default function PaymentTraceModal({
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFileSelect(file);
-                  // ✅ Reset input value so same file can be re-selected
                   e.target.value = "";
                 }}
               />
@@ -452,7 +450,7 @@ export default function PaymentTraceModal({
                 <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                 <span>
                   L'IA (Groq) extrait automatiquement numéro, montant, date et référence via
-                  Tesseract + Groq LLM. Vous pourrez vérifier et corriger avant de valider.
+                  Tesseract + Groq LLM. La photo sera également sauvegardée comme justificatif.
                 </span>
               </div>
 
@@ -470,10 +468,11 @@ export default function PaymentTraceModal({
             </div>
           )}
 
-          {/* Step 2b/3: Form (manual OR after OCR) */}
+          {/* ── Step 2b / 3: Form (manual OR after OCR) ── */}
           {(entryMode === "manual" || (entryMode === "ocr" && ocrDone)) && (
             <div className="space-y-4">
-              {/* Back button + OCR badge */}
+
+              {/* Back + OCR badge */}
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => {
@@ -494,24 +493,37 @@ export default function PaymentTraceModal({
                 )}
               </div>
 
-              {/* Proof thumbnail (OCR mode) */}
+              {/* ✅ Proof thumbnail — shown in OCR mode with "saved as proof" badge */}
               {entryMode === "ocr" && proofImage && (
-                <div className="relative w-full rounded-lg overflow-hidden border bg-muted/30">
-                  <img
-                    src={proofImage}
-                    alt="Preuve"
-                    className="max-h-24 w-full object-contain"
-                  />
-                  <button
-                    onClick={() => {
-                      setProofImage(null);
-                      setProofFile(null);
-                      setOcrDone(false);
-                    }}
-                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs font-semibold">Justificatif de paiement</Label>
+                    <span className="text-[10px] font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      Photo OCR enregistrée
+                    </span>
+                  </div>
+                  <div className="relative w-full rounded-lg overflow-hidden border bg-muted/30">
+                    <img
+                      src={proofImage}
+                      alt="Preuve"
+                      className="max-h-28 w-full object-contain"
+                    />
+                    <button
+                      onClick={() => {
+                        setProofImage(null);
+                        setProofFile(null);
+                        setOcrDone(false);
+                      }}
+                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 hover:bg-black/80"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Cette image sera sauvegardée automatiquement comme justificatif de paiement.
+                  </p>
                 </div>
               )}
 
@@ -643,6 +655,61 @@ export default function PaymentTraceModal({
                 />
               </div>
 
+              {/* ✅ Manual mode only: allow uploading a separate proof image */}
+              {entryMode === "manual" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">
+                    Justificatif de paiement
+                    {proofFile && (
+                      <span className="ml-2 text-[10px] font-medium bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">
+                        ✓ Fichier sélectionné
+                      </span>
+                    )}
+                  </Label>
+                  {proofImage ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={proofImage}
+                        alt="Aperçu justificatif"
+                        className="h-24 rounded-lg object-cover border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProofFile(null);
+                          setProofImage(null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-lg px-4 py-3 hover:bg-muted/40 transition-colors w-full"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Cliquez pour ajouter un justificatif (image)
+                    </button>
+                  )}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setProofFile(file);
+                      setProofImage(URL.createObjectURL(file));
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex items-center gap-3 pt-1">
                 <Button
@@ -678,6 +745,7 @@ export default function PaymentTraceModal({
               </div>
             </div>
           )}
+
         </div>
       </DialogContent>
     </Dialog>

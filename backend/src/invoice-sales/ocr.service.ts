@@ -1,6 +1,4 @@
-// ocr.service.ts  — no changes needed, keeping as-is for reference
-// Make sure your .env contains:
-//   API_TRANS=gsk_xxxxxxxxxxxxxxxxxxxx   ← your Groq API key
+
 
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import Groq from 'groq-sdk';
@@ -19,12 +17,11 @@ export interface PaymentOcrResult {
 @Injectable()
 export class OcrGroqService {
   private readonly client = new Groq({
-    apiKey: process.env.API_TRANS, // your .env key
+    apiKey: process.env.API_TRANS,
   });
 
   async imageToText(file: Express.Multer.File): Promise<string> {
     try {
-      // ✅ file.buffer works because we use memoryStorage() in the controller
       const { data } = await Tesseract.recognize(file.buffer, 'eng+fra');
       return data.text ?? '';
     } catch (err: any) {
@@ -40,7 +37,7 @@ You are a financial document parser. Extract payment information from the text b
 
 Return ONLY a valid JSON object with these exact keys (use empty string "" if not found):
 {
-  "payment_method": "cheque" | "espece" | "virement" | "other",
+  "payment_method": one of exactly these values → "cheque" | "espece" | "virement" | "other" — never null, never a different word,
   "payment_date": "YYYY-MM-DD",
   "amount": "number as string, digits only",
   "reference": "transaction reference or empty string",
@@ -48,6 +45,13 @@ Return ONLY a valid JSON object with these exact keys (use empty string "" if no
   "bank_name": "bank name or empty string",
   "notes": "any other relevant info or empty string"
 }
+
+Rules for payment_method:
+- If the document mentions "chèque", "cheque", "ch." → use "cheque"
+- If it mentions "espèces", "cash", "liquide" → use "espece"
+- If it mentions "virement", "transfer", "VIR" → use "virement"
+- If payment type is unknown or ambiguous → use "other"
+- NEVER return null or an empty string for payment_method — always pick the closest match
 
 Do NOT include any markdown, backticks, explanation, or extra text. Only the JSON object.
 
@@ -84,8 +88,14 @@ ${text}
 
     try {
       const parsed = JSON.parse(jsonMatch[0]) as Partial<PaymentOcrResult>;
+
+      // ✅ Validate payment_method — fallback to 'other' if invalid value
+      const validMethods = ['cheque', 'espece', 'virement', 'other'];
+      const method = parsed.payment_method ?? '';
+      const safeMethod = validMethods.includes(method) ? method : 'other';
+
       return {
-        payment_method: parsed.payment_method ?? '',
+        payment_method: safeMethod as PaymentOcrResult['payment_method'],
         payment_date: parsed.payment_date ?? '',
         amount: parsed.amount ?? '',
         reference: parsed.reference ?? '',
@@ -112,7 +122,7 @@ ${text}
 
   private emptyResult(): PaymentOcrResult {
     return {
-      payment_method: '',
+      payment_method: 'other', // ✅ 'other' au lieu de '' pour éviter le fallback "espece" dans le frontend
       payment_date: '',
       amount: '',
       reference: '',

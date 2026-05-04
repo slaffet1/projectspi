@@ -177,7 +177,9 @@ export class InvoicesService {
     return updatedInvoice;
   }
 
- 
+  /**
+   * Mark invoice as paid/late_paid WITH a full payment trace + stock movements.
+   */
   async markAsPaidWithTrace(
     id: number,
     status: 'paid' | 'late_paid',
@@ -192,7 +194,20 @@ export class InvoicesService {
       proof_image_url?: string | null;
     },
   ) {
-    const invoice = await this.prisma.invoices.findUnique({ where: { id } });
+    // ✅ Include quotes + quote_details + clients to get businessId & stock items
+    const invoice = await this.prisma.invoices.findUnique({
+      where: { id },
+      include: {
+        quotes: {
+          include: {
+            clients: true,
+            quote_details: {
+              include: { products: true },
+            },
+          },
+        },
+      },
+    });
 
     if (!invoice) throw new NotFoundException('Invoice not found');
 
@@ -202,7 +217,7 @@ export class InvoicesService {
 
     const paymentDate = new Date(traceDto.payment_date);
 
-    // Upsert payment trace + update invoice status in one transaction
+    // 1. Update invoice status + upsert payment trace in one transaction
     const [updatedInvoice] = await this.prisma.$transaction([
       this.prisma.invoices.update({
         where: { id },
@@ -234,7 +249,62 @@ export class InvoicesService {
       }),
     ]);
 
-    // Update bank balance if applicable
+    // 2. ✅ Stock movements (same logic as delivery-notes.service.ts)
+    const today = new Date();
+    const businessId = invoice.quotes?.clients?.business_id;
+    const quoteDetails = invoice.quotes?.quote_details ?? [];
+
+    for (const detail of quoteDetails) {
+      const productId = detail.product_id;
+      const qty = detail.quantity;
+
+      if (!productId || qty <= 0) continue;
+
+      // a. Create mouvement OUT
+      await this.prisma.mouvements.create({
+        data: {
+          mouvement_date: today,
+          quantity: qty,
+          type: 'OUT',
+          product_id: productId,
+          note: `Facture #${id} — sortie stock automatique au paiement`,
+        },
+      });
+
+      // b. Decrement warehouse_products (biggest stock first)
+      const warehouseProduct = await this.prisma.warehouse_products.findFirst({
+        where: {
+          product_id: productId,
+          warehouses: { business_id: businessId },
+          quantity: { gt: 0 },
+        },
+        orderBy: { quantity: 'desc' },
+      });
+
+      if (warehouseProduct) {
+        await this.prisma.warehouse_products.update({
+          where: { id: warehouseProduct.id },
+          data: { quantity: { decrement: qty } },
+        });
+      }
+
+      // c. Decrement inventaires.quantity_available
+      const inventaire = await this.prisma.inventaires.findFirst({
+        where: { product_id: productId },
+      });
+
+      if (inventaire) {
+        await this.prisma.inventaires.update({
+          where: { id: inventaire.id },
+          data: {
+            quantity_available: { decrement: qty },
+            last_updated: today,
+          },
+        });
+      }
+    }
+
+    // 3. Update bank balance if a bank is linked
     if (invoice.bank_id) {
       await this.prisma.banks.update({
         where: { id: invoice.bank_id },

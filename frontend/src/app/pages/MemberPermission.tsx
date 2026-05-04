@@ -1,16 +1,4 @@
-// ─────────────────────────────────────────────────────────────
-// MembersPermissions.tsx  (React)
-//
-// Flow :
-//  1. Affiche la liste des membres (comme Members.tsx existant)
-//  2. Owner clique sur un membre → slide-in panel à droite
-//  3. Panel affiche le rôle du membre + toutes les permissions
-//     avec toggle ON/OFF par rôle
-//  4. Save → PUT /roles/:roleId/permissions
-//
-// ⚠️  Les permissions sont sur le RÔLE, pas sur la personne.
-//     Tous les membres du même rôle partagent les mêmes permissions.
-//     (adapté à ton schéma actuel sans migration)
+
 // ─────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
@@ -20,7 +8,7 @@ import { Users, ChevronRight, X, Shield, Save, Loader2 } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 import { toast } from "sonner";
 
-const API_URL = "http://localhost:3001/api";
+const API_URL = "http://localhost:3001";
 
 // ── Types ──────────────────────────────────────────────────────
 interface Member {
@@ -101,7 +89,7 @@ const getAuthHeaders = () => ({
 
 const fetchMembers = async () => {
   try {
-    const res = await fetch(`${API_URL}/businesses/${businessId}/member`, {
+    const res = await fetch(`${API_URL}/api/businesses/${businessId}/member`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -116,7 +104,7 @@ const fetchMembers = async () => {
 const fetchAllPermissions = async () => {
   if (!businessId) return;
   try {
-    const res = await fetch(`${API_URL}/businesses/${businessId}/permissions`, {
+    const res = await fetch(`${API_URL}/api/businesses/${businessId}/permissions`, {
       headers: getAuthHeaders(),
     });
     const data = await res.json();
@@ -138,7 +126,7 @@ const openMemberPanel = async (member: Member) => {
   setLoadingPanel(true);
   try {
     const res = await fetch(
-      `${API_URL}/businesses/${businessId}/roles/${member.role_id}/permissions`,
+      `${API_URL}/api/businesses/${businessId}/roles/${member.role_id}/permissions`,
       { headers: getAuthHeaders() }
     );
     const data: RolePermissionsData = await res.json();
@@ -156,7 +144,7 @@ const savePermissions = async () => {
   setSaving(true);
   try {
     const res = await fetch(
-      `${API_URL}/businesses/${businessId}/roles/${rolePermissions.roleId}/permissions`,
+      `${API_URL}/api/businesses/${businessId}/roles/${rolePermissions.roleId}/permissions`,
       {
         method: "PUT",
         headers: getAuthHeaders(),

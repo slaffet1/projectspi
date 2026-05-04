@@ -17,6 +17,7 @@ async function bootstrap() {
     methods: 'GET,POST,PUT,DELETE,PATCH',
     credentials: false,
   });
+  
   console.log('NODE_ENV:', process.env.NODE_ENV);
   await app.listen(process.env.PORT ?? 3001);
 }
