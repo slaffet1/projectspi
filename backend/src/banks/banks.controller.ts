@@ -2,9 +2,11 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
 import { AuthGuard } from '@nestjs/passport';
 import { BanksService } from './banks.service';
 import { CreateBankDto } from './dto/create-bank.dto';
+import { PermissionsGuard, RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('banks')
+@RequirePermission('banks')
 export class BanksController {
   constructor(private readonly banksService: BanksService) {}
 

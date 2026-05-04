@@ -27,16 +27,19 @@ import {
   RotateCcw,
   FileUp,
   ShoppingCart,
-  Briefcase
+  Briefcase,
+  Shield,
 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
+import { useBusiness } from "@/app/context/BusinessContext";
 
 interface NavItem {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  permission?: string; // ← optionnel : si absent = visible par tous
   children?: NavItem[];
 }
 
@@ -50,51 +53,52 @@ const navGroups: NavGroup[] = [
     label: "General",
     items: [
       { title: "Dashboard", href: "/app", icon: LayoutDashboard },
+      // Dashboard toujours visible, pas de permission requise
     ],
   },
   {
     label: "Sales",
     items: [
-      { title: "Quotes", href: "/app/quotes", icon: FileSignature },
-      { title: "Invoices", href: "/app/invoices", icon: Receipt },
-      { title: "Delivery Notes", href: "/app/delivery-notes", icon: Truck },
-      { title: "Credit Notes", href: "/app/credit-notes", icon: RotateCcw },
-      { title: "Clients", href: "/app/clients", icon: Users },
-      { title: "Purchase Orders Client", href: "/app/purchase-orders-client", icon: ClipboardList  },
-    ]
+      { title: "Quotes",                  href: "/app/quotes",                  icon: FileSignature, permission: "quotes"    },
+      { title: "Invoices",                href: "/app/invoices",                icon: Receipt,       permission: "invoices"  },
+      { title: "Delivery Notes",          href: "/app/delivery-notes",          icon: Truck,         permission: "invoices"  },
+      { title: "Credit Notes",            href: "/app/credit-notes",            icon: RotateCcw,     permission: "invoices"  },
+      { title: "Clients",                 href: "/app/clients",                 icon: Users,         permission: "clients"   },
+      { title: "Purchase Orders Client",  href: "/app/purchase-orders-client",  icon: ClipboardList, permission: "quotes"    },
+    ],
   },
   {
     label: "Purchases",
     items: [
-      { title: "Products", href: "/app/products", icon: Package },
-      { title: "Expenses", href: "/app/expenses", icon: Receipt },
-      { title: "Purchase Orders", href: "/app/purchase-orders", icon: ShoppingCart },
+      { title: "Products",        href: "/app/products",        icon: Package,      permission: "products"  },
+      { title: "Expenses",        href: "/app/expenses",        icon: Receipt,      permission: "expenses"  },
+      { title: "Purchase Orders", href: "/app/purchase-orders", icon: ShoppingCart, permission: "expenses"  },
     ],
   },
   {
     label: "Stock",
     items: [
-      { title: "Warehouses", href: "/app/stock/warehouses", icon: Warehouse },
-      { title: "Stock Levels", href: "/app/stock/levels", icon: BarChart3 },
-      { title: "Movements", href: "/app/stock/movements", icon: ArrowLeftRight },
-      { title: "Inventory", href: "/app/stock/inventory", icon: ClipboardCheck },
-      { title: "Import Excel", href: "/app/stock/import", icon: FileUp },
-      { title: "Suppliers", href: "/app/suppliers", icon: Unplug },
+      { title: "Warehouses",   href: "/app/stock/warehouses", icon: Warehouse,      permission: "products" },
+      { title: "Stock Levels", href: "/app/stock/levels",     icon: BarChart3,      permission: "products" },
+      { title: "Movements",    href: "/app/stock/movements",  icon: ArrowLeftRight, permission: "products" },
+      { title: "Inventory",    href: "/app/stock/inventory",  icon: ClipboardCheck, permission: "products" },
+      { title: "Import Excel", href: "/app/stock/import",     icon: FileUp,         permission: "products" },
+      { title: "Suppliers",    href: "/app/suppliers",        icon: Unplug,         permission: "products" },
     ],
   },
   {
     label: "Banking",
     items: [
-      { title: "Bank Accounts", href: "/app/banks", icon: Landmark },
+      { title: "Bank Accounts", href: "/app/banks", icon: Landmark, permission: "banks" },
     ],
   },
   {
     label: "Team",
     items: [
-
-      { title: "Members", href: "/app/members", icon: UsersRound },
-      { title: "Requests", href: "/app/join-requests", icon: ClipboardList },
-      { title: "Employees", href: "/app/employees", icon: Briefcase },
+      { title: "Members",     href: "/app/members",             icon: UsersRound,   permission: "members" },
+      { title: "Permissions", href: "/app/permissions", icon: Shield,       permission: "members" },
+      { title: "Requests",    href: "/app/join-requests",       icon: ClipboardList, permission: "members" },
+      { title: "Employees",   href: "/app/employees",           icon: Briefcase,    permission: "employees" },
     ],
   },
 ];
@@ -106,7 +110,7 @@ const bottomItems: NavItem[] = [
     icon: Settings,
     children: [
       { title: "Invoicing", href: "/app/settings/invoices", icon: FileSliders },
-      { title: "Taxes", href: "/app/settings/taxes", icon: Percent },
+      { title: "Taxes",     href: "/app/settings/taxes",    icon: Percent },
     ],
   },
   { title: "Help", href: "/app/help", icon: HelpCircle },
@@ -114,19 +118,26 @@ const bottomItems: NavItem[] = [
 
 export function AppSidebar() {
   const location = useLocation();
+  const { hasPermission, isOwner } = useBusiness(); // ← récupérer depuis le contexte
   const [isOpen, setIsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(
     location.pathname.startsWith("/app/settings")
   );
 
- const isActive = (href: string) => {
-  if (href === "/app") return location.pathname === "/app";
+  const isActive = (href: string) => {
+    if (href === "/app") return location.pathname === "/app";
+    return location.pathname === href || location.pathname.startsWith(href + "/");
+  };
 
-  return (
-    location.pathname === href ||
-    location.pathname.startsWith(href + "/")
-  );
-};
+  // ── Filtre un item selon les permissions ──────────────────
+  // Si l'item n'a pas de permission → visible par tous
+  // Si owner → tout visible
+  // Sinon → vérifie hasPermission()
+  const canSee = (item: NavItem): boolean => {
+    if (!item.permission) return true;
+    if (isOwner()) return true;
+    return hasPermission(item.permission);
+  };
 
   return (
     <>
@@ -159,8 +170,9 @@ export function AppSidebar() {
       <nav
         id="main-sidebar"
         aria-label="Navigation principale"
-        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar transition-transform duration-200 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          }`}
+        className={`fixed md:static inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r border-border bg-sidebar transition-transform duration-200 ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
       >
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
@@ -178,34 +190,43 @@ export function AppSidebar() {
 
         {/* Scrollable nav area */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
-          {navGroups.map((group) => (
-            <div key={group.label} role="group" aria-label={group.label}>
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground" aria-hidden="true">
-                {group.label}
-              </p>
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setIsOpen(false)}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
-                        ? "bg-primary text-white"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          {navGroups.map((group) => {
+            // Filtrer les items du groupe selon les permissions
+            const visibleItems = group.items.filter(canSee);
+
+            // Si le groupe n'a aucun item visible → ne pas afficher le groupe
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <div key={group.label} role="group" aria-label={group.label}>
+                <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground" aria-hidden="true">
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setIsOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                          active
+                            ? "bg-primary text-white"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span className="text-sm font-medium">{item.title}</span>
-                    </Link>
-                  );
-                })}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span className="text-sm font-medium">{item.title}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Bottom nav */}
@@ -220,10 +241,11 @@ export function AppSidebar() {
                     onClick={() => setSettingsOpen(!settingsOpen)}
                     aria-expanded={settingsOpen}
                     aria-controls="settings-submenu"
-                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${parentActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
+                      parentActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -245,10 +267,11 @@ export function AppSidebar() {
                             to={child.href}
                             onClick={() => setIsOpen(false)}
                             aria-current={childActive ? "page" : undefined}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${childActive
-                              ? "bg-primary text-white"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                              }`}
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                              childActive
+                                ? "bg-primary text-white"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
                           >
                             <ChildIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                             <span className="font-medium">{child.title}</span>
@@ -267,10 +290,11 @@ export function AppSidebar() {
                 to={item.href}
                 onClick={() => setIsOpen(false)}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${active
-                  ? "bg-primary text-white"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                  active
+                    ? "bg-primary text-white"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="text-sm font-medium">{item.title}</span>

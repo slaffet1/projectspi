@@ -107,7 +107,10 @@ export const BusinessProvider = ({ children }: { children: React.ReactNode }) =>
   }
 };
 
-  const hasPermission = (permission: string) => permissions.includes(permission);
+  const hasPermission = (action: string): boolean => {
+  if (isOwner()) return true;
+  return permissions.includes(action);
+};
   const isOwner = () => activeRole === 'OWNER';
   const isAdmin = () => activeRole === 'ADMIN' || activeRole === 'OWNER';
 

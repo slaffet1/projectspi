@@ -10,9 +10,11 @@ import { StockService } from './stock.service';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { AssignProductDto } from './dto/assign-product.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('api/businesses/:businessId/stock')
+@RequirePermission('products')
 export class StockController {
   constructor(private readonly stockService: StockService) {}
 

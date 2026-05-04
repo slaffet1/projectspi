@@ -2,8 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from 
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/suppliers')
+@RequirePermission('products')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 

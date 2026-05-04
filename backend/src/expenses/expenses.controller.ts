@@ -16,9 +16,11 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RequirePermissions } from 'src/common/decorators/permissions.decorator';
 import { Role } from 'src/common/enums/role.enum';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/expenses')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('expenses')
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 

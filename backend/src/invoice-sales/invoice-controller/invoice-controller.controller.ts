@@ -20,9 +20,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { InvoicesService } from '../invoice/invoice.service';
 import { EmailService } from '../email/email.service';
 import { GeminiService } from '../gemini/gemini.service';
+import { PermissionsGuard, RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/invoices')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'),PermissionsGuard)
+@RequirePermission('invoices')
 export class InvoicesController {
   constructor(
     private readonly invoicesService: InvoicesService,

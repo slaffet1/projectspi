@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { EmployeeService } from './employee.service';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('employees')
+@RequirePermission('employees')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 

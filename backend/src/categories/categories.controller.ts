@@ -19,6 +19,7 @@ import { Role } from 'src/common/enums/role.enum';
 
 @Controller('api/businesses/:businessId/categories')
 @UseGuards(AuthGuard('jwt'))
+
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 

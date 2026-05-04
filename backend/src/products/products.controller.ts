@@ -14,9 +14,11 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/products')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 

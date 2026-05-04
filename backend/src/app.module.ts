@@ -28,6 +28,7 @@ import { TelegramModule } from './telegram/telegram.module';
 import { PurchaseOrdersClientModule } from './purchase-orders-client/purchase-orders-client.module';
 import { SearchModule } from './search/search.module';
 import { AiAdvisorModule } from './ai-advisor/ai-advisor.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AiAdvisorModule } from './ai-advisor/ai-advisor.module';
     PurchaseOrdersClientModule,
     SearchModule,
     AiAdvisorModule,
+    PermissionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, DeliveryNotesService],

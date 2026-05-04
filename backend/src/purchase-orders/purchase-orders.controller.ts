@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Param, Body, ParseIntPipe, Patch } from '@nestjs/common';
 import { PurchaseOrdersService } from './purchase-orders.service';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/purchase-orders')
+@RequirePermission('expenses')
 export class PurchaseOrdersController {
   constructor(private readonly poService: PurchaseOrdersService) {}
 

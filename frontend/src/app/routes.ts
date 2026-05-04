@@ -40,6 +40,7 @@ import PurchaseOrdersClient from "./pages/PurchaseOrdersClient";
 import CreatePurchaseOrder from "./pages/Createpurchaseorder";
 import PurchaseOrderDetail from "./pages/Purchaseorderdetail";
 import VoicePurchaseOrder from "./pages/Voicepurchaseorder";
+import MembersPermissions from "./pages/MemberPermission";
 
 export const router = createBrowserRouter([
   // ─── Pages publiques ───────────────────────────────────────────
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
       { path: "/app/suppliers/:id/edit", Component: SupplierForm },
       { path: "/app/purchase-orders", Component: PurchaseOrders },
       { path: "/app/employees", Component: Employees },
+      { path: "permissions", Component: MembersPermissions },
       { path: "purchase-orders-client", Component: PurchaseOrdersClient },
       { path: "purchase-orders-client/create", Component: CreatePurchaseOrder },
       { path: "purchase-orders-client/:id", Component: PurchaseOrderDetail },

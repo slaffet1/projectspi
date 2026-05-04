@@ -17,8 +17,10 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentBusiness } from 'src/common/decorators/current-business.decorator';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('clients')
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}

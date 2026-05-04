@@ -12,9 +12,11 @@ import {
 import { CreditNotesService } from './credit-notes.service';
 import { CreateCreditNoteDto } from './credit-notes-dto.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/credit-notes')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('invoices')
 export class CreditNotesController {
     constructor(private readonly service: CreditNotesService) { }
 

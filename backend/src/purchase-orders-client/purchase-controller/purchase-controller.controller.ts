@@ -12,9 +12,11 @@ import { UpdatePurchaseOrderDto } from '../dto/update-purchase-order.dto';
 import { PurchaseOrderEmailService } from '../PurchaseOrderEmailService.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WhisperService } from '../Whisper.service';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/purchase-orders-client')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('quotes')
 export class PurchaseControllerController {
     constructor(private readonly purchaseOrdersService: PurchaseServiceService,
       private readonly emailService: PurchaseOrderEmailService,

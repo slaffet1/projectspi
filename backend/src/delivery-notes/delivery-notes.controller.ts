@@ -14,9 +14,11 @@ import { CreateDeliveryNoteDto } from './dto/createdelivery-notes.dto';
 import { UpdateDeliveryNoteDto } from './dto/updatedelivery-note.dto';
 import { DeliveryStatus } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermission } from 'src/permissions/permissions/permissions.guard';
 
 @Controller('api/businesses/:businessId/delivery-notes')
 @UseGuards(AuthGuard('jwt'))
+@RequirePermission('invoices')
 export class DeliveryNotesController {
   constructor(private readonly deliveryNotesService: DeliveryNotesService) { }
 
