@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  baseURL: 'http://charikty.swedencentral.cloudapp.azure.com/apicharikty.swedencentral.cloudapp.azure.com',
 });
 
 api.interceptors.request.use((config) => {
