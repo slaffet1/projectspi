@@ -10,9 +10,12 @@ async function bootstrap() {
       'http://localhost:5173',
       'http://localhost:80',
       'http://localhost',
+      'http://20.240.34.20',
+      '*',
+
     ],
     methods: 'GET,POST,PUT,DELETE,PATCH',
-    credentials: true,
+    credentials: false,
   });
   console.log('NODE_ENV:', process.env.NODE_ENV);
   await app.listen(process.env.PORT ?? 3001);
