@@ -35,7 +35,7 @@ export class PurchaseServiceService {
     const count = await this.prisma.purchase_orders_client.count({
       where: { clients: { business_id: businessId } },
     });
-    return `BC-${year}-${String(count + 1).padStart(4, '0')}`;
+    return `${businessId || 'BC-'}${businessId}-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
   private async assertBelongsToBusiness(id: number, businessId: number) {
