@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { TaxSettingsService } from './tax-settings.service';
 
-@Controller('api')
+@Controller()
 export class TaxSettingsController {
   constructor(private readonly service: TaxSettingsService) {}
 
