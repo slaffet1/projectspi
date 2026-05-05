@@ -36,7 +36,7 @@ export class QuotesService {
       const lastNum = parseInt(parts[parts.length - 1], 10);
       if (!isNaN(lastNum)) next = lastNum + 1;
     }
-    return `QT-${year}-${String(next).padStart(4, '0')}`;
+    return `QT-${businessId}-${year}-${String(next).padStart(4, '0')}`;
   }
 
   private async assertBelongsToBusiness(id: number, businessId: number) {

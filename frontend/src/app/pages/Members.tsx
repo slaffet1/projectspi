@@ -6,6 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { UserPlus, Trash2, Users } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
+
 const API_URL = "/api";
 
 const Members = () => {

@@ -525,6 +525,41 @@ export default function Employees() {
                     </div>
                 </div>
             )}
+             {employeeForPayslip && simulation && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col">
+                        <div className="bg-primary p-4 text-white flex justify-between items-center">
+                            <div>
+                                <h2 className="font-bold text-lg">Simulation Paie : {employeeForPayslip.firstName} {employeeForPayslip.lastName}</h2>
+                                <p className="text-primary-foreground/80 text-sm">Mois actuel : {new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            <button onClick={() => setEmployeeForPayslip(null)} className="text-white hover:text-gray-200">✕</button>
+                        </div>
+                        
+                        <div className="p-6 space-y-3 flex-1 bg-gray-50">
+                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Salaire Brut</span><span className="font-medium">{simulation.salaireBrut.toFixed(3)} TND</span></div>
+                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Retenue CNSS (9.68%)</span><span className="text-red-500 font-medium">-{simulation.retenueCnss.toFixed(3)} TND</span></div>
+                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">Salaire Brut Imposable</span><span className="font-medium">{simulation.salaireBrutImposable.toFixed(3)} TND</span></div>
+                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">IRPP (Barème 2026)</span><span className="text-red-500 font-medium">-{simulation.retenueIrpp.toFixed(3)} TND</span></div>
+                            <div className="flex justify-between py-2 border-b border-gray-200"><span className="text-gray-600">CSS (0.5%)</span><span className="text-red-500 font-medium">-{simulation.retenueCss.toFixed(3)} TND</span></div>
+                            
+                            <div className="flex justify-between py-4 mt-4 bg-green-100 border border-green-200 px-4 rounded-lg">
+                                <span className="font-bold text-green-800">SALAIRE NET À PAYER</span>
+                                <span className="font-bold text-green-800 text-xl">{simulation.salaireNet.toFixed(3)} TND</span>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t bg-white flex justify-between items-center gap-2">
+                            <Button variant="outline" onClick={() => handleDownloadPDF(simulation, employeeForPayslip, new Date().toLocaleString('fr-FR', { month: 'long', year: 'numeric' }))}>
+                                <Download className="h-4 w-4 mr-2" /> Télécharger PDF
+                            </Button>
+                            <Button onClick={handleSavePayslip} disabled={isSavingPayslip} className="bg-green-600 hover:bg-green-700 text-white">
+                                {isSavingPayslip ? "Sauvegarde..." : "Enregistrer ce mois-ci"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* MODAL 3 : HISTORIQUE DES PAIES */}
             {employeeForHistory && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
