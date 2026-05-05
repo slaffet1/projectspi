@@ -1,7 +1,7 @@
 import { Controller, Get, Put, Body, Param } from '@nestjs/common';
 import { InvoiceSettingsService } from './invoice-settings.service';
 
-@Controller('businesses')
+@Controller('api/businesses')
 export class InvoiceSettingsController {
   constructor(private readonly service: InvoiceSettingsService) {}
 
