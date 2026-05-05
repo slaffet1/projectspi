@@ -15,6 +15,18 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
+  server: {
+    host: true, // Needed for your CI's --host 0.0.0.0 flag
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path: string) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   assetsInclude: ['**/*.svg', '**/*.csv'],
   build: {
     rollupOptions: {

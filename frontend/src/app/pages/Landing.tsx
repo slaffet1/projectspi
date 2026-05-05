@@ -186,7 +186,7 @@ export default function Landing() {
               {!user ? (
                 <>
                   <Link
-                    to="/app"
+                    to="/<app>"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <Button
