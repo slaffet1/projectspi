@@ -15,7 +15,7 @@ export class EmailService {
   });
 
  async sendVerificationEmail(email: string, token: string) {
-    const   url = `http://localhost:5173/verifEmail?token=${token}`;
+    const   url = `http://charikty.swedencentral.cloudapp.azure.com/verifEmail?token=${token}`;
 
     const html = `
       <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">

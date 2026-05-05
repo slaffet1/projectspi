@@ -298,7 +298,7 @@ export class InviteUsersService {
         html: `
           <h2>Bienvenue !</h2>
           <p>Vous avez été ajouté à <strong>${businessName}</strong> en tant que <strong>${roleName}</strong>.</p>
-          <p><a href="http://localhost:5173/app">Accéder à la plateforme</a></p>
+          <p><a href="http://charikty.swedencentral.cloudapp.azure.com/app">Accéder à la plateforme</a></p>
         `,
       });
     } catch (error) {
@@ -316,7 +316,7 @@ export class InviteUsersService {
         html: `
           <h2>Vous êtes invité !</h2>
           <p><strong>${businessName}</strong> vous invite à rejoindre leur entreprise en tant que <strong>${roleName}</strong>.</p>
-          <p><a href="http://localhost:5173/register?token=${token}">Créer votre compte et rejoindre</a></p>
+          <p><a href="http://charikty.swedencentral.cloudapp.azure.com/register?token=${token}">Créer votre compte et rejoindre</a></p>
           <p><em>Ce lien expire dans 7 jours.</em></p>
         `,
       });
