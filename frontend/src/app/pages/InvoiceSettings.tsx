@@ -6,7 +6,9 @@ import { Label } from "@/app/components/ui/label";
 import { Save, FileText } from "lucide-react";
 import { useBusiness } from "@/app/context/BusinessContext";
 
-const API_URL = "/api";
+const API_URL = import.meta.env.PROD 
+  ? "http://charikty.swedencentral.cloudapp.azure.com:3001" 
+  : "/api";
 
 const InvoiceSettings = () => {
   const [invoicePrefix, setInvoicePrefix] = useState("");
